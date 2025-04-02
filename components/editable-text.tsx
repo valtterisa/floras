@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Pencil, Check, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, useRef, useEffect } from "react";
+import { Pencil, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EditableTextProps {
-  initialValue: string
-  onSave?: (value: string) => void
-  className?: string
-  tag?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span"
-  placeholder?: string
-  disabled?: boolean
+  initialValue: string;
+  onSave?: (value: string) => void;
+  className?: string;
+  tag?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span";
+  placeholder?: string;
+  disabled?: boolean;
 }
 
 export function EditableText({
@@ -23,48 +23,48 @@ export function EditableText({
   placeholder = "Click to edit",
   disabled = false,
 }: EditableTextProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [value, setValue] = useState(initialValue)
-  const [originalValue, setOriginalValue] = useState(initialValue)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(initialValue);
+  const [originalValue, setOriginalValue] = useState(initialValue);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus()
+      inputRef.current.focus();
       // Place cursor at the end of the text
-      const length = inputRef.current.value.length
-      inputRef.current.setSelectionRange(length, length)
+      const length = inputRef.current.value.length;
+      inputRef.current.setSelectionRange(length, length);
     }
-  }, [isEditing])
+  }, [isEditing]);
 
   const handleClick = () => {
     if (!disabled) {
-      setIsEditing(true)
-      setOriginalValue(value)
+      setIsEditing(true);
+      setOriginalValue(value);
     }
-  }
+  };
 
   const handleSave = () => {
-    setIsEditing(false)
+    setIsEditing(false);
     if (onSave && value !== originalValue) {
-      onSave(value)
+      onSave(value);
     }
-  }
+  };
 
   const handleCancel = () => {
-    setIsEditing(false)
-    setValue(originalValue) // Reset to original value if canceled
-  }
+    setIsEditing(false);
+    setValue(originalValue); // Reset to original value if canceled
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSave()
+      e.preventDefault();
+      handleSave();
     }
     if (e.key === "Escape") {
-      handleCancel()
+      handleCancel();
     }
-  }
+  };
 
   const renderElement = () => {
     if (isEditing) {
@@ -105,17 +105,21 @@ export function EditableText({
             </Button>
           </div>
         </div>
-      )
+      );
     }
 
-    const TagName = tag
+    const TagName = tag;
     return (
       <div
-        className={`group relative cursor-pointer ${disabled ? "cursor-not-allowed" : ""} transition-colors duration-200 ${className}`}
+        className={`group relative cursor-pointer ${
+          disabled ? "cursor-not-allowed" : ""
+        } transition-colors duration-200 ${className}`}
         onClick={handleClick}
       >
         <TagName
-          className={`${value ? "" : "text-gray-400 italic"} relative py-1 px-0.5 border border-transparent hover:border-dashed hover:border-gray-300 dark:hover:border-gray-600 rounded`}
+          className={`${
+            value ? "" : "text-gray-400 italic"
+          } relative py-1 px-0.5 border border-transparent hover:border-dashed hover:border-gray-300 dark:hover:border-gray-600 rounded`}
         >
           {value || placeholder}
         </TagName>
@@ -126,8 +130,8 @@ export function EditableText({
               variant="ghost"
               className="h-6 w-6 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={(e) => {
-                e.stopPropagation()
-                setIsEditing(true)
+                e.stopPropagation();
+                setIsEditing(true);
               }}
               aria-label="Edit text"
             >
@@ -136,9 +140,8 @@ export function EditableText({
           </div>
         )}
       </div>
-    )
-  }
+    );
+  };
 
-  return renderElement()
+  return renderElement();
 }
-
