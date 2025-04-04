@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-// Define the steps in the onboarding process
+// Define the steps in the advanced onboarding process
 const STEPS = [
   { id: "business", title: "Business Details" },
   { id: "features", title: "Website Features" },
@@ -143,7 +142,7 @@ const COLOR_SCHEMES = [
   { id: "gray", name: "Gray", primary: "#4B5563", secondary: "#6B7280" },
 ];
 
-// Initial form state
+// Initial form state for advanced funnel
 const initialFormState = {
   businessName: "",
   industry: "",
@@ -157,50 +156,30 @@ const initialFormState = {
 export default function AICreatePage() {
   const router = useRouter();
   const { toast } = useToast();
+
+  // mode state: null means no selection yet, "quick" for one prompt funnel, "advanced" for detailed options
+  const [mode, setMode] = useState<"quick" | "advanced" | null>(null);
+
+  // advanced funnel states
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [templates, setTemplates] = useState<any[]>([]);
 
-  // Load saved form data from localStorage on initial load
-  useEffect(() => {
-    const savedData = localStorage.getItem("aiOnboardingData");
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        setFormData(parsedData);
+  // quick mode state: single prompt input
+  const [quickPrompt, setQuickPrompt] = useState("");
 
-        // If they already completed some steps, take them to where they left off
-        if (parsedData.industry && currentStep === 0) {
-          setCurrentStep(1);
-        }
-        if (parsedData.features.length > 0 && currentStep === 1) {
-          setCurrentStep(2);
-        }
-        if (parsedData.designStyle && currentStep === 2) {
-          setCurrentStep(3);
-        }
-      } catch (error) {
-        console.error("Error parsing saved data:", error);
-      }
-    }
-  }, []);
+  // ---------- Common helper functions -------------
+  const getIndustryName = (id: string) => {
+    const industry = INDUSTRIES.find((ind) => ind.id === id);
+    return industry ? industry.name : id;
+  };
 
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("aiOnboardingData", JSON.stringify(formData));
-  }, [formData]);
-
-  // Generate templates when reaching the template selection step
-  useEffect(() => {
-    if (currentStep === 3 && templates.length === 0) {
-      generateTemplates();
-    }
-  }, [currentStep]);
-
-  const generateTemplates = async () => {
+  // Modified generateTemplates accepts an optional override for form data.
+  const generateTemplates = async (dataOverride?: typeof formData) => {
     setIsLoading(true);
+    const data = dataOverride || formData;
 
     try {
       // Simulate API call to generate templates
@@ -211,35 +190,34 @@ export default function AICreatePage() {
         {
           id: 1,
           name: `${
-            formData.designStyle.charAt(0).toUpperCase() +
-            formData.designStyle.slice(1)
+            data.designStyle.charAt(0).toUpperCase() + data.designStyle.slice(1)
           } Design`,
-          description: `A ${formData.designStyle} website for ${
-            formData.businessName
-          } with a focus on ${formData.features.slice(0, 2).join(" and ")}.`,
+          description: `A ${data.designStyle} website for ${
+            data.businessName
+          } with a focus on ${data.features.slice(0, 2).join(" and ")}.`,
           preview: `/placeholder.svg?height=300&width=500&text=Template+1`,
-          sections: generateSections(formData, "variation1"),
+          sections: generateSections(data, "variation1"),
         },
         {
           id: 2,
           name: `${
-            formData.colorScheme.charAt(0).toUpperCase() +
-            formData.colorScheme.slice(1)
+            data.colorScheme.charAt(0).toUpperCase() + data.colorScheme.slice(1)
           } Accent`,
-          description: `A ${formData.colorScheme}-themed website highlighting your ${formData.industry} business with unique sections.`,
+          description: `A ${data.colorScheme}-themed website highlighting your ${data.industry} business with unique sections.`,
           preview: `/placeholder.svg?height=300&width=500&text=Template+2`,
-          sections: generateSections(formData, "variation2"),
+          sections: generateSections(data, "variation2"),
         },
         {
           id: 3,
           name: "Premium Layout",
-          description: `An advanced layout for ${formData.businessName} with premium features and optimized content structure.`,
+          description: `An advanced layout for ${data.businessName} with premium features and optimized content structure.`,
           preview: `/placeholder.svg?height=300&width=500&text=Template+3`,
-          sections: generateSections(formData, "variation3"),
+          sections: generateSections(data, "variation3"),
         },
       ];
 
       setTemplates(generatedTemplates);
+      return generatedTemplates;
     } catch (error) {
       console.error("Error generating templates:", error);
       toast({
@@ -247,6 +225,7 @@ export default function AICreatePage() {
         description: "Failed to generate templates. Please try again.",
         variant: "destructive",
       });
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -431,10 +410,39 @@ export default function AICreatePage() {
     return sections;
   };
 
-  const getIndustryName = (id: string) => {
-    const industry = INDUSTRIES.find((ind) => ind.id === id);
-    return industry ? industry.name : id;
-  };
+  // ---------- Advanced Funnel Handlers -------------
+  // Load saved form data from localStorage on initial load (advanced mode only)
+  useEffect(() => {
+    if (mode === "advanced") {
+      const savedData = localStorage.getItem("aiOnboardingData");
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          setFormData(parsedData);
+
+          // If they already completed some steps, take them to where they left off
+          if (parsedData.industry && currentStep === 0) {
+            setCurrentStep(1);
+          }
+          if (parsedData.features.length > 0 && currentStep === 1) {
+            setCurrentStep(2);
+          }
+          if (parsedData.designStyle && currentStep === 2) {
+            setCurrentStep(3);
+          }
+        } catch (error) {
+          console.error("Error parsing saved data:", error);
+        }
+      }
+    }
+  }, [mode]);
+
+  // Save form data to localStorage whenever it changes (advanced mode)
+  useEffect(() => {
+    if (mode === "advanced") {
+      localStorage.setItem("aiOnboardingData", JSON.stringify(formData));
+    }
+  }, [formData, mode]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -442,7 +450,6 @@ export default function AICreatePage() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error for this field if it exists
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -455,7 +462,6 @@ export default function AICreatePage() {
   const handleIndustrySelect = (industryId: string) => {
     setFormData((prev) => ({ ...prev, industry: industryId }));
 
-    // Clear error for industry if it exists
     if (errors.industry) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -468,7 +474,6 @@ export default function AICreatePage() {
   const handleFeatureToggle = (featureId: string) => {
     setFormData((prev) => {
       const features = [...prev.features];
-
       if (features.includes(featureId)) {
         return { ...prev, features: features.filter((f) => f !== featureId) };
       } else {
@@ -476,7 +481,6 @@ export default function AICreatePage() {
       }
     });
 
-    // Clear error for features if it exists
     if (errors.features) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -506,11 +510,9 @@ export default function AICreatePage() {
         if (!formData.businessName.trim()) {
           newErrors.businessName = "Business name is required";
         }
-
         if (!formData.industry) {
           newErrors.industry = "Please select an industry";
         }
-
         if (!formData.description.trim()) {
           newErrors.description = "Please provide a brief description";
         } else if (formData.description.length < 20) {
@@ -529,7 +531,6 @@ export default function AICreatePage() {
         if (!formData.designStyle) {
           newErrors.designStyle = "Please select a design style";
         }
-
         if (!formData.colorScheme) {
           newErrors.colorScheme = "Please select a color scheme";
         }
@@ -556,22 +557,15 @@ export default function AICreatePage() {
 
   const handleFinish = async () => {
     setIsLoading(true);
-
     try {
-      // Get the selected template
       const selectedTemplate = templates[formData.selectedTemplate];
-
-      // Store the complete website data in localStorage
       const websiteData = {
         ...formData,
         source: "ai",
         createdAt: new Date().toISOString(),
         sections: selectedTemplate.sections,
       };
-
       localStorage.setItem("websiteData", JSON.stringify(websiteData));
-
-      // Navigate to editor
       router.push("/website/editor");
     } catch (error: any) {
       toast({
@@ -584,274 +578,148 @@ export default function AICreatePage() {
     }
   };
 
-  // Render the current step content
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0: // Business Details
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="businessName" className="text-base font-medium">
-                Business Name
-              </Label>
-              <Input
-                id="businessName"
-                name="businessName"
-                placeholder="e.g. Acme Inc., Mountain View Cafe, Bright Spark Studios"
-                value={formData.businessName}
-                onChange={handleInputChange}
-                className={cn(
-                  "border-2 p-6 text-lg",
-                  errors.businessName
-                    ? "border-red-300 focus:border-red-500"
-                    : formData.businessName
-                    ? "border-green-300 focus:border-green-500"
-                    : "border-gray-200"
-                )}
-              />
-              {errors.businessName && (
-                <div className="flex items-center text-red-500 text-sm mt-1">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.businessName}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-base font-medium">Industry</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {INDUSTRIES.map((industry) => (
-                  <div
-                    key={industry.id}
-                    onClick={() => handleIndustrySelect(industry.id)}
-                    className={cn(
-                      "p-3 rounded-lg border-2 cursor-pointer transition-all",
-                      formData.industry === industry.id
-                        ? `${industry.color} border-2 ring-2 ring-offset-2 ring-purple-300`
-                        : "border-gray-200 hover:border-purple-200"
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{industry.name}</span>
-                      {formData.industry === industry.id && (
-                        <Check className="h-5 w-5" />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {errors.industry && (
-                <div className="flex items-center text-red-500 text-sm mt-1">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.industry}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-base font-medium">
-                Business Description
-              </Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Describe your business, products, or services. What makes you unique? What do you offer to customers?"
-                value={formData.description}
-                onChange={handleInputChange}
-                className={cn(
-                  "min-h-[150px] border-2 p-4 text-base",
-                  errors.description
-                    ? "border-red-300 focus:border-red-500"
-                    : formData.description.length >= 20
-                    ? "border-green-300 focus:border-green-500"
-                    : "border-gray-200"
-                )}
-              />
-              {errors.description ? (
-                <div className="flex items-center text-red-500 text-sm mt-1">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.description}
-                </div>
-              ) : (
-                <div className="text-gray-500 text-sm mt-1">
-                  {formData.description.length}/20 characters minimum
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 1: // Features
-        return (
-          <div className="space-y-6">
-            <p className="text-gray-600">
-              Select the sections you want to include in your website. You can
-              add or remove sections later.
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-4">
-              {FEATURES.map((feature) => (
-                <div
-                  key={feature.id}
-                  onClick={() => handleFeatureToggle(feature.id)}
-                  className={cn(
-                    "p-4 rounded-lg border-2 cursor-pointer transition-all",
-                    formData.features.includes(feature.id)
-                      ? "bg-purple-50 border-purple-300 ring-2 ring-offset-2 ring-purple-300"
-                      : "border-gray-200 hover:border-purple-200"
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">{feature.name}</span>
-                    {formData.features.includes(feature.id) && (
-                      <Check className="h-5 w-5 text-purple-600" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-
-            {errors.features && (
-              <div className="flex items-center text-red-500 text-sm mt-1">
-                <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.features}
-              </div>
-            )}
-          </div>
-        );
-
-      case 2: // Design
-        return (
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <Label className="text-base font-medium">Design Style</Label>
-              <div className="grid md:grid-cols-3 gap-4">
-                {DESIGN_STYLES.map((style) => (
-                  <div
-                    key={style.id}
-                    onClick={() => handleDesignStyleSelect(style.id)}
-                    className={cn(
-                      "p-4 rounded-lg border-2 cursor-pointer transition-all",
-                      formData.designStyle === style.id
-                        ? "bg-purple-50 border-purple-300 ring-2 ring-offset-2 ring-purple-300"
-                        : "border-gray-200 hover:border-purple-200"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{style.name}</span>
-                      {formData.designStyle === style.id && (
-                        <Check className="h-5 w-5 text-purple-600" />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600">{style.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Label className="text-base font-medium">Color Scheme</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {COLOR_SCHEMES.map((scheme) => (
-                  <div
-                    key={scheme.id}
-                    onClick={() => handleColorSchemeSelect(scheme.id)}
-                    className={cn(
-                      "p-4 rounded-lg border-2 cursor-pointer transition-all",
-                      formData.colorScheme === scheme.id
-                        ? "border-purple-300 ring-2 ring-offset-2 ring-purple-300"
-                        : "border-gray-200 hover:border-purple-200"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium">{scheme.name}</span>
-                      {formData.colorScheme === scheme.id && (
-                        <Check className="h-5 w-5 text-purple-600" />
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      <div
-                        className="h-8 w-8 rounded-full"
-                        style={{ backgroundColor: scheme.primary }}
-                      />
-                      <div
-                        className="h-8 w-8 rounded-full"
-                        style={{ backgroundColor: scheme.secondary }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 3: // Templates
-        return (
-          <div className="space-y-6">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
-                <h3 className="text-xl font-medium mb-2">
-                  Generating your templates
-                </h3>
-                <p className="text-gray-600">
-                  We're creating custom templates based on your preferences...
-                </p>
-              </div>
-            ) : (
-              <>
-                <p className="text-gray-600">
-                  Choose one of these templates as a starting point. You can
-                  customize it further in the editor.
-                </p>
-
-                <div className="grid md:grid-cols-3 gap-6">
-                  {templates.map((template, index) => (
-                    <div
-                      key={template.id}
-                      onClick={() => handleTemplateSelect(index)}
-                      className={cn(
-                        "rounded-lg border-2 cursor-pointer transition-all overflow-hidden",
-                        formData.selectedTemplate === index
-                          ? "border-purple-300 ring-2 ring-offset-2 ring-purple-300"
-                          : "border-gray-200 hover:border-purple-200"
-                      )}
-                    >
-                      <div className="relative">
-                        <img
-                          src={template.preview || "/placeholder.svg"}
-                          alt={template.name}
-                          className="w-full h-48 object-cover"
-                        />
-                        {formData.selectedTemplate === index && (
-                          <div className="absolute top-2 right-2 bg-purple-600 text-white p-1 rounded-full">
-                            <Check className="h-5 w-5" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-medium text-lg mb-1">
-                          {template.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {template.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        );
-
-      default:
-        return null;
+  // ---------- Quick Funnel Handler -------------
+  const handleQuickFinish = async () => {
+    if (!quickPrompt.trim()) {
+      toast({
+        title: "Error",
+        description:
+          "Please enter a prompt describing your business and needs.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      // In quick mode we use the prompt for the description and apply default values
+      const quickData = {
+        businessName: "My Business",
+        industry: "other",
+        description: quickPrompt,
+        features: ["about", "services", "contact"],
+        designStyle: "modern",
+        colorScheme: "purple",
+        selectedTemplate: 0,
+      };
+      // Optionally, you could parse the prompt to extract more details.
+      // Generate templates using the quick data override
+      const generatedTemplates = await generateTemplates(quickData);
+      if (generatedTemplates.length > 0) {
+        const selectedTemplate = generatedTemplates[0];
+        const websiteData = {
+          ...quickData,
+          source: "ai",
+          createdAt: new Date().toISOString(),
+          sections: selectedTemplate.sections,
+        };
+        localStorage.setItem("websiteData", JSON.stringify(websiteData));
+        router.push("/website/editor");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // ---------- Rendering: Mode Selection, Quick Funnel, or Advanced Funnel -------------
+  if (!mode) {
+    // Mode selection screen
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 flex flex-col">
+        <header className="container mx-auto px-4 py-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => router.push("/")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-500 to-purple-700"></div>
+            <span className="font-bold text-xl">SiteForge</span>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-20 flex flex-col items-center">
+          <h1 className="text-3xl font-bold mb-6">Choose Your Funnel</h1>
+          <p className="text-gray-600 mb-10 text-center">
+            Would you like to use our quick one-prompt funnel or customize your
+            website further?
+          </p>
+          <div className="flex gap-6">
+            <Button
+              onClick={() => setMode("quick")}
+              className="px-6 py-3 text-lg bg-gradient-to-r from-green-500 to-green-700 text-white"
+            >
+              Quick Prompt
+            </Button>
+            <Button
+              onClick={() => setMode("advanced")}
+              className="px-6 py-3 text-lg bg-gradient-to-r from-purple-600 to-purple-800 text-white"
+            >
+              Advanced Options
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (mode === "quick") {
+    // Quick funnel screen: single prompt input
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 flex flex-col">
+        <header className="container mx-auto px-4 py-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => setMode(null)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-500 to-green-700"></div>
+            <span className="font-bold text-xl">SiteForge</span>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-20">
+          <h1 className="text-3xl font-bold mb-4">Quick Website Creation</h1>
+          <p className="text-gray-600 mb-6">
+            Describe your business and what you need in one prompt.
+          </p>
+          <div className="space-y-4">
+            <Label htmlFor="quickPrompt" className="text-base font-medium">
+              Your Prompt
+            </Label>
+            <Textarea
+              id="quickPrompt"
+              name="quickPrompt"
+              placeholder="e.g. I run a boutique cafe offering artisanal coffee and pastries. I need a modern, clean design with easy navigation."
+              value={quickPrompt}
+              onChange={(e) => setQuickPrompt(e.target.value)}
+              className="min-h-[150px] border-2 p-4 text-base border-gray-200"
+            />
+          </div>
+          <div className="mt-8 flex justify-end">
+            <Button
+              onClick={handleQuickFinish}
+              disabled={isLoading}
+              className="gap-2 bg-gradient-to-r from-green-500 to-green-700 text-white"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating your website...
+                </>
+              ) : (
+                "Create Website"
+              )}
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Advanced funnel UI (existing multi-step process)
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-purple-50">
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
@@ -905,7 +773,6 @@ export default function AICreatePage() {
                   </div>
                   <span className="text-sm font-medium">{step.title}</span>
 
-                  {/* Connector line */}
                   {index < STEPS.length - 1 && (
                     <div
                       className={cn(
@@ -925,7 +792,273 @@ export default function AICreatePage() {
               <h2 className="text-2xl font-bold mb-6">
                 {STEPS[currentStep].title}
               </h2>
-              {renderStepContent()}
+              {currentStep === 0 && (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="businessName"
+                      className="text-base font-medium"
+                    >
+                      Business Name
+                    </Label>
+                    <Input
+                      id="businessName"
+                      name="businessName"
+                      placeholder="e.g. Acme Inc., Mountain View Cafe, Bright Spark Studios"
+                      value={formData.businessName}
+                      onChange={handleInputChange}
+                      className={cn(
+                        "border-2 p-6 text-lg",
+                        errors.businessName
+                          ? "border-red-300 focus:border-red-500"
+                          : formData.businessName
+                          ? "border-green-300 focus:border-green-500"
+                          : "border-gray-200"
+                      )}
+                    />
+                    {errors.businessName && (
+                      <div className="flex items-center text-red-500 text-sm mt-1">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {errors.businessName}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-base font-medium">Industry</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {INDUSTRIES.map((industry) => (
+                        <div
+                          key={industry.id}
+                          onClick={() => handleIndustrySelect(industry.id)}
+                          className={cn(
+                            "p-3 rounded-lg border-2 cursor-pointer transition-all",
+                            formData.industry === industry.id
+                              ? `${industry.color} border-2 ring-2 ring-offset-2 ring-purple-300`
+                              : "border-gray-200 hover:border-purple-200"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{industry.name}</span>
+                            {formData.industry === industry.id && (
+                              <Check className="h-5 w-5" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {errors.industry && (
+                      <div className="flex items-center text-red-500 text-sm mt-1">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {errors.industry}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="description"
+                      className="text-base font-medium"
+                    >
+                      Business Description
+                    </Label>
+                    <Textarea
+                      id="description"
+                      name="description"
+                      placeholder="Describe your business, products, or services. What makes you unique? What do you offer to customers?"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      className={cn(
+                        "min-h-[150px] border-2 p-4 text-base",
+                        errors.description
+                          ? "border-red-300 focus:border-red-500"
+                          : formData.description.length >= 20
+                          ? "border-green-300 focus:border-green-500"
+                          : "border-gray-200"
+                      )}
+                    />
+                    {errors.description ? (
+                      <div className="flex items-center text-red-500 text-sm mt-1">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {errors.description}
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 text-sm mt-1">
+                        {formData.description.length}/20 characters minimum
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 1 && (
+                <div className="space-y-6">
+                  <p className="text-gray-600">
+                    Select the sections you want to include in your website. You
+                    can add or remove sections later.
+                  </p>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {FEATURES.map((feature) => (
+                      <div
+                        key={feature.id}
+                        onClick={() => handleFeatureToggle(feature.id)}
+                        className={cn(
+                          "p-4 rounded-lg border-2 cursor-pointer transition-all",
+                          formData.features.includes(feature.id)
+                            ? "bg-purple-50 border-purple-300 ring-2 ring-offset-2 ring-purple-300"
+                            : "border-gray-200 hover:border-purple-200"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium">{feature.name}</span>
+                          {formData.features.includes(feature.id) && (
+                            <Check className="h-5 w-5 text-purple-600" />
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {feature.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {errors.features && (
+                    <div className="flex items-center text-red-500 text-sm mt-1">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {errors.features}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <Label className="text-base font-medium">
+                      Design Style
+                    </Label>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {DESIGN_STYLES.map((style) => (
+                        <div
+                          key={style.id}
+                          onClick={() => handleDesignStyleSelect(style.id)}
+                          className={cn(
+                            "p-4 rounded-lg border-2 cursor-pointer transition-all",
+                            formData.designStyle === style.id
+                              ? "bg-purple-50 border-purple-300 ring-2 ring-offset-2 ring-purple-300"
+                              : "border-gray-200 hover:border-purple-200"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium">{style.name}</span>
+                            {formData.designStyle === style.id && (
+                              <Check className="h-5 w-5 text-purple-600" />
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {style.description}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-medium">
+                      Color Scheme
+                    </Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {COLOR_SCHEMES.map((scheme) => (
+                        <div
+                          key={scheme.id}
+                          onClick={() => handleColorSchemeSelect(scheme.id)}
+                          className={cn(
+                            "p-4 rounded-lg border-2 cursor-pointer transition-all",
+                            formData.colorScheme === scheme.id
+                              ? "border-purple-300 ring-2 ring-offset-2 ring-purple-300"
+                              : "border-gray-200 hover:border-purple-200"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="font-medium">{scheme.name}</span>
+                            {formData.colorScheme === scheme.id && (
+                              <Check className="h-5 w-5 text-purple-600" />
+                            )}
+                          </div>
+                          <div className="flex space-x-2">
+                            <div
+                              className="h-8 w-8 rounded-full"
+                              style={{ backgroundColor: scheme.primary }}
+                            />
+                            <div
+                              className="h-8 w-8 rounded-full"
+                              style={{ backgroundColor: scheme.secondary }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
+                      <h3 className="text-xl font-medium mb-2">
+                        Generating your templates
+                      </h3>
+                      <p className="text-gray-600">
+                        We're creating custom templates based on your
+                        preferences...
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-gray-600">
+                        Choose one of these templates as a starting point. You
+                        can customize it further in the editor.
+                      </p>
+                      <div className="grid md:grid-cols-3 gap-6">
+                        {templates.map((template, index) => (
+                          <div
+                            key={template.id}
+                            onClick={() => handleTemplateSelect(index)}
+                            className={cn(
+                              "rounded-lg border-2 cursor-pointer transition-all overflow-hidden",
+                              formData.selectedTemplate === index
+                                ? "border-purple-300 ring-2 ring-offset-2 ring-purple-300"
+                                : "border-gray-200 hover:border-purple-200"
+                            )}
+                          >
+                            <div className="relative">
+                              <img
+                                src={template.preview || "/placeholder.svg"}
+                                alt={template.name}
+                                className="w-full h-48 object-cover"
+                              />
+                              {formData.selectedTemplate === index && (
+                                <div className="absolute top-2 right-2 bg-purple-600 text-white p-1 rounded-full">
+                                  <Check className="h-5 w-5" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-4">
+                              <h3 className="font-medium text-lg mb-1">
+                                {template.name}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {template.description}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
