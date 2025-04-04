@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCompletion } from "@ai-sdk/react";
 
 // Predefined prompts for the landing page
 const predefinedPrompts = [
