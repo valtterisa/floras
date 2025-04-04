@@ -21,30 +21,30 @@ export default function LandingPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [quickPrompt, setQuickPrompt] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, handleSubmit, handleInputChange, input } = useCompletion({
+    api: "/api/completion",
+    // onError: (error) => {
+    //   toast({
+    //     title: "Error",
+    //     description: error.message,
+    //     variant: "destructive",
+    //   });
+    // },
+    // onResponse: (response) => {
+    //   toast({
+    //     title: "Error",
+    //     description: "Failed to generate website.",
+    //     variant: "destructive",
+    //   });
+    // },
+  });
 
-  const handleGenerateWebsite = (prompt: string) => {
-    if (!prompt) {
-      toast({
-        title: "Error",
-        description: "Please enter a prompt.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setIsLoading(true);
-    localStorage.setItem("websiteData", prompt);
-    router.push("/website/editor");
-    toast({
-      title: "Generating website...",
-      description: "Your website is being generated. Please wait.",
-      duration: 5000,
-    });
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-  };
+  // if (isLoading) {
+  //   toast({
+  //     title: "Generating website...",
+  //     description: "Your website is being generated. Please wait.",
+  //   });
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 flex flex-col">
@@ -67,21 +67,20 @@ export default function LandingPage() {
             website templates for you.
           </p>
 
-          <div className="bg-white rounded-lg shadow p-6 mb-6 text-left">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white rounded-lg shadow p-6 mb-6 text-left"
+          >
             <Textarea
-              id="quickPrompt"
-              name="quickPrompt"
-              placeholder="e.g. I run a boutique cafe offering artisanal coffee and pastries. I need a modern, clean design with easy navigation."
-              value={quickPrompt}
-              onChange={(e) => setQuickPrompt(e.target.value)}
+              name="prompt"
+              value={input}
+              onChange={handleInputChange}
+              id="input"
+              placeholder="I run a boutique cafe offering artisanal coffee and pastries. I need a modern, clean design with easy navigation."
               className="min-h-[150px] border-2 p-4 text-base border-gray-200"
             />
             <div className="flex justify-center mt-2">
-              <Button
-                onClick={() => handleGenerateWebsite(quickPrompt)}
-                disabled={isLoading}
-                className="gap-2 text-white"
-              >
+              <Button disabled={isLoading} className="gap-2 text-white">
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -92,14 +91,14 @@ export default function LandingPage() {
                 )}
               </Button>
             </div>
-          </div>
+          </form>
 
           <div className="mb-6 flex flex-wrap gap-3 justify-center">
             {predefinedPrompts.map((prompt, idx) => (
               <Button
                 key={idx}
                 variant="outline"
-                onClick={() => handleGenerateWebsite(prompt)}
+                // onClick={() => handleGenerateWebsite(prompt)}
                 className="text-sm"
               >
                 {prompt}

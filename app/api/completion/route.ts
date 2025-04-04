@@ -3,12 +3,12 @@ import { openai } from "@ai-sdk/openai";
 import { systemPrompt } from "@/lib/prompts/system";
 
 export async function POST(req: Request) {
-  const { prompt }: { prompt: string } = await req.json();
+  const { prompt } = await req.json();
 
   const { text } = await generateText({
-    model: openai("gpt-4"),
+    model: openai("o3-mini"),
     system: systemPrompt,
-    prompt: "",
+    prompt: prompt,
   });
 
   return Response.json({ text });
