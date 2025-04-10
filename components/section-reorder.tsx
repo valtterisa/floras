@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { GripVertical, Eye, EyeOff, Plus, Trash2, Lock } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { GripVertical, Eye, EyeOff, Plus, Trash2, Lock } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
@@ -21,45 +21,67 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export interface Section {
-  id: string
-  name: string
-  visible: boolean
-  type?: string
-  requiresPro?: boolean
+  id: string;
+  name: string;
+  visible: boolean;
+  type?: string;
+  requiresPro?: boolean;
 }
 
 interface SectionReorderProps {
-  onReorder: (sections: Section[]) => void
-  currentPlan?: "starter" | "pro" | "enterprise"
-  onUpgradeClick?: () => void
+  onReorder: (sections: Section[]) => void;
+  currentPlan?: "starter" | "pro" | "enterprise";
+  onUpgradeClick?: () => void;
 }
 
-export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeClick }: SectionReorderProps) {
+export function SectionReorder({
+  onReorder,
+  currentPlan = "starter",
+  onUpgradeClick,
+}: SectionReorderProps) {
   // Default sections that would be in the website
   const [sections, setSections] = useState<Section[]>([
     { id: "hero", name: "Hero Section", visible: true, type: "hero" },
     { id: "about", name: "About Us", visible: true, type: "about" },
-    { id: "services", name: "Services/Products", visible: true, type: "services" },
+    {
+      id: "services",
+      name: "Services/Products",
+      visible: true,
+      type: "services",
+    },
     { id: "gallery", name: "Gallery", visible: true, type: "gallery" },
-    { id: "testimonials", name: "Testimonials", visible: true, type: "testimonials" },
+    {
+      id: "testimonials",
+      name: "Testimonials",
+      visible: true,
+      type: "testimonials",
+    },
     { id: "contact", name: "Contact Form", visible: true, type: "contact" },
-  ])
+  ]);
 
-  const [draggedItem, setDraggedItem] = useState<number | null>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [showAddDialog, setShowAddDialog] = useState(false)
-  const [newSectionName, setNewSectionName] = useState("")
-  const [selectedSectionType, setSelectedSectionType] = useState<string>("custom")
-  const [sectionToDelete, setSectionToDelete] = useState<number | null>(null)
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newSectionName, setNewSectionName] = useState("");
+  const [selectedSectionType, setSelectedSectionType] =
+    useState<string>("custom");
+  const [sectionToDelete, setSectionToDelete] = useState<number | null>(null);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const predefinedSections = [
     {
@@ -68,9 +90,24 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
       description: "Create a custom section with your own content",
       requiresPro: false,
     },
-    { id: "team", name: "Team Members", description: "Showcase your team with photos and bios", requiresPro: false },
-    { id: "faq", name: "FAQ", description: "Frequently asked questions in an accordion format", requiresPro: false },
-    { id: "pricing", name: "Pricing Table", description: "Display your pricing plans", requiresPro: false },
+    {
+      id: "team",
+      name: "Team Members",
+      description: "Showcase your team with photos and bios",
+      requiresPro: false,
+    },
+    {
+      id: "faq",
+      name: "FAQ",
+      description: "Frequently asked questions in an accordion format",
+      requiresPro: false,
+    },
+    {
+      id: "pricing",
+      name: "Pricing Table",
+      description: "Display your pricing plans",
+      requiresPro: false,
+    },
     {
       id: "advanced-gallery",
       name: "Advanced Gallery/Slideshow",
@@ -83,57 +120,72 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
       description: "Multi-field contact form with validation",
       requiresPro: true,
     },
-    { id: "newsletter", name: "Newsletter Signup", description: "Email subscription form", requiresPro: true },
-    { id: "map", name: "Location Map", description: "Interactive map showing your location", requiresPro: true },
-  ]
+    {
+      id: "newsletter",
+      name: "Newsletter Signup",
+      description: "Email subscription form",
+      requiresPro: true,
+    },
+    {
+      id: "map",
+      name: "Location Map",
+      description: "Interactive map showing your location",
+      requiresPro: true,
+    },
+  ];
 
   const handleDragStart = (index: number) => {
-    setDraggedItem(index)
-  }
+    setDraggedItem(index);
+  };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    if (draggedItem === null) return
+    e.preventDefault();
+    if (draggedItem === null) return;
 
-    const newSections = [...sections]
-    const draggedSection = newSections[draggedItem]
+    const newSections = [...sections];
+    const draggedSection = newSections[draggedItem];
 
     // Remove the dragged item
-    newSections.splice(draggedItem, 1)
+    newSections.splice(draggedItem, 1);
     // Insert it at the new position
-    newSections.splice(index, 0, draggedSection)
+    newSections.splice(index, 0, draggedSection);
 
-    setSections(newSections)
-    setDraggedItem(index)
-    onReorder(newSections) // Update UI immediately during drag
-  }
+    setSections(newSections);
+    setDraggedItem(index);
+    onReorder(newSections); // Update UI immediately during drag
+  };
 
   const handleDragEnd = () => {
-    setDraggedItem(null)
-    onReorder(sections) // Ensure final state is passed to parent
-  }
+    setDraggedItem(null);
+    onReorder(sections); // Ensure final state is passed to parent
+  };
 
   const toggleSectionVisibility = (index: number) => {
-    const newSections = [...sections]
-    newSections[index].visible = !newSections[index].visible
-    setSections(newSections)
-    onReorder(newSections)
-  }
+    const newSections = [...sections];
+    newSections[index].visible = !newSections[index].visible;
+    setSections(newSections);
+    onReorder(newSections);
+  };
 
   const handleAddSection = () => {
-    const selectedPredefined = predefinedSections.find((s) => s.id === selectedSectionType)
+    const selectedPredefined = predefinedSections.find(
+      (s) => s.id === selectedSectionType
+    );
 
     // Check if this is a pro feature
     if (selectedPredefined?.requiresPro && currentPlan === "starter") {
-      setShowUpgradeDialog(true)
-      setShowAddDialog(false)
-      return
+      setShowUpgradeDialog(true);
+      setShowAddDialog(false);
+      return;
     }
 
     // For custom sections, require a name
-    if (selectedSectionType === "custom" && !newSectionName.trim()) return
+    if (selectedSectionType === "custom" && !newSectionName.trim()) return;
 
-    const sectionName = selectedSectionType === "custom" ? newSectionName : selectedPredefined?.name || "New Section"
+    const sectionName =
+      selectedSectionType === "custom"
+        ? newSectionName
+        : selectedPredefined?.name || "New Section";
 
     const newSection: Section = {
       id: `${selectedSectionType}-${Date.now()}`,
@@ -141,36 +193,36 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
       visible: true,
       type: selectedSectionType,
       requiresPro: selectedPredefined?.requiresPro,
-    }
+    };
 
-    const newSections = [...sections, newSection]
-    setSections(newSections)
-    onReorder(newSections)
-    setNewSectionName("")
-    setSelectedSectionType("custom")
-    setShowAddDialog(false)
-  }
+    const newSections = [...sections, newSection];
+    setSections(newSections);
+    onReorder(newSections);
+    setNewSectionName("");
+    setSelectedSectionType("custom");
+    setShowAddDialog(false);
+  };
 
   const handleDeleteSection = (index: number) => {
-    setSectionToDelete(index)
-  }
+    setSectionToDelete(index);
+  };
 
   const confirmDeleteSection = () => {
-    if (sectionToDelete === null) return
+    if (sectionToDelete === null) return;
 
-    const newSections = [...sections]
-    newSections.splice(sectionToDelete, 1)
-    setSections(newSections)
-    onReorder(newSections)
-    setSectionToDelete(null)
-  }
+    const newSections = [...sections];
+    newSections.splice(sectionToDelete, 1);
+    setSections(newSections);
+    onReorder(newSections);
+    setSectionToDelete(null);
+  };
 
   const handleUpgrade = () => {
-    setShowUpgradeDialog(false)
+    setShowUpgradeDialog(false);
     if (onUpgradeClick) {
-      onUpgradeClick()
+      onUpgradeClick();
     }
-  }
+  };
 
   return (
     <>
@@ -182,10 +234,12 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
             <span className="sm:hidden">Arrange</span>
           </Button>
         </SheetTrigger>
-        <SheetContent className="w-[90%] sm:max-w-md">
+        <SheetContent className="w-[90%] sm:max-w-md" title="Reorder Sections">
           <SheetHeader>
             <SheetTitle>Arrange Website Sections</SheetTitle>
-            <SheetDescription>Drag and drop sections to reorder them or toggle their visibility.</SheetDescription>
+            <SheetDescription>
+              Drag and drop sections to reorder them or toggle their visibility.
+            </SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-2 max-h-[60vh] overflow-y-auto">
             {sections.map((section, index) => (
@@ -202,9 +256,16 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
                 <div className="flex items-center gap-3">
                   <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab touch-manipulation" />
                   <div>
-                    <span className={section.visible ? "" : "text-muted-foreground"}>{section.name}</span>
+                    <span
+                      className={section.visible ? "" : "text-muted-foreground"}
+                    >
+                      {section.name}
+                    </span>
                     {section.requiresPro && (
-                      <Badge variant="outline" className="ml-2 text-xs bg-primary/10 text-primary">
+                      <Badge
+                        variant="outline"
+                        className="ml-2 text-xs bg-primary/10 text-primary"
+                      >
                         Pro
                       </Badge>
                     )}
@@ -229,7 +290,12 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
                       </>
                     )}
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteSection(index)} className="h-8">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteSection(index)}
+                    className="h-8"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -237,7 +303,10 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
             ))}
           </div>
           <SheetFooter className="mt-6">
-            <Button onClick={() => setShowAddDialog(true)} className="w-full sm:w-auto">
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              className="w-full sm:w-auto"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add New Section
             </Button>
@@ -250,7 +319,9 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Section</DialogTitle>
-            <DialogDescription>Choose a section type or create a custom section.</DialogDescription>
+            <DialogDescription>
+              Choose a section type or create a custom section.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <RadioGroup
@@ -260,7 +331,11 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
             >
               {predefinedSections.map((section) => (
                 <div key={section.id} className="relative">
-                  <RadioGroupItem value={section.id} id={section.id} className="peer sr-only" />
+                  <RadioGroupItem
+                    value={section.id}
+                    id={section.id}
+                    className="peer sr-only"
+                  />
                   <Label
                     htmlFor={section.id}
                     className="flex flex-col items-start justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
@@ -268,12 +343,17 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
                     <div className="flex justify-between w-full">
                       <span className="font-medium">{section.name}</span>
                       {section.requiresPro && (
-                        <Badge variant="outline" className="text-xs bg-primary/10 text-primary">
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-primary/10 text-primary"
+                        >
                           Pro
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground mt-1">{section.description}</span>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {section.description}
+                    </span>
                     {section.requiresPro && currentPlan === "starter" && (
                       <Lock className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
                     )}
@@ -304,12 +384,16 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={sectionToDelete !== null} onOpenChange={(open) => !open && setSectionToDelete(null)}>
+      <Dialog
+        open={sectionToDelete !== null}
+        onOpenChange={(open) => !open && setSectionToDelete(null)}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Delete Section</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this section? This action cannot be undone.
+              Are you sure you want to delete this section? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -328,13 +412,17 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Upgrade to Pro</DialogTitle>
-            <DialogDescription>This feature is only available on the Pro and Enterprise plans.</DialogDescription>
+            <DialogDescription>
+              This feature is only available on the Pro and Enterprise plans.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Card className="border-primary">
               <CardHeader>
                 <CardTitle>Pro Plan Features</CardTitle>
-                <CardDescription>Unlock premium sections and features</CardDescription>
+                <CardDescription>
+                  Unlock premium sections and features
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center">
@@ -364,6 +452,5 @@ export function SectionReorder({ onReorder, currentPlan = "starter", onUpgradeCl
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
-

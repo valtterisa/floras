@@ -1,13 +1,23 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import Link from "next/link"
-import { Globe, CreditCard, Settings, Users, LogOut, LayoutDashboard, LinkIcon, Mail, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import {
+  Globe,
+  CreditCard,
+  Settings,
+  Users,
+  LogOut,
+  LayoutDashboard,
+  LinkIcon,
+  Mail,
+  Menu,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   SidebarProvider,
   Sidebar,
@@ -21,42 +31,46 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated
-    const checkAuth = localStorage.getItem("isAuthenticated") === "true"
-    setIsAuthenticated(checkAuth)
+    const checkAuth = localStorage.getItem("isAuthenticated") === "true";
+    setIsAuthenticated(checkAuth);
 
     if (!checkAuth) {
-      router.push("/")
-      return
+      router.push("/");
+      return;
     }
 
     // Check if mobile
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
+      setIsMobile(window.innerWidth < 768);
+    };
 
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [router])
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated")
-    router.push("/")
-  }
+    localStorage.removeItem("isAuthenticated");
+    router.push("/");
+  };
 
   if (!isAuthenticated) {
-    return <div className="container py-10 px-4 md:px-6">Redirecting...</div>
+    return <div className="container py-10 px-4 md:px-6">Redirecting...</div>;
   }
 
   return (
@@ -76,7 +90,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === "/dashboard"}
+                    >
                       <Link href="/dashboard">
                         <LayoutDashboard className="h-5 w-5 mr-3" />
                         Dashboard
@@ -84,7 +101,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard/websites"}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === "/dashboard/websites"}
+                    >
                       <Link href="/dashboard/websites">
                         <Globe className="h-5 w-5 mr-3" />
                         My Websites
@@ -92,7 +112,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard/domains"}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === "/dashboard/domains"}
+                    >
                       <Link href="/dashboard/domains">
                         <LinkIcon className="h-5 w-5 mr-3" />
                         Domains
@@ -100,7 +123,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard/integrations"}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === "/dashboard/integrations"}
+                    >
                       <Link href="/dashboard/integrations">
                         <Mail className="h-5 w-5 mr-3" />
                         Integrations
@@ -118,7 +144,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard/billing"}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === "/dashboard/billing"}
+                    >
                       <Link href="/dashboard/billing">
                         <CreditCard className="h-5 w-5 mr-3" />
                         Billing
@@ -126,7 +155,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard/team"}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === "/dashboard/team"}
+                    >
                       <Link href="/dashboard/team">
                         <Users className="h-5 w-5 mr-3" />
                         Team
@@ -134,7 +166,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/dashboard/settings"}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === "/dashboard/settings"}
+                    >
                       <Link href="/dashboard/settings">
                         <Settings className="h-5 w-5 mr-3" />
                         Settings
@@ -171,7 +206,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[250px] sm:w-[300px]">
+                <SheetContent
+                  side="left"
+                  className="w-[250px] sm:w-[300px]"
+                  title="Dashboard Navigation"
+                >
                   <div className="flex flex-col h-full">
                     <div className="flex items-center gap-2 py-4 border-b">
                       <Globe className="h-5 w-5" />
@@ -179,36 +218,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                     <div className="flex-1 py-4">
                       <div className="space-y-1">
-                        <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Button
-                            variant={pathname === "/dashboard" ? "default" : "ghost"}
+                            variant={
+                              pathname === "/dashboard" ? "default" : "ghost"
+                            }
                             className="w-full justify-start"
                           >
                             <LayoutDashboard className="h-5 w-5 mr-3" />
                             Dashboard
                           </Button>
                         </Link>
-                        <Link href="/dashboard/websites" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          href="/dashboard/websites"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Button
-                            variant={pathname === "/dashboard/websites" ? "default" : "ghost"}
+                            variant={
+                              pathname === "/dashboard/websites"
+                                ? "default"
+                                : "ghost"
+                            }
                             className="w-full justify-start"
                           >
                             <Globe className="h-5 w-5 mr-3" />
                             My Websites
                           </Button>
                         </Link>
-                        <Link href="/dashboard/domains" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          href="/dashboard/domains"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Button
-                            variant={pathname === "/dashboard/domains" ? "default" : "ghost"}
+                            variant={
+                              pathname === "/dashboard/domains"
+                                ? "default"
+                                : "ghost"
+                            }
                             className="w-full justify-start"
                           >
                             <LinkIcon className="h-5 w-5 mr-3" />
                             Domains
                           </Button>
                         </Link>
-                        <Link href="/dashboard/integrations" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          href="/dashboard/integrations"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Button
-                            variant={pathname === "/dashboard/integrations" ? "default" : "ghost"}
+                            variant={
+                              pathname === "/dashboard/integrations"
+                                ? "default"
+                                : "ghost"
+                            }
                             className="w-full justify-start"
                           >
                             <Mail className="h-5 w-5 mr-3" />
@@ -220,27 +285,48 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <div className="h-px bg-border my-4" />
 
                       <div className="space-y-1">
-                        <Link href="/dashboard/billing" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          href="/dashboard/billing"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Button
-                            variant={pathname === "/dashboard/billing" ? "default" : "ghost"}
+                            variant={
+                              pathname === "/dashboard/billing"
+                                ? "default"
+                                : "ghost"
+                            }
                             className="w-full justify-start"
                           >
                             <CreditCard className="h-5 w-5 mr-3" />
                             Billing
                           </Button>
                         </Link>
-                        <Link href="/dashboard/team" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          href="/dashboard/team"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Button
-                            variant={pathname === "/dashboard/team" ? "default" : "ghost"}
+                            variant={
+                              pathname === "/dashboard/team"
+                                ? "default"
+                                : "ghost"
+                            }
                             className="w-full justify-start"
                           >
                             <Users className="h-5 w-5 mr-3" />
                             Team
                           </Button>
                         </Link>
-                        <Link href="/dashboard/settings" onClick={() => setMobileMenuOpen(false)}>
+                        <Link
+                          href="/dashboard/settings"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
                           <Button
-                            variant={pathname === "/dashboard/settings" ? "default" : "ghost"}
+                            variant={
+                              pathname === "/dashboard/settings"
+                                ? "default"
+                                : "ghost"
+                            }
                             className="w-full justify-start"
                           >
                             <Settings className="h-5 w-5 mr-3" />
@@ -250,7 +336,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </div>
                     </div>
                     <div className="border-t py-4">
-                      <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={handleLogout}
+                      >
                         <LogOut className="h-5 w-5 mr-3" />
                         Logout
                       </Button>
@@ -266,6 +356,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </div>
     </SidebarProvider>
-  )
+  );
 }
-

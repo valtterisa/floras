@@ -50,6 +50,9 @@ import {
   BoxIcon as ButtonIcon,
   WandSparkles,
   Rocket,
+  UndoIcon,
+  RedoIcon,
+  EyeOff,
 } from "lucide-react";
 
 import type { ComponentType } from "@/components/component-library";
@@ -66,6 +69,7 @@ import {
 import { WebsitePreview } from "./website-preview";
 import { FileTracker } from "@/lib/file-tracker";
 import { VirtualFileSystem } from "@/lib/virtual-fs";
+import { ViewportControls } from "./viewport-controls";
 
 type ViewportSize = "desktop" | "tablet" | "mobile";
 type EditModeType = "text" | "color" | "image" | "hover-color" | null;
@@ -155,6 +159,9 @@ export function WebsiteEditor() {
   const [isEditing, setIsEditing] = useState(false);
   const [elementText, setElementText] = useState("");
   const [currentFile, setCurrentFile] = useState<string>("/index.html");
+  const [isPreviewMode, setIsPreviewMode] = useState<
+    "desktop" | "tablet" | "mobile" | false
+  >(false);
   const vfs = VirtualFileSystem.getInstance();
   const fileTracker = FileTracker.getInstance();
 
@@ -715,7 +722,7 @@ export function WebsiteEditor() {
   };
 
   // Undo last action
-  const undo = () => {
+  const handleUndo = () => {
     if (historyIndex > 0) {
       setHistoryIndex(historyIndex - 1);
       setComponents([...history[historyIndex - 1]]);
@@ -723,7 +730,7 @@ export function WebsiteEditor() {
   };
 
   // Redo last undone action
-  const redo = () => {
+  const handleRedo = () => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex(historyIndex + 1);
       setComponents([...history[historyIndex + 1]]);
@@ -1057,7 +1064,11 @@ export function WebsiteEditor() {
 
     return isMobile ? (
       <Sheet open={leftSidebarOpen} onOpenChange={setLeftSidebarOpen}>
-        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+        <SheetContent
+          side="left"
+          className="w-[300px] sm:w-[400px]"
+          title="Website Editor"
+        >
           {content}
         </SheetContent>
       </Sheet>
@@ -1618,6 +1629,21 @@ export function WebsiteEditor() {
     }
   };
 
+  // Add toggle preview mode function
+  const togglePreviewMode = () => {
+    if (isPreviewMode) {
+      setIsPreviewMode(false);
+    } else {
+      setIsPreviewMode("desktop");
+    }
+    setSelectedElement(null);
+    setEditMode(null);
+  };
+
+  const handlePreviewSizeChange = (size: "desktop" | "tablet" | "mobile") => {
+    setIsPreviewMode(size);
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Toolbar */}
@@ -1636,8 +1662,8 @@ export function WebsiteEditor() {
             <Button
               variant="outline"
               size="sm"
-              onClick={undo}
-              disabled={historyIndex <= 0}
+              onClick={handleUndo}
+              disabled={historyIndex <= 0 || !!isPreviewMode}
             >
               <Undo className="h-4 w-4 mr-1" />
               Undo
@@ -1645,8 +1671,8 @@ export function WebsiteEditor() {
             <Button
               variant="outline"
               size="sm"
-              onClick={redo}
-              disabled={historyIndex >= history.length - 1}
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1 || !!isPreviewMode}
             >
               <Redo className="h-4 w-4 mr-1" />
               Redo
@@ -1661,6 +1687,7 @@ export function WebsiteEditor() {
             size="icon"
             onClick={() => setViewportSize("desktop")}
             title="Desktop view"
+            disabled={!!isPreviewMode}
           >
             <Monitor className="h-4 w-4" />
           </Button>
@@ -1669,6 +1696,7 @@ export function WebsiteEditor() {
             size="icon"
             onClick={() => setViewportSize("tablet")}
             title="Tablet view"
+            disabled={!!isPreviewMode}
           >
             <Tablet className="h-4 w-4" />
           </Button>
@@ -1677,6 +1705,7 @@ export function WebsiteEditor() {
             size="icon"
             onClick={() => setViewportSize("mobile")}
             title="Mobile view"
+            disabled={!!isPreviewMode}
           >
             <Smartphone className="h-4 w-4" />
           </Button>
@@ -1684,20 +1713,36 @@ export function WebsiteEditor() {
 
         <div className="flex items-center space-x-2">
           <div className="hidden sm:flex space-x-2">
-            <Button variant="outline" size="sm">
-              <Eye className="h-4 w-4 mr-1" />
-              Preview
+            <Button
+              onClick={togglePreviewMode}
+              className={`px-3 py-1 rounded-md text-sm font-medium ${
+                isPreviewMode
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-gray-700 text-gray-200 hover:bg-gray-600"
+              }`}
+            >
+              {isPreviewMode ? (
+                <>
+                  <EyeOff className="h-4 w-4 mr-1" />
+                  Exit Preview
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-1" />
+                  Preview
+                </>
+              )}
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled={!!isPreviewMode}>
               <Code className="h-4 w-4 mr-1" />
               Export
             </Button>
           </div>
-          <Button size="sm" onClick={saveProject}>
+          <Button size="sm" onClick={saveProject} disabled={!!isPreviewMode}>
             <Save className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Save</span>
           </Button>
-          <Button size="sm" onClick={saveProject}>
+          <Button size="sm" onClick={saveProject} disabled={!!isPreviewMode}>
             <Rocket className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Deploy</span>
           </Button>
@@ -1717,6 +1762,7 @@ export function WebsiteEditor() {
               initialContent={
                 components.length > 0 ? components[0].component : undefined
               }
+              onPreviewSizeChange={handlePreviewSizeChange}
             />
           </div>
         </div>
@@ -1731,23 +1777,27 @@ export function WebsiteEditor() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={undo}
-            disabled={historyIndex <= 0}
+            onClick={handleUndo}
+            disabled={historyIndex <= 0 || !!isPreviewMode}
           >
             <Undo className="h-5 w-5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            onClick={redo}
-            disabled={historyIndex >= history.length - 1}
+            onClick={handleRedo}
+            disabled={historyIndex >= history.length - 1 || !!isPreviewMode}
           >
             <Redo className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
-            <Eye className="h-5 w-5" />
+          <Button variant="ghost" size="icon" onClick={togglePreviewMode}>
+            {isPreviewMode ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" disabled={!!isPreviewMode}>
             <Code className="h-5 w-5" />
           </Button>
         </div>

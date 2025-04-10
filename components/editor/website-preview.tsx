@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff, Monitor, Tablet, Smartphone, X } from "lucide-react";
 
 interface WebsitePreviewProps {
   onContentChange: (content: string) => void;
   initialContent?: string;
+  onPreviewSizeChange?: (size: "desktop" | "tablet" | "mobile") => void;
 }
 
 interface EditOptions {
@@ -379,8 +382,10 @@ const hslToHex = (h: number, s: number, l: number): string => {
 export function WebsitePreview({
   onContentChange,
   initialContent,
+  onPreviewSizeChange,
 }: WebsitePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(
     null
   );
@@ -395,6 +400,20 @@ export function WebsitePreview({
   const [activeColorTab, setActiveColorTab] = useState<"basic" | "custom">(
     "basic"
   );
+  const [isPreviewMode, setIsPreviewMode] = useState<
+    "desktop" | "tablet" | "mobile" | false
+  >(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewSize, setPreviewSize] = useState<
+    "desktop" | "tablet" | "mobile"
+  >("desktop");
+
+  useEffect(() => {
+    if (onPreviewSizeChange) {
+      setShowPreviewModal(true);
+      setIsPreviewMode(previewSize);
+    }
+  }, [onPreviewSizeChange, previewSize]);
 
   const handleElementClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -445,204 +464,7 @@ export function WebsitePreview({
     value: string | boolean
   ) => {
     if (selectedElement) {
-      setEditOptions((prev) => ({ ...prev, [option]: value }));
-
-      // Apply changes immediately
-      switch (option) {
-        case "textColor":
-          selectedElement.style.color = value as string;
-          break;
-        case "backgroundColor":
-          selectedElement.style.backgroundColor = value as string;
-          break;
-        case "fontSize":
-          selectedElement.style.fontSize = value as string;
-          break;
-        case "fontWeight":
-          selectedElement.style.fontWeight = value as string;
-          break;
-        case "textAlign":
-          selectedElement.style.textAlign = value as string;
-          break;
-        case "content":
-          selectedElement.textContent = value as string;
-          break;
-        case "customClasses":
-          selectedElement.className = value as string;
-          break;
-        case "marginX":
-          const marginX = parseInt(value as string);
-          if (!isNaN(marginX)) {
-            // Remove existing margin classes
-            selectedElement.classList.remove(
-              "mx-0",
-              "mx-1",
-              "mx-2",
-              "mx-3",
-              "mx-4",
-              "mx-5",
-              "mx-6",
-              "mx-7",
-              "mx-8",
-              "mx-9",
-              "mx-10",
-              "ml-0",
-              "ml-1",
-              "ml-2",
-              "ml-3",
-              "ml-4",
-              "ml-5",
-              "ml-6",
-              "ml-7",
-              "ml-8",
-              "ml-9",
-              "ml-10",
-              "mr-0",
-              "mr-1",
-              "mr-2",
-              "mr-3",
-              "mr-4",
-              "mr-5",
-              "mr-6",
-              "mr-7",
-              "mr-8",
-              "mr-9",
-              "mr-10"
-            );
-            // Add the new margin class
-            selectedElement.classList.add(`mx-${marginX}`);
-          }
-          break;
-        case "marginY":
-          const marginY = parseInt(value as string);
-          if (!isNaN(marginY)) {
-            // Remove existing margin classes
-            selectedElement.classList.remove(
-              "my-0",
-              "my-1",
-              "my-2",
-              "my-3",
-              "my-4",
-              "my-5",
-              "my-6",
-              "my-7",
-              "my-8",
-              "my-9",
-              "my-10",
-              "mt-0",
-              "mt-1",
-              "mt-2",
-              "mt-3",
-              "mt-4",
-              "mt-5",
-              "mt-6",
-              "mt-7",
-              "mt-8",
-              "mt-9",
-              "mt-10",
-              "mb-0",
-              "mb-1",
-              "mb-2",
-              "mb-3",
-              "mb-4",
-              "mb-5",
-              "mb-6",
-              "mb-7",
-              "mb-8",
-              "mb-9",
-              "mb-10"
-            );
-            // Add the new margin class
-            selectedElement.classList.add(`my-${marginY}`);
-          }
-          break;
-        case "paddingX":
-          const paddingX = parseInt(value as string);
-          if (!isNaN(paddingX)) {
-            // Remove existing padding classes
-            selectedElement.classList.remove(
-              "px-0",
-              "px-1",
-              "px-2",
-              "px-3",
-              "px-4",
-              "px-5",
-              "px-6",
-              "px-7",
-              "px-8",
-              "px-9",
-              "px-10",
-              "pl-0",
-              "pl-1",
-              "pl-2",
-              "pl-3",
-              "pl-4",
-              "pl-5",
-              "pl-6",
-              "pl-7",
-              "pl-8",
-              "pl-9",
-              "pl-10",
-              "pr-0",
-              "pr-1",
-              "pr-2",
-              "pr-3",
-              "pr-4",
-              "pr-5",
-              "pr-6",
-              "pr-7",
-              "pr-8",
-              "pr-9",
-              "pr-10"
-            );
-            // Add the new padding class
-            selectedElement.classList.add(`px-${paddingX}`);
-          }
-          break;
-        case "paddingY":
-          const paddingY = parseInt(value as string);
-          if (!isNaN(paddingY)) {
-            // Remove existing padding classes
-            selectedElement.classList.remove(
-              "py-0",
-              "py-1",
-              "py-2",
-              "py-3",
-              "py-4",
-              "py-5",
-              "py-6",
-              "py-7",
-              "py-8",
-              "py-9",
-              "py-10",
-              "pt-0",
-              "pt-1",
-              "pt-2",
-              "pt-3",
-              "pt-4",
-              "pt-5",
-              "pt-6",
-              "pt-7",
-              "pt-8",
-              "pt-9",
-              "pt-10",
-              "pb-0",
-              "pb-1",
-              "pb-2",
-              "pb-3",
-              "pb-4",
-              "pb-5",
-              "pb-6",
-              "pb-7",
-              "pb-8",
-              "pb-9",
-              "pb-10"
-            );
-            // Add the new padding class
-            selectedElement.classList.add(`py-${paddingY}`);
-          }
-          break;
-      }
+      setEditOptions((prev: EditOptions) => ({ ...prev, [option]: value }));
       setUnsavedChanges(true);
     }
   };
@@ -756,274 +578,573 @@ export function WebsitePreview({
     return classes.join(" ");
   };
 
-  useEffect(() => {
-    if (iframeRef.current) {
-      const iframe = iframeRef.current;
-      const doc = iframe.contentDocument;
+  const handleIframeLoad = () => {
+    if (!iframeRef.current) return;
 
-      if (doc) {
-        doc.open();
-        doc.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <script src="https://cdn.tailwindcss.com"></script>
-              <style>
-                [contenteditable] {
-                  position: relative;
-                  min-height: 1em;
-                  min-width: 1em;
-                }
-                [contenteditable]:hover {
-                  outline: 2px dashed #3b82f6;
-                  outline-offset: 2px;
-                }
-                [contenteditable]:focus {
-                  outline: 2px solid #3b82f6;
-                  outline-offset: 2px;
-                }
-              </style>
-            </head>
-            <body class="bg-white">
-              <div class="min-h-screen">
-                <header class="bg-white shadow-sm">
-                  <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
-                    <div class="text-2xl font-bold text-blue-600" contenteditable>Logo</div>
-                    <div class="hidden md:flex space-x-8">
-                      <a href="#" class="text-gray-600 hover:text-blue-600" contenteditable>Home</a>
-                      <a href="#" class="text-gray-600 hover:text-blue-600" contenteditable>About</a>
-                      <a href="#" class="text-gray-600 hover:text-blue-600" contenteditable>Services</a>
-                      <a href="#" class="text-gray-600 hover:text-blue-600" contenteditable>Contact</a>
-                    </div>
-                  </nav>
-                </header>
+    const iframe = iframeRef.current;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
 
-                <main>
-                  <section class="bg-gradient-to-r from-blue-500 to-blue-700 text-white py-20">
-                    <div class="container mx-auto px-4 text-center">
-                      <h1 class="text-4xl md:text-6xl font-bold mb-6" contenteditable>Welcome to Our Website</h1>
-                      <p class="text-xl mb-8 max-w-2xl mx-auto" contenteditable>We create beautiful and functional websites that help businesses grow online.</p>
-                      <button class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors" contenteditable>Get Started</button>
-                    </div>
-                  </section>
+    // Write the initial HTML content
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            [contenteditable] {
+              position: relative;
+              min-height: 1em;
+              min-width: 1em;
+            }
+            ${
+              !isPreviewMode
+                ? `
+              [contenteditable]:hover {
+                outline: 2px dashed #3b82f6;
+                outline-offset: 2px;
+              }
+              [contenteditable]:focus {
+                outline: 2px solid #3b82f6;
+                outline-offset: 2px;
+              }
+            `
+                : ""
+            }
+          </style>
+        </head>
+        <body class="bg-white">
+          <div class="min-h-screen">
+            <header class="bg-white shadow-sm">
+              <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="text-2xl font-bold text-blue-600" ${
+                  !isPreviewMode ? "contenteditable" : ""
+                }>Logo</div>
+                <div class="hidden md:flex space-x-8">
+                  <a href="#" class="text-gray-600 hover:text-blue-600" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>Home</a>
+                  <a href="#" class="text-gray-600 hover:text-blue-600" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>About</a>
+                  <a href="#" class="text-gray-600 hover:text-blue-600" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>Services</a>
+                  <a href="#" class="text-gray-600 hover:text-blue-600" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>Contact</a>
+                </div>
+              </nav>
+            </header>
 
-                  <section class="py-16 bg-gray-50">
-                    <div class="container mx-auto px-4">
-                      <h2 class="text-3xl font-bold text-center mb-12" contenteditable>Our Services</h2>
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div class="bg-white p-6 rounded-lg shadow-sm">
-                          <h3 class="text-xl font-semibold mb-2" contenteditable>Web Design</h3>
-                          <p class="text-gray-600" contenteditable>Create stunning websites that convert visitors into customers.</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-sm">
-                          <h3 class="text-xl font-semibold mb-2" contenteditable>Digital Marketing</h3>
-                          <p class="text-gray-600" contenteditable>Reach your target audience and grow your business online.</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-sm">
-                          <h3 class="text-xl font-semibold mb-2" contenteditable>SEO Optimization</h3>
-                          <p class="text-gray-600" contenteditable>Improve your search rankings and get more organic traffic.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </main>
+            <main>
+              <section class="bg-gradient-to-r from-blue-500 to-blue-700 text-white py-20">
+                <div class="container mx-auto px-4 text-center">
+                  <h1 class="text-4xl md:text-6xl font-bold mb-6" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>Welcome to Our Website</h1>
+                  <p class="text-xl mb-8 max-w-2xl mx-auto" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>We create beautiful and functional websites that help businesses grow online.</p>
+                  <button class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>Get Started</button>
+                </div>
+              </section>
 
-                <footer class="bg-gray-900 text-white py-12">
-                  <div class="container mx-auto px-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                      <div>
-                        <h3 class="text-xl font-bold mb-4" contenteditable>About Us</h3>
-                        <p class="text-gray-400" contenteditable>We are a team of passionate developers and designers creating beautiful websites.</p>
-                      </div>
-                      <div>
-                        <h3 class="text-xl font-bold mb-4" contenteditable>Contact</h3>
-                        <ul class="space-y-2 text-gray-400">
-                          <li contenteditable>123 Business Street</li>
-                          <li contenteditable>City, State 12345</li>
-                          <li contenteditable>info@example.com</li>
-                          <li contenteditable>(123) 456-7890</li>
-                        </ul>
-                      </div>
+              <section class="py-16 bg-gray-50">
+                <div class="container mx-auto px-4">
+                  <h2 class="text-3xl font-bold text-center mb-12" ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>Our Services</h2>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                      <h3 class="text-xl font-semibold mb-2" ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>Web Design</h3>
+                      <p class="text-gray-600" ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>Create stunning websites that convert visitors into customers.</p>
                     </div>
-                    <div class="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-                      <p contenteditable>&copy; 2024 Your Company. All rights reserved.</p>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                      <h3 class="text-xl font-semibold mb-2" ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>Digital Marketing</h3>
+                      <p class="text-gray-600" ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>Reach your target audience and grow your business online.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                      <h3 class="text-xl font-semibold mb-2" ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>SEO Optimization</h3>
+                      <p class="text-gray-600" ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>Improve your search rankings and get more organic traffic.</p>
                     </div>
                   </div>
-                </footer>
+                </div>
+              </section>
+            </main>
+
+            <footer class="bg-gray-900 text-white py-12">
+              <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                  <div>
+                    <h3 class="text-xl font-bold mb-4" ${
+                      !isPreviewMode ? "contenteditable" : ""
+                    }>About Us</h3>
+                    <p class="text-gray-400" ${
+                      !isPreviewMode ? "contenteditable" : ""
+                    }>We are a team of passionate developers and designers creating beautiful websites.</p>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-bold mb-4" ${
+                      !isPreviewMode ? "contenteditable" : ""
+                    }>Contact</h3>
+                    <ul class="space-y-2 text-gray-400">
+                      <li ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>123 Business Street</li>
+                      <li ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>City, State 12345</li>
+                      <li ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>info@example.com</li>
+                      <li ${
+                        !isPreviewMode ? "contenteditable" : ""
+                      }>(123) 456-7890</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
+                  <p ${
+                    !isPreviewMode ? "contenteditable" : ""
+                  }>&copy; 2024 Your Company. All rights reserved.</p>
+                </div>
               </div>
-            </body>
-          </html>
-        `);
-        doc.close();
+            </footer>
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
 
-        // Add click event listener
-        doc.addEventListener("click", handleElementClick);
-
-        // Initial load - mock API call
-        mockApi.getContent().then(({ content }) => {
-          if (content) {
-            doc.body.innerHTML = content;
+    // Add click event listener for editable elements only in edit mode
+    if (!isPreviewMode) {
+      doc.addEventListener("click", handleElementClick);
+      doc.addEventListener("input", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.hasAttribute("contenteditable")) {
+          setUnsavedChanges(true);
+          if (onContentChange) {
+            onContentChange(doc.body.innerHTML);
           }
-        });
-      }
+        }
+      });
     }
-  }, []);
+  };
+
+  const handlePreviewIframeLoad = () => {
+    if (!previewIframeRef.current) return;
+
+    const iframe = previewIframeRef.current;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+
+    // Write the initial HTML content
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            * {
+              pointer-events: none;
+            }
+          </style>
+        </head>
+        <body class="bg-white">
+          ${initialContent || ""}
+        </body>
+      </html>
+    `);
+    doc.close();
+  };
+
+  const handlePreviewSizeChange = (size: "desktop" | "tablet" | "mobile") => {
+    setPreviewSize(size);
+    if (onPreviewSizeChange) {
+      onPreviewSizeChange(size);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setShowPreviewModal(false);
+    setIsPreviewMode(false);
+    if (onPreviewSizeChange) {
+      onPreviewSizeChange("desktop");
+    }
+  };
 
   return (
-    <div className="w-full h-full flex">
-      <div className="flex-1">
+    <div className="relative w-full h-full flex">
+      <div className="flex-1 h-full">
         <iframe
           ref={iframeRef}
           className="w-full h-full border-0"
+          onLoad={handleIframeLoad}
           src="about:blank"
         />
       </div>
 
-      {showModal && selectedElement && (
-        <div className="w-80 bg-[#1E1E1E] text-white">
-          <div className="p-4 space-y-4">
-            {/* Content */}
-            <div className="space-y-2">
-              <label className="text-sm">Content</label>
-              <input
-                type="text"
-                value={
-                  editOptions.content || selectedElement?.textContent || ""
-                }
-                onChange={(e) => handleOptionChange("content", e.target.value)}
-                className="w-full p-2 bg-[#2D2D2D] text-white rounded border-none"
-                placeholder="Enter content..."
-              />
-            </div>
+      {/* Edit Menu */}
+      {showModal && selectedElement && !isPreviewMode && (
+        <div className="w-80 bg-[#1E1E1E] text-white border-l border-gray-800">
+          <div className="p-4 border-b border-gray-800">
+            <h2 className="text-lg font-semibold">Edit Element</h2>
+          </div>
 
-            {/* Margin */}
-            <div className="space-y-2">
-              <label className="text-sm">Margin</label>
-              <div className="flex gap-2">
-                <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
-                  <span className="text-lg">↔</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={editOptions.marginX?.replace(/[^0-9]/g, "") || "0"}
-                    onChange={(e) =>
-                      handleOptionChange("marginX", e.target.value)
-                    }
-                    className="w-full p-2 bg-transparent text-white border-none"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
-                  <span className="text-lg">↕</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={editOptions.marginY?.replace(/[^0-9]/g, "") || "0"}
-                    onChange={(e) =>
-                      handleOptionChange("marginY", e.target.value)
-                    }
-                    className="w-full p-2 bg-transparent text-white border-none"
-                    placeholder="0"
-                  />
+          {/* Scrollable content */}
+          <div className="overflow-y-auto h-[calc(100vh-64px)]">
+            <div className="p-4 space-y-4">
+              {/* Content */}
+              <div className="space-y-2">
+                <label className="text-sm">Content</label>
+                <input
+                  type="text"
+                  value={
+                    editOptions.content || selectedElement?.textContent || ""
+                  }
+                  onChange={(e) =>
+                    handleOptionChange("content", e.target.value)
+                  }
+                  className="w-full p-2 bg-[#2D2D2D] text-white rounded border-none"
+                  placeholder="Enter content..."
+                />
+              </div>
+
+              {/* Margin */}
+              <div className="space-y-2">
+                <label className="text-sm">Margin</label>
+                <div className="flex gap-2">
+                  <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
+                    <span className="text-lg">↔</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={editOptions.marginX?.replace(/[^0-9]/g, "") || "0"}
+                      onChange={(e) =>
+                        handleOptionChange("marginX", e.target.value)
+                      }
+                      className="w-full p-2 bg-transparent text-white border-none"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
+                    <span className="text-lg">↕</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={editOptions.marginY?.replace(/[^0-9]/g, "") || "0"}
+                      onChange={(e) =>
+                        handleOptionChange("marginY", e.target.value)
+                      }
+                      className="w-full p-2 bg-transparent text-white border-none"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Padding */}
-            <div className="space-y-2">
-              <label className="text-sm">Padding</label>
-              <div className="flex gap-2">
-                <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
-                  <span className="text-lg">↔</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={editOptions.paddingX?.replace(/[^0-9]/g, "") || "0"}
-                    onChange={(e) =>
-                      handleOptionChange("paddingX", e.target.value)
-                    }
-                    className="w-full p-2 bg-transparent text-white border-none"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
-                  <span className="text-lg">↕</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={editOptions.paddingY?.replace(/[^0-9]/g, "") || "0"}
-                    onChange={(e) =>
-                      handleOptionChange("paddingY", e.target.value)
-                    }
-                    className="w-full p-2 bg-transparent text-white border-none"
-                    placeholder="0"
-                  />
+              {/* Padding */}
+              <div className="space-y-2">
+                <label className="text-sm">Padding</label>
+                <div className="flex gap-2">
+                  <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
+                    <span className="text-lg">↔</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={
+                        editOptions.paddingX?.replace(/[^0-9]/g, "") || "0"
+                      }
+                      onChange={(e) =>
+                        handleOptionChange("paddingX", e.target.value)
+                      }
+                      className="w-full p-2 bg-transparent text-white border-none"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="flex-1 flex items-center bg-[#2D2D2D] rounded px-2">
+                    <span className="text-lg">↕</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={
+                        editOptions.paddingY?.replace(/[^0-9]/g, "") || "0"
+                      }
+                      onChange={(e) =>
+                        handleOptionChange("paddingY", e.target.value)
+                      }
+                      className="w-full p-2 bg-transparent text-white border-none"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Font Size */}
-            <div className="space-y-2">
-              <label className="text-sm">Font size</label>
-              <select
-                value={editOptions.fontSize || ""}
-                onChange={(e) => handleOptionChange("fontSize", e.target.value)}
-                className="w-full p-2 bg-[#2D2D2D] text-white rounded border-none"
-              >
-                <option value="12px">XS (12px)</option>
-                <option value="14px">SM (14px)</option>
-                <option value="16px">Base (16px)</option>
-                <option value="18px">LG (18px)</option>
-                <option value="20px">XL (20px)</option>
-                <option value="24px">2XL (24px)</option>
-                <option value="30px">3XL (30px)</option>
-                <option value="36px">4XL (36px)</option>
-                <option value="48px">5XL (48px)</option>
-                <option value="60px">6XL (60px)</option>
-              </select>
-            </div>
-
-            {/* Font Weight */}
-            <div className="space-y-2">
-              <label className="text-sm">Font weight</label>
-              <select
-                value={editOptions.fontWeight || ""}
-                onChange={(e) =>
-                  handleOptionChange("fontWeight", e.target.value)
-                }
-                className="w-full p-2 bg-[#2D2D2D] text-white rounded border-none"
-              >
-                <option value="400">Normal (400)</option>
-                <option value="500">Medium (500)</option>
-                <option value="600">Semibold (600)</option>
-                <option value="700">Bold (700)</option>
-              </select>
-            </div>
-
-            {/* Color */}
-            <div className="space-y-2 relative">
-              <label className="text-sm">Color</label>
-              <div className="flex gap-2 items-center">
-                <button
-                  onClick={() => setShowColorPicker(!showColorPicker)}
-                  className="flex items-center gap-2 w-full p-2 bg-[#2D2D2D] rounded hover:bg-[#3B3B3B]"
+              {/* Font Size */}
+              <div className="space-y-2">
+                <label className="text-sm">Font size</label>
+                <select
+                  value={editOptions.fontSize || ""}
+                  onChange={(e) =>
+                    handleOptionChange("fontSize", e.target.value)
+                  }
+                  className="w-full p-2 bg-[#2D2D2D] text-white rounded border-none"
                 >
-                  <div
-                    className="w-4 h-4 rounded"
-                    style={{
-                      backgroundColor: editOptions.textColor || "#000000",
-                    }}
-                  />
-                  <span className="flex-1 text-left">
-                    {editOptions.textColor || "Select color"}
-                  </span>
+                  <option value="12px">XS (12px)</option>
+                  <option value="14px">SM (14px)</option>
+                  <option value="16px">Base (16px)</option>
+                  <option value="18px">LG (18px)</option>
+                  <option value="20px">XL (20px)</option>
+                  <option value="24px">2XL (24px)</option>
+                  <option value="30px">3XL (30px)</option>
+                  <option value="36px">4XL (36px)</option>
+                  <option value="48px">5XL (48px)</option>
+                  <option value="60px">6XL (60px)</option>
+                </select>
+              </div>
+
+              {/* Font Weight */}
+              <div className="space-y-2">
+                <label className="text-sm">Font weight</label>
+                <select
+                  value={editOptions.fontWeight || ""}
+                  onChange={(e) =>
+                    handleOptionChange("fontWeight", e.target.value)
+                  }
+                  className="w-full p-2 bg-[#2D2D2D] text-white rounded border-none"
+                >
+                  <option value="400">Normal (400)</option>
+                  <option value="500">Medium (500)</option>
+                  <option value="600">Semibold (600)</option>
+                  <option value="700">Bold (700)</option>
+                </select>
+              </div>
+
+              {/* Color */}
+              <div className="space-y-2 relative">
+                <label className="text-sm">Color</label>
+                <div className="flex gap-2 items-center">
+                  <button
+                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    className="flex items-center gap-2 w-full p-2 bg-[#2D2D2D] rounded hover:bg-[#3B3B3B]"
+                  >
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{
+                        backgroundColor: editOptions.textColor || "#000000",
+                      }}
+                    />
+                    <span className="flex-1 text-left">
+                      {editOptions.textColor || "Select color"}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 transform ${
+                        showColorPicker ? "rotate-180" : ""
+                      }`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        d="M19 9l-7 7-7-7"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Color Picker Dropdown */}
+                {showColorPicker && (
+                  <div className="absolute left-0 right-0 mt-1 bg-[#1E1E1E] border border-[#3B3B3B] rounded shadow-lg z-10">
+                    {/* Tabs */}
+                    <div className="flex border-b border-[#3B3B3B]">
+                      <button
+                        onClick={() => setActiveColorTab("basic")}
+                        className={`flex-1 px-4 py-2 text-sm ${
+                          activeColorTab === "basic"
+                            ? "bg-[#3B3B3B] text-white"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        Basic Colors
+                      </button>
+                      <button
+                        onClick={() => setActiveColorTab("custom")}
+                        className={`flex-1 px-4 py-2 text-sm ${
+                          activeColorTab === "custom"
+                            ? "bg-[#3B3B3B] text-white"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        Custom
+                      </button>
+                    </div>
+
+                    {/* Basic Colors Tab */}
+                    {activeColorTab === "basic" && (
+                      <div className="p-2">
+                        {/* Color Groups */}
+                        <div className="flex gap-1 flex-wrap mb-2">
+                          {Object.keys(tailwindColors).map((colorName) => (
+                            <button
+                              key={colorName}
+                              onClick={() =>
+                                setSelectedColorGroup(colorName as ColorName)
+                              }
+                              className={`px-2 py-1 text-xs rounded ${
+                                selectedColorGroup === (colorName as ColorName)
+                                  ? "bg-blue-600"
+                                  : "bg-[#2D2D2D] hover:bg-[#3B3B3B]"
+                              }`}
+                            >
+                              {colorName}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Color Shades */}
+                        <div className="grid grid-cols-10 gap-1">
+                          {selectedColorGroup &&
+                            tailwindColors[selectedColorGroup].map(
+                              (color: string, index: number) => (
+                                <button
+                                  key={`${selectedColorGroup}-${index}`}
+                                  onClick={() => {
+                                    handleOptionChange("textColor", color);
+                                    setCustomColor(color);
+                                    setShowColorPicker(false);
+                                  }}
+                                  className={`w-6 h-6 rounded border-2 ${
+                                    editOptions.textColor === color
+                                      ? "border-white"
+                                      : "border-transparent"
+                                  }`}
+                                  style={{ backgroundColor: color }}
+                                  title={`${selectedColorGroup}-${index + 1}00`}
+                                />
+                              )
+                            )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Custom Color Tab */}
+                    {activeColorTab === "custom" && (
+                      <div className="p-4">
+                        <div className="space-y-4">
+                          {/* Color Preview and Picker */}
+                          <HexColorPicker
+                            color={customColor}
+                            onChange={(color) => {
+                              setCustomColor(color);
+                              handleOptionChange("textColor", color);
+                            }}
+                          />
+
+                          {/* Hex Input */}
+                          <div className="flex gap-2">
+                            <div
+                              className="w-8 h-8 rounded"
+                              style={{ backgroundColor: customColor }}
+                            />
+                            <input
+                              type="text"
+                              value={customColor}
+                              onChange={(e) => {
+                                const color = e.target.value;
+                                if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+                                  setCustomColor(color);
+                                  handleOptionChange("textColor", color);
+                                }
+                              }}
+                              placeholder="#000000"
+                              className="flex-1 p-2 bg-[#2D2D2D] rounded text-sm font-mono"
+                            />
+                          </div>
+
+                          {/* Apply Button */}
+                          <button
+                            onClick={() => {
+                              handleOptionChange("textColor", customColor);
+                              setShowColorPicker(false);
+                            }}
+                            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            Apply Color
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Alignment */}
+              <div className="space-y-2">
+                <label className="text-sm">Alignment</label>
+                <div className="flex gap-1">
+                  {["left", "center", "right", "justify"].map((align) => (
+                    <button
+                      key={align}
+                      onClick={() => handleOptionChange("textAlign", align)}
+                      className={`flex-1 p-2 bg-[#2D2D2D] rounded ${
+                        editOptions.textAlign === align ? "bg-[#3B3B3B]" : ""
+                      }`}
+                    >
+                      <svg
+                        className="w-5 h-5 mx-auto"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path
+                          d={
+                            align === "left"
+                              ? "M3 6h18v2H3V6zm0 5h12v2H3v-2zm0 5h18v2H3v-2z"
+                              : align === "center"
+                              ? "M3 6h18v2H3V6zm3 5h12v2H6v-2zm-3 5h18v2H3v-2z"
+                              : align === "right"
+                              ? "M3 6h18v2H3V6zm6 5h12v2H9v-2zm-6 5h18v2H3v-2z"
+                              : "M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"
+                          }
+                        />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Advanced Section */}
+              <div>
+                <button
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="flex items-center gap-2 text-sm"
+                >
                   <svg
                     className={`w-4 h-4 transform ${
-                      showColorPicker ? "rotate-180" : ""
+                      showAdvanced ? "rotate-180" : ""
                     }`}
                     viewBox="0 0 24 24"
                     fill="none"
@@ -1036,224 +1157,109 @@ export function WebsitePreview({
                       strokeLinejoin="round"
                     />
                   </svg>
+                  Advanced
+                </button>
+                {showAdvanced && selectedElement && (
+                  <div className="mt-2 p-3 bg-[#2D2D2D] rounded">
+                    <input
+                      type="text"
+                      value={
+                        editOptions.customClasses || selectedElement.className
+                      }
+                      onChange={(e) =>
+                        handleOptionChange("customClasses", e.target.value)
+                      }
+                      className="w-full p-2 bg-[#1E1E1E] text-white rounded border-none font-mono text-sm"
+                      placeholder="Enter Tailwind classes..."
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 text-sm bg-[#2D2D2D] rounded hover:bg-[#3B3B3B]"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={saveChanges}
+                  className="flex-1 px-4 py-2 text-sm bg-blue-600 rounded hover:bg-blue-700"
+                  disabled={!unsavedChanges}
+                >
+                  Save
                 </button>
               </div>
-
-              {/* Color Picker Dropdown */}
-              {showColorPicker && (
-                <div className="absolute left-0 right-0 mt-1 bg-[#1E1E1E] border border-[#3B3B3B] rounded shadow-lg z-10">
-                  {/* Tabs */}
-                  <div className="flex border-b border-[#3B3B3B]">
-                    <button
-                      onClick={() => setActiveColorTab("basic")}
-                      className={`flex-1 px-4 py-2 text-sm ${
-                        activeColorTab === "basic"
-                          ? "bg-[#3B3B3B] text-white"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Basic Colors
-                    </button>
-                    <button
-                      onClick={() => setActiveColorTab("custom")}
-                      className={`flex-1 px-4 py-2 text-sm ${
-                        activeColorTab === "custom"
-                          ? "bg-[#3B3B3B] text-white"
-                          : "text-gray-400 hover:text-white"
-                      }`}
-                    >
-                      Custom
-                    </button>
-                  </div>
-
-                  {/* Basic Colors Tab */}
-                  {activeColorTab === "basic" && (
-                    <div className="p-2">
-                      {/* Color Groups */}
-                      <div className="flex gap-1 flex-wrap mb-2">
-                        {Object.keys(tailwindColors).map((colorName) => (
-                          <button
-                            key={colorName}
-                            onClick={() =>
-                              setSelectedColorGroup(colorName as ColorName)
-                            }
-                            className={`px-2 py-1 text-xs rounded ${
-                              selectedColorGroup === (colorName as ColorName)
-                                ? "bg-blue-600"
-                                : "bg-[#2D2D2D] hover:bg-[#3B3B3B]"
-                            }`}
-                          >
-                            {colorName}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Color Shades */}
-                      <div className="grid grid-cols-10 gap-1">
-                        {selectedColorGroup &&
-                          tailwindColors[selectedColorGroup].map(
-                            (color: string, index: number) => (
-                              <button
-                                key={`${selectedColorGroup}-${index}`}
-                                onClick={() => {
-                                  handleOptionChange("textColor", color);
-                                  setCustomColor(color);
-                                  setShowColorPicker(false);
-                                }}
-                                className={`w-6 h-6 rounded border-2 ${
-                                  editOptions.textColor === color
-                                    ? "border-white"
-                                    : "border-transparent"
-                                }`}
-                                style={{ backgroundColor: color }}
-                                title={`${selectedColorGroup}-${index + 1}00`}
-                              />
-                            )
-                          )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Custom Color Tab */}
-                  {activeColorTab === "custom" && (
-                    <div className="p-4">
-                      <div className="space-y-4">
-                        {/* Color Preview and Picker */}
-                        <HexColorPicker
-                          color={customColor}
-                          onChange={(color) => {
-                            setCustomColor(color);
-                            handleOptionChange("textColor", color);
-                          }}
-                        />
-
-                        {/* Hex Input */}
-                        <div className="flex gap-2">
-                          <div
-                            className="w-8 h-8 rounded"
-                            style={{ backgroundColor: customColor }}
-                          />
-                          <input
-                            type="text"
-                            value={customColor}
-                            onChange={(e) => {
-                              const color = e.target.value;
-                              if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
-                                setCustomColor(color);
-                                handleOptionChange("textColor", color);
-                              }
-                            }}
-                            placeholder="#000000"
-                            className="flex-1 p-2 bg-[#2D2D2D] rounded text-sm font-mono"
-                          />
-                        </div>
-
-                        {/* Apply Button */}
-                        <button
-                          onClick={() => {
-                            handleOptionChange("textColor", customColor);
-                            setShowColorPicker(false);
-                          }}
-                          className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                          Apply Color
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Alignment */}
-            <div className="space-y-2">
-              <label className="text-sm">Alignment</label>
-              <div className="flex gap-1">
-                {["left", "center", "right", "justify"].map((align) => (
+      {/* Preview Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 bg-black/75">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-gray-900 w-full h-full flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-gray-700">
+                <div className="flex items-center space-x-2">
                   <button
-                    key={align}
-                    onClick={() => handleOptionChange("textAlign", align)}
-                    className={`flex-1 p-2 bg-[#2D2D2D] rounded ${
-                      editOptions.textAlign === align ? "bg-[#3B3B3B]" : ""
+                    onClick={() => handlePreviewSizeChange("desktop")}
+                    className={`p-2 rounded-md ${
+                      previewSize === "desktop"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                     }`}
                   >
-                    <svg
-                      className="w-5 h-5 mx-auto"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path
-                        d={
-                          align === "left"
-                            ? "M3 6h18v2H3V6zm0 5h12v2H3v-2zm0 5h18v2H3v-2z"
-                            : align === "center"
-                            ? "M3 6h18v2H3V6zm3 5h12v2H6v-2zm-3 5h18v2H3v-2z"
-                            : align === "right"
-                            ? "M3 6h18v2H3V6zm6 5h12v2H9v-2zm-6 5h18v2H3v-2z"
-                            : "M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"
-                        }
-                      />
-                    </svg>
+                    <Monitor className="w-5 h-5" />
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Advanced Section */}
-            <div>
-              <button
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-2 text-sm"
-              >
-                <svg
-                  className={`w-4 h-4 transform ${
-                    showAdvanced ? "rotate-180" : ""
-                  }`}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
+                  <button
+                    onClick={() => handlePreviewSizeChange("tablet")}
+                    className={`p-2 rounded-md ${
+                      previewSize === "tablet"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                    }`}
+                  >
+                    <Tablet className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handlePreviewSizeChange("mobile")}
+                    className={`p-2 rounded-md ${
+                      previewSize === "mobile"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                    }`}
+                  >
+                    <Smartphone className="w-5 h-5" />
+                  </button>
+                </div>
+                <button
+                  onClick={handleClosePreview}
+                  className="text-gray-400 hover:text-white"
                 >
-                  <path
-                    d="M19 9l-7 7-7-7"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Advanced
-              </button>
-              {showAdvanced && selectedElement && (
-                <div className="mt-2 p-3 bg-[#2D2D2D] rounded">
-                  <input
-                    type="text"
-                    value={
-                      editOptions.customClasses || selectedElement.className
-                    }
-                    onChange={(e) =>
-                      handleOptionChange("customClasses", e.target.value)
-                    }
-                    className="w-full p-2 bg-[#1E1E1E] text-white rounded border-none font-mono text-sm"
-                    placeholder="Enter Tailwind classes..."
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-4">
+                <div
+                  className={`mx-auto bg-white rounded-lg shadow-lg overflow-hidden ${
+                    previewSize === "desktop"
+                      ? "w-full h-full"
+                      : previewSize === "tablet"
+                      ? "w-[768px] h-[1024px]"
+                      : "w-[375px] h-[667px]"
+                  }`}
+                >
+                  <iframe
+                    ref={previewIframeRef}
+                    className="w-full h-full border-0"
+                    onLoad={handlePreviewIframeLoad}
+                    src="about:blank"
                   />
                 </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-4">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 text-sm bg-[#2D2D2D] rounded hover:bg-[#3B3B3B]"
-              >
-                Discard
-              </button>
-              <button
-                onClick={saveChanges}
-                className="flex-1 px-4 py-2 text-sm bg-blue-600 rounded hover:bg-blue-700"
-                disabled={!unsavedChanges}
-              >
-                Save
-              </button>
+              </div>
             </div>
           </div>
         </div>
