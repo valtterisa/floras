@@ -1,6 +1,6 @@
 "use client";
 
-import { WebsiteEditor } from "@/components/editor/website-editor";
+import WebsiteEditor from "@/components/editor/website-editor";
 
 export default function EditorPage() {
   return (

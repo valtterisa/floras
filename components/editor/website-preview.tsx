@@ -410,7 +410,6 @@ export function WebsitePreview({
 
   useEffect(() => {
     if (onPreviewSizeChange) {
-      setShowPreviewModal(true);
       setIsPreviewMode(previewSize);
     }
   }, [onPreviewSizeChange, previewSize]);
@@ -455,7 +454,6 @@ export function WebsitePreview({
         paddingY: getValueFromClass("py-"),
         content: target.textContent || "",
       });
-      setShowModal(true);
     }
   };
 

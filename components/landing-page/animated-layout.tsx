@@ -31,10 +31,7 @@ export function AnimatedLayout() {
       <div className="fixed inset-0 bg-gradient-to-b from-purple-50 via-white to-white -z-10" />
 
       {/* Sticky Header */}
-      <motion.header
-        style={{ y, opacity }}
-        className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100"
-      >
+      <motion.header className="sticky top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <span className="text-xl font-bold text-purple-600">SiteForge</span>

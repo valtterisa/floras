@@ -77,7 +77,7 @@ export function HeroSection() {
           <div className="hidden md:block h-4 w-px bg-gray-200" />
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-sm font-medium">14-day free trial</span>
+            <span className="text-sm font-medium">7-day free trial</span>
           </div>
           <div className="hidden md:block h-4 w-px bg-gray-200" />
           <div className="flex items-center gap-2">

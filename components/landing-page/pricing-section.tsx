@@ -79,7 +79,7 @@ export function PricingSection() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Choose the perfect plan for your needs. All plans include a 14-day
+            Choose the perfect plan for your needs. All plans include a 7-day
             free trial.
           </p>
           <div className="inline-flex items-center bg-white rounded-full shadow-sm">
