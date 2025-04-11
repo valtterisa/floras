@@ -69,7 +69,6 @@ import {
 import { WebsitePreview } from "./website-preview";
 import { FileTracker } from "@/lib/file-tracker";
 import { VirtualFileSystem } from "@/lib/virtual-fs";
-import { ViewportControls } from "./viewport-controls";
 
 type ViewportSize = "desktop" | "tablet" | "mobile";
 type EditModeType = "text" | "color" | "image" | "hover-color" | null;
@@ -1712,32 +1711,6 @@ export function WebsiteEditor() {
         </div>
 
         <div className="flex items-center space-x-2">
-          <div className="hidden sm:flex space-x-2">
-            <Button
-              onClick={togglePreviewMode}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                isPreviewMode
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-gray-700 text-gray-200 hover:bg-gray-600"
-              }`}
-            >
-              {isPreviewMode ? (
-                <>
-                  <EyeOff className="h-4 w-4 mr-1" />
-                  Exit Preview
-                </>
-              ) : (
-                <>
-                  <Eye className="h-4 w-4 mr-1" />
-                  Preview
-                </>
-              )}
-            </Button>
-            <Button variant="outline" size="sm" disabled={!!isPreviewMode}>
-              <Code className="h-4 w-4 mr-1" />
-              Export
-            </Button>
-          </div>
           <Button size="sm" onClick={saveProject} disabled={!!isPreviewMode}>
             <Save className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Save</span>
@@ -1774,30 +1747,14 @@ export function WebsiteEditor() {
       {/* Mobile bottom toolbar */}
       {isMobile && (
         <div className="h-14 border-t flex items-center justify-around px-4 bg-background">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleUndo}
-            disabled={historyIndex <= 0 || !!isPreviewMode}
-          >
+          <Button variant="ghost" size="icon" onClick={handleUndo}>
             <Undo className="h-5 w-5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRedo}
-            disabled={historyIndex >= history.length - 1 || !!isPreviewMode}
-          >
+          <Button variant="ghost" size="icon" onClick={handleRedo}>
             <Redo className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={togglePreviewMode}>
-            {isPreviewMode ? (
-              <EyeOff className="h-5 w-5" />
-            ) : (
-              <Eye className="h-5 w-5" />
-            )}
-          </Button>
-          <Button variant="ghost" size="icon" disabled={!!isPreviewMode}>
+
+          <Button variant="ghost" size="icon">
             <Code className="h-5 w-5" />
           </Button>
         </div>
