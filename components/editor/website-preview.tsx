@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
@@ -239,22 +239,31 @@ export default function WebsitePreview({
       const selection = iframe.contentWindow?.getSelection();
 
       if (!selection || selection.rangeCount === 0) {
-        const range = iframe.contentDocument.createRange();
-        range.selectNodeContents(selectedElement);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
+        const iframe = iframeRef.current;
+        if (iframe && iframe.contentDocument) {
+          const range = iframe.contentDocument.createRange();
+          range.selectNodeContents(selectedElement);
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
       }
 
       // Execute command in the iframe's document
-      const result = iframe.contentDocument.execCommand(command, false, value);
-
-      if (!result) {
-        console.warn(`Command ${command} failed`);
-        setDebugInfo(`Command ${command} failed`);
-      } else {
-        setDebugInfo(
-          `Applied ${command} ${value ? `with value ${value}` : ""}`
+      if (iframe.contentDocument) {
+        const result = iframe.contentDocument.execCommand(
+          command,
+          false,
+          value
         );
+
+        if (!result) {
+          console.warn(`Command ${command} failed`);
+          setDebugInfo(`Command ${command} failed`);
+        } else {
+          setDebugInfo(
+            `Applied ${command} ${value ? `with value ${value}` : ""}`
+          );
+        }
       }
 
       // Update active formats
@@ -273,13 +282,12 @@ export default function WebsitePreview({
   };
 
   // Handle URL change
-  const handleUrlChange = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
     setUrl(inputUrl);
     setIsEditorReady(false);
     setShowToolbar(false);
     setDebugInfo("");
-  };
+  }, [inputUrl]);
 
   // Handle iframe load
   const handleIframeLoad = () => {

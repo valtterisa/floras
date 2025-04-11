@@ -139,18 +139,6 @@ export function WebsiteEditor() {
   const vfs = VirtualFileSystem.getInstance();
   const fileTracker = FileTracker.getInstance();
 
-  // Update the editableFields state to include buttons
-  const [editableFields, setEditableFields] = useState<{
-    text: EditableField[];
-    color: EditableField[];
-    image: EditableField[];
-    button: EditableField[];
-  }>({
-    text: [],
-    color: [],
-    image: [],
-    button: [],
-  });
   const canvasRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
   const observerRef = useRef<MutationObserver | null>(null);
@@ -186,7 +174,6 @@ export function WebsiteEditor() {
     const newComponents = components.filter((_, i) => i !== index);
     setComponents(newComponents);
     setSelectedComponentIndex(null);
-    setEditableFields({ text: [], color: [], image: [], button: [] });
     addToHistory(newComponents);
   };
 
@@ -229,7 +216,6 @@ export function WebsiteEditor() {
   // Scan the selected component for all editable fields
   const scanComponentForEditableFields = () => {
     if (!canvasRef.current || selectedComponentIndex === null) {
-      setEditableFields({ text: [], color: [], image: [], button: [] });
       return;
     }
 
@@ -359,14 +345,6 @@ export function WebsiteEditor() {
           hoverClass: hoverClass || "",
         },
       });
-    });
-
-    // Add buttons to the editable fields
-    setEditableFields({
-      text: textFields,
-      color: colorFields,
-      image: imageFields,
-      button: buttonFields,
     });
   };
 
@@ -1649,12 +1627,7 @@ export function WebsiteEditor() {
         {/* Canvas */}
         <div className="flex-1 overflow-auto bg-gray-100 p-4 flex justify-center">
           <div className={`transition-all duration-300 ${getViewportWidth()}`}>
-            <WebsitePreview
-              onContentChange={handleContentChange}
-              initialContent={
-                components.length > 0 ? components[0].component : undefined
-              }
-            />
+            <WebsitePreview />
           </div>
         </div>
       </div>
