@@ -22,7 +22,6 @@ import {
   Undo,
   Redo,
   Smartphone,
-  Tablet,
   Monitor,
   Menu,
   Download,
@@ -34,6 +33,8 @@ import {
   AlignCenter,
   AlignRight,
   Rocket,
+  Settings,
+  WandSparkles,
 } from "lucide-react";
 
 import type { ComponentType } from "@/components/component-library";
@@ -46,7 +47,7 @@ import WebsitePreview from "./website-preview";
 import { FileTracker } from "@/lib/file-tracker";
 import { VirtualFileSystem } from "@/lib/virtual-fs";
 
-type ViewportSize = "desktop" | "tablet" | "mobile";
+type ViewportSize = "desktop" | "mobile";
 type EditModeType = "text" | "color" | "image" | "hover-color" | null;
 
 // Define a new interface for button hover state
@@ -134,7 +135,7 @@ export function WebsiteEditor() {
   const [elementText, setElementText] = useState("");
   const [currentFile, setCurrentFile] = useState<string>("/index.html");
   const [isPreviewMode, setIsPreviewMode] = useState<
-    "desktop" | "tablet" | "mobile" | false
+    "desktop" | "mobile" | false
   >(false);
   const vfs = VirtualFileSystem.getInstance();
   const fileTracker = FileTracker.getInstance();
@@ -828,8 +829,6 @@ export function WebsiteEditor() {
     switch (viewportSize) {
       case "mobile":
         return "w-[375px]";
-      case "tablet":
-        return "w-[768px]";
       case "desktop":
       default:
         return "w-full";
@@ -871,7 +870,7 @@ export function WebsiteEditor() {
       <div className="rounded h-full w-fit flex flex-col">
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="w-fit mb-4">
+            <Button size="sm" variant="outline" className="w-fit mb-4">
               <Plus className="h-4 w-4" />
               <DialogHeader className="hidden">
                 <DialogTitle>Component Library</DialogTitle>
@@ -887,8 +886,8 @@ export function WebsiteEditor() {
         </Dialog>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="w-fit mb-4">
-              <Plus className="h-4 w-4" />
+            <Button size="sm" variant="outline" className="w-fit mb-4">
+              <Settings className="h-4 w-4" />
               <DialogHeader className="hidden">
                 <DialogTitle>Component Library</DialogTitle>
               </DialogHeader>
@@ -903,30 +902,14 @@ export function WebsiteEditor() {
         </Dialog>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="w-fit mb-4">
-              <Plus className="h-4 w-4" />
+            <Button size="sm" variant="outline" className="w-fit mb-4">
+              <WandSparkles className="h-4 w-4" />
               <DialogHeader className="hidden">
                 <DialogTitle>Component Library</DialogTitle>
               </DialogHeader>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[825px]">
-            <ComponentLibrary onSelectComponent={addComponent} />
-          </DialogContent>
-        </Dialog>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="w-fit mb-4">
-              <Plus className="h-4 w-4" />
-              <DialogHeader className="hidden">
-                <DialogTitle>Component Library</DialogTitle>
-              </DialogHeader>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[825px]">
-            <DialogHeader>
-              <DialogTitle>Component Library</DialogTitle>
-            </DialogHeader>
             <ComponentLibrary onSelectComponent={addComponent} />
           </DialogContent>
         </Dialog>
@@ -1556,39 +1539,34 @@ export function WebsiteEditor() {
     setEditMode(null);
   };
 
-  const handlePreviewSizeChange = (size: "desktop" | "tablet" | "mobile") => {
+  const handlePreviewSizeChange = (size: "desktop" | "mobile") => {
     setIsPreviewMode(size);
   };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Toolbar */}
-      <div className="h-14 border-b flex items-center justify-between px-4">
-        <div className="flex items-center space-x-2">
-          <div className="hidden sm:flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUndo}
-              disabled={historyIndex <= 0 || !!isPreviewMode}
-            >
-              <Undo className="h-4 w-4 mr-1" />
-              Undo
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRedo}
-              disabled={historyIndex >= history.length - 1 || !!isPreviewMode}
-            >
-              <Redo className="h-4 w-4 mr-1" />
-              Redo
-            </Button>
-          </div>
-        </div>
-
+      <div className="h-14 border-b flex items-center px-4">
         {/* Viewport size controls */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleUndo}
+            disabled={historyIndex <= 0 || !!isPreviewMode}
+          >
+            <Undo className="h-4 w-4 mr-1" />
+            Undo
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRedo}
+            disabled={historyIndex >= history.length - 1 || !!isPreviewMode}
+          >
+            <Redo className="h-4 w-4 mr-1" />
+            Redo
+          </Button>
           <Button
             variant={viewportSize === "desktop" ? "default" : "outline"}
             size="icon"
@@ -1597,14 +1575,7 @@ export function WebsiteEditor() {
           >
             <Monitor className="h-4 w-4" />
           </Button>
-          <Button
-            variant={viewportSize === "tablet" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewportSize("tablet")}
-            title="Tablet view"
-          >
-            <Tablet className="h-4 w-4" />
-          </Button>
+
           <Button
             variant={viewportSize === "mobile" ? "default" : "outline"}
             size="icon"
@@ -1613,9 +1584,7 @@ export function WebsiteEditor() {
           >
             <Smartphone className="h-4 w-4" />
           </Button>
-        </div>
 
-        <div className="flex items-center space-x-2">
           <Button size="sm" variant="outline" onClick={saveProject}>
             <Save className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Save</span>

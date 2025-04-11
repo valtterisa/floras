@@ -350,6 +350,8 @@ export default function WebsitePreview({
 
   return (
     <div className="flex flex-col h-full w-full gap-4">
+      {/* @TODO */}
+      <p>Controls for undo/redo, viewport size?</p>
       {/* Floating Toolbar */}
       <FloatingToolbar
         show={showToolbar}
