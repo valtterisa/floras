@@ -284,7 +284,6 @@ export default function WebsitePreview({
   // Handle URL change
   useEffect(() => {
     setUrl(inputUrl);
-    setIsEditorReady(false);
     setShowToolbar(false);
     setDebugInfo("");
   }, [inputUrl]);
@@ -371,6 +370,7 @@ export default function WebsitePreview({
 
       {/* Iframe Container */}
       <div className="relative w-full h-full border rounded-lg overflow-hidden">
+        {/* Sometimes "loads" infinitely for no reason @TODO: Fix */}
         {!isEditorReady && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
             <div className="text-center">

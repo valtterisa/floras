@@ -868,13 +868,59 @@ export function WebsiteEditor() {
   // Render the component library sidebar
   const renderComponentLibrarySidebar = () => {
     const content = (
-      <div className="h-full flex flex-col">
-        <h2 className="text-lg font-bold mb-4">Components</h2>
+      <div className="h-full w-fit flex flex-col">
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="w-full mb-4">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Component
+            <Button className="w-fit mb-4">
+              <Plus className="h-4 w-4" />
+              <DialogHeader className="hidden">
+                <DialogTitle>Component Library</DialogTitle>
+              </DialogHeader>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[825px]">
+            <DialogHeader>
+              <DialogTitle>Component Library</DialogTitle>
+            </DialogHeader>
+            <ComponentLibrary onSelectComponent={addComponent} />
+          </DialogContent>
+        </Dialog>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="w-fit mb-4">
+              <Plus className="h-4 w-4" />
+              <DialogHeader className="hidden">
+                <DialogTitle>Component Library</DialogTitle>
+              </DialogHeader>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[825px]">
+            <DialogHeader>
+              <DialogTitle>Component Library</DialogTitle>
+            </DialogHeader>
+            <ComponentLibrary onSelectComponent={addComponent} />
+          </DialogContent>
+        </Dialog>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="w-fit mb-4">
+              <Plus className="h-4 w-4" />
+              <DialogHeader className="hidden">
+                <DialogTitle>Component Library</DialogTitle>
+              </DialogHeader>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[825px]">
+            <ComponentLibrary onSelectComponent={addComponent} />
+          </DialogContent>
+        </Dialog>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="w-fit mb-4">
+              <Plus className="h-4 w-4" />
+              <DialogHeader className="hidden">
+                <DialogTitle>Component Library</DialogTitle>
+              </DialogHeader>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[825px]">
@@ -933,28 +979,6 @@ export function WebsiteEditor() {
             ))}
           </div>
         </div>
-
-        {/* Project Save/Load */}
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex space-x-2">
-            <Button variant="outline" className="flex-1" onClick={saveProject}>
-              <Download className="h-4 w-4 mr-2" />
-              Save
-            </Button>
-            <label className="flex-1">
-              <input
-                type="file"
-                accept=".json"
-                onChange={loadProject}
-                className="hidden"
-              />
-              <Button variant="outline" className="w-full">
-                <Upload className="h-4 w-4 mr-2" />
-                Load
-              </Button>
-            </label>
-          </div>
-        </div>
       </div>
     );
 
@@ -971,7 +995,7 @@ export function WebsiteEditor() {
     ) : (
       <div
         className={`border-r bg-muted/20 p-4 flex flex-col ${
-          leftSidebarOpen ? "w-64" : "w-0 overflow-hidden"
+          leftSidebarOpen ? "w-fit" : "w-0 overflow-hidden"
         }`}
       >
         {content}
@@ -1583,7 +1607,6 @@ export function WebsiteEditor() {
             size="icon"
             onClick={() => setViewportSize("desktop")}
             title="Desktop view"
-            disabled={!!isPreviewMode}
           >
             <Monitor className="h-4 w-4" />
           </Button>
@@ -1592,7 +1615,6 @@ export function WebsiteEditor() {
             size="icon"
             onClick={() => setViewportSize("tablet")}
             title="Tablet view"
-            disabled={!!isPreviewMode}
           >
             <Tablet className="h-4 w-4" />
           </Button>
@@ -1601,20 +1623,19 @@ export function WebsiteEditor() {
             size="icon"
             onClick={() => setViewportSize("mobile")}
             title="Mobile view"
-            disabled={!!isPreviewMode}
           >
             <Smartphone className="h-4 w-4" />
           </Button>
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button size="sm" onClick={saveProject} disabled={!!isPreviewMode}>
+          <Button size="sm" variant="outline" onClick={saveProject}>
             <Save className="h-4 w-4 sm:mr-1" />
             <span className="hidden sm:inline">Save</span>
           </Button>
-          <Button size="sm" onClick={saveProject} disabled={!!isPreviewMode}>
+          <Button size="sm" onClick={saveProject}>
             <Rocket className="h-4 w-4 sm:mr-1" />
-            <span className="hidden sm:inline">Deploy</span>
+            <span className="hidden sm:inline">Go Live</span>
           </Button>
         </div>
       </div>
