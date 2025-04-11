@@ -4,10 +4,7 @@ import type React from "react";
 
 import { useState, useRef, useEffect } from "react";
 import { ComponentLibrary } from "@/components/component-library";
-import { ColorPicker } from "@/components/editor/color-picker";
-import { ImageEditor } from "@/components/editor/image-editor";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -15,27 +12,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Save,
-  Eye,
   Code,
-  Layers,
-  Settings,
   Plus,
-  Trash2,
   MoveUp,
   MoveDown,
-  Copy,
   Undo,
   Redo,
   Smartphone,
   Tablet,
   Monitor,
   Menu,
-  PanelLeft,
-  PanelRight,
   Download,
   Upload,
   Bold,
@@ -44,15 +33,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Type,
-  Image,
-  PaintBucket,
-  BoxIcon as ButtonIcon,
-  WandSparkles,
   Rocket,
-  UndoIcon,
-  RedoIcon,
-  EyeOff,
 } from "lucide-react";
 
 import type { ComponentType } from "@/components/component-library";
@@ -60,13 +41,8 @@ import { useMobile } from "@/hooks/use-mobile";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { WebsitePreview } from "./website-preview";
+
+import WebsitePreview from "./website-preview";
 import { FileTracker } from "@/lib/file-tracker";
 import { VirtualFileSystem } from "@/lib/virtual-fs";
 
