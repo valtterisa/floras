@@ -1,9 +1,3 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 interface GenerateWebsiteParams {
   businessName: string;
   description: string;
@@ -53,24 +47,4 @@ Format the response as JSON with the following structure:
     ...
   ]
 }`;
-
-  const completion = await openai.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a professional website content generator. Create engaging, SEO-friendly content that converts visitors into customers.",
-      },
-      { role: "user", content: prompt },
-    ],
-    model: "gpt-4-turbo-preview",
-    response_format: { type: "json_object" },
-  });
-
-  const content = completion.choices[0].message.content;
-  if (!content) {
-    throw new Error("Failed to generate website content");
-  }
-
-  return JSON.parse(content);
 }
