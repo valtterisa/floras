@@ -220,11 +220,10 @@ export function WebsiteEditor() {
                 onDrop={(e) => handleDrop(index, e)}
                 onDragEnd={() => setDraggedIndex(null)}
                 onClick={() => setSelectedComponentIndex(index)}
-                className={`p-2 border rounded-md cursor-pointer flex justify-between items-center transition-all ${
-                  selectedComponentIndex === index
+                className={`p-2 border rounded-md cursor-pointer flex justify-between items-center transition-all ${selectedComponentIndex === index
                     ? "bg-primary/10 border-primary"
                     : "bg-white border-gray-200"
-                } ${draggedIndex === index ? "shadow-lg" : "shadow-sm"}`}
+                  } ${draggedIndex === index ? "shadow-lg" : "shadow-sm"}`}
               >
                 <span className="truncate flex-1">{component.name}</span>
                 <div className="flex space-x-1">
@@ -268,9 +267,8 @@ export function WebsiteEditor() {
       </Sheet>
     ) : (
       <div
-        className={`border-r bg-muted/20 p-4 flex flex-col md:rounded-none rounded-t-lg ${
-          leftSidebarOpen ? "" : "w-0 overflow-hidden"
-        }`}
+        className={`border-r bg-muted/20 p-4 flex flex-col md:rounded-none rounded-t-lg ${leftSidebarOpen ? "" : "w-0 overflow-hidden"
+          }`}
       >
         {content}
       </div>

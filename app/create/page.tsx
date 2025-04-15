@@ -20,14 +20,44 @@ const steps = [
   {
     id: "style",
     title: "Choose your style",
-    description:
-      "Select colors and design preferences that match your brand identity.",
+    description: "Select colors that match your brand identity.",
+  },
+  {
+    id: "components",
+    title: "Choose website components",
+    description: "Select the features and sections you want on your website.",
   },
   {
     id: "preview",
-    title: "Preview & Generate",
+    title: "Review & Generate",
     description: "Review your choices and let our AI create your website.",
   },
+];
+
+const industries = [
+  { id: "retail", name: "Retail & E-commerce" },
+  { id: "services", name: "Professional Services" },
+  { id: "tech", name: "Technology" },
+  { id: "health", name: "Healthcare & Wellness" },
+  { id: "food", name: "Food & Hospitality" },
+  { id: "education", name: "Education & Training" },
+  { id: "creative", name: "Creative & Design" },
+  { id: "real-estate", name: "Real Estate" },
+  { id: "nonprofit", name: "Nonprofit & Community" },
+  { id: "other", name: "Other" },
+];
+
+const componentOptions = [
+  { id: "contact-form", name: "Contact Form", description: "Let visitors get in touch with you" },
+  { id: "blog", name: "Blog Section", description: "Share updates and articles" },
+  { id: "testimonials", name: "Testimonials", description: "Display customer reviews" },
+  { id: "gallery", name: "Image Gallery", description: "Showcase your work or products" },
+  { id: "pricing", name: "Pricing Tables", description: "Display your pricing plans" },
+  { id: "team", name: "Team Section", description: "Introduce your team members" },
+  { id: "faq", name: "FAQ Section", description: "Answer common questions" },
+  { id: "newsletter", name: "Newsletter Signup", description: "Collect email subscribers" },
+  { id: "social", name: "Social Media Feed", description: "Display your social media posts" },
+  { id: "map", name: "Location Map", description: "Show your physical location" },
 ];
 
 const colorOptions = [
@@ -111,22 +141,29 @@ export default function CreatePage() {
   const [formData, setFormData] = useState({
     businessName: "",
     description: "",
+    industry: "",
     selectedColors: colorOptions[0],
     customColors: {
       primary: "#6366F1",
       secondary: "#8B5CF6",
       accent: "#EC4899",
     },
+    selectedComponents: [] as string[],
   });
+
   const [errors, setErrors] = useState({
     businessName: "",
     description: "",
+    industry: "",
   });
+
+  const MAX_DESCRIPTION_LENGTH = 500;
 
   const validateStep = () => {
     const newErrors = {
       businessName: "",
       description: "",
+      industry: "",
     };
 
     if (currentStep === 0) {
@@ -136,10 +173,16 @@ export default function CreatePage() {
       if (!formData.description.trim()) {
         newErrors.description = "Business description is required";
       }
+      if (!formData.industry) {
+        newErrors.industry = "Please select an industry";
+      }
+      if (formData.description.length > MAX_DESCRIPTION_LENGTH) {
+        newErrors.description = `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`;
+      }
     }
 
     setErrors(newErrors);
-    return !newErrors.businessName && !newErrors.description;
+    return Object.values(newErrors).every((error) => !error);
   };
 
   const handleNext = () => {
@@ -165,65 +208,46 @@ export default function CreatePage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      // Mock API call with a delay
-      await new Promise((resolve) => setTimeout(resolve, 4000));
-
-      // Mock response
-      const mockResponse = {
-        id: "mock-website-id",
-        name: formData.businessName,
-        description: formData.description,
-        colors: showCustomColors
-          ? formData.customColors
-          : formData.selectedColors.colors,
-        content: {
-          sections: [
-            {
-              type: "hero",
-              title: "Welcome to " + formData.businessName,
-              content: "Your business description will go here",
-              cta: "Get Started",
-              image: "hero-image.jpg",
-            },
-            {
-              type: "about",
-              title: "About Us",
-              content: formData.description,
-              cta: "Learn More",
-              image: "about-image.jpg",
-            },
-            {
-              type: "services",
-              title: "Our Services",
-              content: "Detailed services description",
-              cta: "View Services",
-              image: "services-image.jpg",
-            },
-            {
-              type: "contact",
-              title: "Get in Touch",
-              content: "Contact information and form",
-              cta: "Contact Us",
-              image: "contact-image.jpg",
-            },
-          ],
+      const websiteData = {
+        businessInfo: {
+          name: formData.businessName,
+          description: formData.description,
+          industry: formData.industry
         },
+        colors: showCustomColors ? formData.customColors : formData.selectedColors.colors,
+        components: formData.selectedComponents
       };
 
-      // Simulate storing in database
-      console.log("Mock website created:", mockResponse);
+      const response = await fetch('/api/generate-website', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: JSON.stringify(websiteData)
+        }),
+      });
 
-      // Redirect to editor with mock ID
-      // router.push(`/editor/${mockResponse.id}`);
-      router.push(`/website/editor`);
+      if (!response.ok) {
+        throw new Error('Failed to generate website');
+      }
+
+      const data = await response.json();
+
+      // Store in localStorage for demo purposes
+      localStorage.setItem('websiteData', JSON.stringify(websiteData));
+
+      // Redirect to editor
+      router.push('/website/editor');
     } catch (error) {
+      console.error('Error generating website:', error);
       toast.error("Failed to generate website. Please try again.");
       setIsGenerating(false);
     }
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -252,10 +276,7 @@ export default function CreatePage() {
         return (
           <div className="space-y-6">
             <div>
-              <label
-                htmlFor="businessName"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-2">
                 Business Name
               </label>
               <Input
@@ -264,20 +285,15 @@ export default function CreatePage() {
                 value={formData.businessName}
                 onChange={handleInputChange}
                 placeholder="Enter your business name"
-                className={`w-full ${errors.businessName ? "border-red-500" : ""
-                  }`}
+                className={`w-full ${errors.businessName ? "border-red-500" : ""}`}
               />
               {errors.businessName && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.businessName}
-                </p>
+                <p className="mt-1 text-sm text-red-500">{errors.businessName}</p>
               )}
             </div>
+
             <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                 Business Description
               </label>
               <Textarea
@@ -286,13 +302,39 @@ export default function CreatePage() {
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="Describe your business, products, or services"
-                className={`min-h-[150px] ${errors.description ? "border-red-500" : ""
-                  }`}
+                className={`min-h-[150px] ${errors.description ? "border-red-500" : ""}`}
               />
+              <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <span>{formData.description.length}/{MAX_DESCRIPTION_LENGTH} characters</span>
+                <span className={formData.description.length > MAX_DESCRIPTION_LENGTH ? "text-red-500" : ""}>
+                  {MAX_DESCRIPTION_LENGTH - formData.description.length} characters remaining
+                </span>
+              </div>
               {errors.description && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.description}
-                </p>
+                <p className="mt-1 text-sm text-red-500">{errors.description}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Industry
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {industries.map((industry) => (
+                  <button
+                    key={industry.id}
+                    onClick={() => setFormData(prev => ({ ...prev, industry: industry.id }))}
+                    className={`p-4 rounded-lg border-2 transition-all ${formData.industry === industry.id
+                      ? "border-purple-500 ring-2 ring-purple-200 bg-purple-50"
+                      : "border-gray-200 hover:border-purple-300"
+                      }`}
+                  >
+                    <div className="text-sm font-medium text-gray-900">{industry.name}</div>
+                  </button>
+                ))}
+              </div>
+              {errors.industry && (
+                <p className="mt-2 text-sm text-red-500">{errors.industry}</p>
               )}
             </div>
           </div>
@@ -410,48 +452,113 @@ export default function CreatePage() {
       case 2:
         return (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="font-medium text-gray-900 mb-2">
-                Business Information
-              </h3>
-              <p className="text-gray-600">{formData.businessName}</p>
-              <p className="text-gray-600 mt-2">{formData.description}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="font-medium text-gray-900 mb-2">Selected Style</h3>
-              <div className="flex items-center gap-2">
-                <div className="grid grid-cols-3 gap-1 w-24">
-                  <div
-                    className="h-6 rounded"
-                    style={{
-                      backgroundColor: showCustomColors
-                        ? formData.customColors.primary
-                        : formData.selectedColors.colors.primary,
-                    }}
-                  />
-                  <div
-                    className="h-6 rounded"
-                    style={{
-                      backgroundColor: showCustomColors
-                        ? formData.customColors.secondary
-                        : formData.selectedColors.colors.secondary,
-                    }}
-                  />
-                  <div
-                    className="h-6 rounded"
-                    style={{
-                      backgroundColor: showCustomColors
-                        ? formData.customColors.accent
-                        : formData.selectedColors.colors.accent,
-                    }}
-                  />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {componentOptions.map((component) => (
+                <div
+                  key={component.id}
+                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${formData.selectedComponents.includes(component.id)
+                    ? "border-purple-500 ring-2 ring-purple-200"
+                    : "border-gray-200 hover:border-purple-300"
+                    }`}
+                  onClick={() => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      selectedComponents: prev.selectedComponents.includes(component.id)
+                        ? prev.selectedComponents.filter((id) => id !== component.id)
+                        : [...prev.selectedComponents, component.id],
+                    }));
+                  }}
+                >
+                  <h3 className="font-medium text-gray-900">{component.name}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{component.description}</p>
                 </div>
-                <span className="text-gray-600">
-                  {showCustomColors
-                    ? "Custom Colors"
-                    : formData.selectedColors.name}
-                </span>
+              ))}
+            </div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="font-medium text-gray-900 mb-4">Business Information</h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Business Name</h4>
+                  <p className="text-gray-900 mt-1">{formData.businessName}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Description</h4>
+                  <p className="text-gray-900 mt-1">{formData.description}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Industry</h4>
+                  <p className="text-gray-900 mt-1">
+                    {industries.find(i => i.id === formData.industry)?.name}
+                  </p>
+                </div>
               </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="font-medium text-gray-900 mb-4">Design Style</h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Color Scheme</h4>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="grid grid-cols-3 gap-2 w-32">
+                      <div
+                        className="h-8 rounded"
+                        style={{
+                          backgroundColor: showCustomColors
+                            ? formData.customColors.primary
+                            : formData.selectedColors.colors.primary,
+                        }}
+                      />
+                      <div
+                        className="h-8 rounded"
+                        style={{
+                          backgroundColor: showCustomColors
+                            ? formData.customColors.secondary
+                            : formData.selectedColors.colors.secondary,
+                        }}
+                      />
+                      <div
+                        className="h-8 rounded"
+                        style={{
+                          backgroundColor: showCustomColors
+                            ? formData.customColors.accent
+                            : formData.selectedColors.colors.accent,
+                        }}
+                      />
+                    </div>
+                    <span className="text-gray-900">
+                      {showCustomColors ? "Custom Colors" : formData.selectedColors.name}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="font-medium text-gray-900 mb-4">Selected Components</h3>
+              {formData.selectedComponents.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {formData.selectedComponents.map(componentId => {
+                    const component = componentOptions.find(c => c.id === componentId);
+                    return (
+                      <div key={componentId} className="flex items-start gap-2">
+                        <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900">{component?.name}</h4>
+                          <p className="text-sm text-gray-600">{component?.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-600">No components selected</p>
+              )}
             </div>
           </div>
         );
