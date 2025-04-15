@@ -1,60 +1,68 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, AlertCircle, Sparkles } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase!.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
       if (error) {
-        throw error
+        throw error;
       }
 
       toast({
         title: "Login successful",
         description: "Welcome back!",
-      })
+      });
 
-      router.push("/dashboard")
-      router.refresh()
+      router.push("/dashboard");
+      router.refresh();
     } catch (error: any) {
-      setError(error.message || "An error occurred during login")
+      setError(error.message || "An error occurred during login");
       toast({
         title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
+        description:
+          error.message || "Please check your credentials and try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="container flex items-center justify-center min-h-screen py-10 px-4 md:px-6 bg-gradient-to-b from-purple-50 to-white">
@@ -70,7 +78,9 @@ export default function LoginPage() {
         <Card className="border-purple-100 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Login</CardTitle>
-            <CardDescription>Enter your email and password to access your account</CardDescription>
+            <CardDescription>
+              Enter your email and password to access your account
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
@@ -130,7 +140,10 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col">
             <div className="text-sm text-center text-muted-foreground mt-2">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-purple-600 font-medium underline-offset-4 hover:underline">
+              <Link
+                href="/signup"
+                className="text-purple-600 font-medium underline-offset-4 hover:underline"
+              >
                 Sign up
               </Link>
             </div>
@@ -138,6 +151,5 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

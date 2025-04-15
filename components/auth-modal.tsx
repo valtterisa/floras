@@ -1,90 +1,98 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 interface AuthModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
 export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClientComponentClient()
+  const supabase = createClientComponentClient();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase!.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
       if (error) {
-        throw error
+        throw error;
       }
 
       // Store session info in localStorage
-      localStorage.setItem("user_session", "true")
+      localStorage.setItem("user_session", "true");
 
-      onSuccess()
+      onSuccess();
     } catch (error: any) {
-      setError(error.message || "Failed to sign in")
+      setError(error.message || "Failed to sign in");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabase!.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
+      });
 
       if (error) {
-        throw error
+        throw error;
       }
 
       // Store session info in localStorage
-      localStorage.setItem("user_session", "true")
+      localStorage.setItem("user_session", "true");
 
-      onSuccess()
+      onSuccess();
     } catch (error: any) {
-      setError(error.message || "Failed to sign up")
+      setError(error.message || "Failed to sign up");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create an account to publish</DialogTitle>
-          <DialogDescription>Sign up or log in to publish your website and access all features.</DialogDescription>
+          <DialogDescription>
+            Sign up or log in to publish your website and access all features.
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="login" className="w-full">
@@ -167,6 +175,5 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         </Tabs>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

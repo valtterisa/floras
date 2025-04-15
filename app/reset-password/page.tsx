@@ -1,94 +1,103 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, AlertCircle, Sparkles } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [sessionChecked, setSessionChecked] = useState(false)
+  const router = useRouter();
+  const { toast } = useToast();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
     // Check if we have a session when the component mounts
     const checkSession = async () => {
       try {
-        const { data } = await supabase.auth.getSession()
+        const { data } = await supabase!.auth.getSession();
         if (!data.session) {
           toast({
             title: "Invalid or expired link",
             description: "Please request a new password reset link.",
             variant: "destructive",
-          })
-          router.push("/forgot-password")
+          });
+          router.push("/forgot-password");
         }
-        setSessionChecked(true)
+        setSessionChecked(true);
       } catch (error) {
-        console.error("Error checking session:", error)
-        setSessionChecked(true)
+        console.error("Error checking session:", error);
+        setSessionChecked(true);
       }
-    }
+    };
 
-    checkSession()
-  }, [router, toast])
+    checkSession();
+  }, [router, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     // Validate passwords
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
+      setError("Passwords do not match");
+      return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters long")
-      return
+      setError("Password must be at least 8 characters long");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await supabase!.auth.updateUser({
         password,
-      })
+      });
 
       if (error) {
-        throw error
+        throw error;
       }
 
       toast({
         title: "Password updated",
         description: "Your password has been successfully reset.",
-      })
+      });
 
-      router.push("/login")
+      router.push("/login");
     } catch (error: any) {
-      setError(error.message || "An error occurred while resetting your password")
+      setError(
+        error.message || "An error occurred while resetting your password"
+      );
       toast({
         title: "Failed to reset password",
         description: error.message || "Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (!sessionChecked) {
     return (
@@ -97,7 +106,7 @@ export default function ResetPasswordPage() {
           <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -134,7 +143,9 @@ export default function ResetPasswordPage() {
                   required
                   className="border-purple-100 focus:border-purple-300"
                 />
-                <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 8 characters long
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm New Password</Label>
@@ -166,7 +177,10 @@ export default function ResetPasswordPage() {
           <CardFooter className="flex flex-col">
             <div className="text-sm text-center text-muted-foreground mt-2">
               Remember your password?{" "}
-              <Link href="/login" className="text-purple-600 font-medium underline-offset-4 hover:underline">
+              <Link
+                href="/login"
+                className="text-purple-600 font-medium underline-offset-4 hover:underline"
+              >
                 Back to login
               </Link>
             </div>
@@ -174,6 +188,5 @@ export default function ResetPasswordPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
-
