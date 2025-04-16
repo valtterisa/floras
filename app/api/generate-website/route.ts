@@ -13,8 +13,6 @@ export async function POST(request: NextRequest) {
       components: websiteData.components,
     });
 
-    // @TODO: Add generateValidSectionCode
-
     return NextResponse.json({ data: generatedContent });
   } catch (error) {
     console.error("Error generating website:", error);

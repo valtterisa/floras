@@ -242,6 +242,7 @@ export default function CreatePage() {
       }
 
       const data = await response.json();
+      console.log('Generated website data:', data);
 
       // Store in localStorage for editor
       localStorage.setItem('websiteData', JSON.stringify(websiteData));

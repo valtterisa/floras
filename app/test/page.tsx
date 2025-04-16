@@ -1,228 +1,210 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Code, Briefcase, Smartphone } from "lucide-react";
 
-export default function ComponentPage() {
+export default function Component() {
     return (
-        <main
-            className="font-sans text-gray-800 antialiased"
+        <motion.main
+            data-file-location="/app/index/page.tsx"
+            className="flex flex-col min-h-screen"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
         >
+            {/* Header */}
+            <header className="bg-white shadow-md">
+                <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+                    <Link href="/" aria-label="Bittive Oy Home" data-editable="true" className="text-2xl font-bold text-[#EC4899]">
+                        Bittive Oy
+                    </Link>
+                    <div className="flex space-x-6">
+                        <Link href="#home" aria-label="Home" data-editable="true" className="text-gray-700 hover:text-[#F43F5E]">
+                            Home
+                        </Link>
+                        <Link href="#about" aria-label="About" data-editable="true" className="text-gray-700 hover:text-[#F43F5E]">
+                            About
+                        </Link>
+                        <Link href="#services" aria-label="Services" data-editable="true" className="text-gray-700 hover:text-[#F43F5E]">
+                            Services
+                        </Link>
+                        <Link href="#contact" aria-label="Contact" data-editable="true" className="text-gray-700 hover:text-[#F43F5E]">
+                            Contact
+                        </Link>
+                    </div>
+                </nav>
+            </header>
+
             {/* Hero Section */}
             <motion.section
-                data-file-location="/app/page.tsx"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="bg-blue-600 text-white py-20 px-4 text-center"
-            >
-                <h1 className="text-5xl font-bold mb-4" aria-label="Bittive - Software Development Agency" data-editable="true">
-                    Bittive
-                </h1>
-                <p className="text-xl mb-6" aria-label="Empowering your vision with innovative software solutions." data-editable="true">
-                    Empowering your vision with innovative software solutions.
-                </p>
-                <a
-                    href="#contact"
-                    className="inline-block bg-[#10B981] hover:bg-green-600 text-white py-3 px-6 rounded shadow transition-colors"
-                    aria-label="Get in Touch"
-                    data-editable="true"
-                >
-                    Get in Touch
-                </a>
-            </motion.section>
-
-            {/* Services Section */}
-            <motion.section
-                data-file-location="/app/page.tsx"
-                id="services"
+                data-file-location="/app/index/page.tsx"
+                id="home"
+                className="relative bg-[#EC4899] text-white text-center py-20 px-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-                className="py-16 px-4 bg-white"
             >
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-4xl font-bold text-center mb-8" aria-label="Our Services" data-editable="true">
-                        Our Services
-                    </h2>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <li className="border p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                            <h3 className="text-2xl font-semibold mb-2" aria-label="Custom Software Development" data-editable="true">
-                                Custom Software Development
-                            </h3>
-                            <p aria-label="Tailored solutions to fit your business needs." data-editable="true">
-                                Tailored solutions to fit your business needs.
-                            </p>
-                        </li>
-                        <li className="border p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                            <h3 className="text-2xl font-semibold mb-2" aria-label="Mobile Application Development" data-editable="true">
-                                Mobile Application Development
-                            </h3>
-                            <p aria-label="Innovative mobile apps for Android and iOS platforms." data-editable="true">
-                                Innovative mobile apps for Android and iOS platforms.
-                            </p>
-                        </li>
-                        <li className="border p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                            <h3 className="text-2xl font-semibold mb-2" aria-label="User Interface & UX Design" data-editable="true">
-                                UI/UX Design
-                            </h3>
-                            <p aria-label="Creating intuitive and engaging digital experiences." data-editable="true">
-                                Creating intuitive and engaging digital experiences.
-                            </p>
-                        </li>
-                        <li className="border p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                            <h3 className="text-2xl font-semibold mb-2" aria-label="Cloud & DevOps Solutions" data-editable="true">
-                                Cloud & DevOps Solutions
-                            </h3>
-                            <p aria-label="Scalable infrastructure and streamlined operations." data-editable="true">
-                                Scalable infrastructure and streamlined operations.
-                            </p>
-                        </li>
-                    </ul>
+                    <h1 className="text-4xl sm:text-5xl font-extrabold mb-4" aria-label="Welcome to Bittive Oy" data-editable="true">
+                        Empowering Your Business with Cutting-Edge Software Solutions
+                    </h1>
+                    <p className="text-lg sm:text-xl mb-8" aria-label="Business tagline" data-editable="true">
+                        Bittive Oy specializes in innovative software development that drives growth and enhances efficiency.
+                    </p>
+                    <Link
+                        href="#contact"
+                        aria-label="Get in touch with us"
+                        data-editable="true"
+                        className="inline-block bg-[#F59E0B] hover:bg-[#F43F5E] text-white font-semibold py-3 px-6 rounded-md transition-colors duration-300"
+                    >
+                        Get Started
+                    </Link>
                 </div>
-            </motion.section>
-
-            {/* Portfolio Section */}
-            <motion.section
-                data-file-location="/app/page.tsx"
-                id="portfolio"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
-                className="py-16 px-4 bg-gray-50"
-            >
-                <div className="max-w-5xl mx-auto">
-                    <h2 className="text-4xl font-bold text-center mb-8" aria-label="Our Portfolio" data-editable="true">
-                        Our Portfolio
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div className="border rounded-lg overflow-hidden shadow">
-                            <Image
-                                src="https://placehold.co/400x300"
-                                alt="Project 1 screenshot"
-                                width={400}
-                                height={300}
-                            />
-                            <div className="p-4">
-                                <h3 className="text-2xl font-semibold mb-2" aria-label="Project One" data-editable="true">
-                                    Project One
-                                </h3>
-                                <p aria-label="A groundbreaking software solution." data-editable="true">
-                                    A groundbreaking software solution.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="border rounded-lg overflow-hidden shadow">
-                            <Image
-                                src="https://placehold.co/400x300"
-                                alt="Project 2 screenshot"
-                                width={400}
-                                height={300}
-                            />
-                            <div className="p-4">
-                                <h3 className="text-2xl font-semibold mb-2" aria-label="Project Two" data-editable="true">
-                                    Project Two
-                                </h3>
-                                <p aria-label="Innovative design meeting modern functionality." data-editable="true">
-                                    Innovative design meeting modern functionality.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="border rounded-lg overflow-hidden shadow">
-                            <Image
-                                src="https://placehold.co/400x300"
-                                alt="Project 3 screenshot"
-                                width={400}
-                                height={300}
-                            />
-                            <div className="p-4">
-                                <h3 className="text-2xl font-semibold mb-2" aria-label="Project Three" data-editable="true">
-                                    Project Three
-                                </h3>
-                                <p aria-label="Delivering excellence in every line of code." data-editable="true">
-                                    Delivering excellence in every line of code.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                <div className="mt-10">
+                    <Image
+                        src="https://placehold.co/1200x600"
+                        alt="Abstract representation of software development"
+                        width={1200}
+                        height={600}
+                        className="rounded-md shadow-lg"
+                    />
                 </div>
             </motion.section>
 
             {/* About Section */}
             <motion.section
-                data-file-location="/app/page.tsx"
+                data-file-location="/app/index/page.tsx"
                 id="about"
+                className="py-16 px-4 bg-white"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+            >
+                <div className="max-w-4xl mx-auto text-center">
+                    <h2 className="text-3xl font-bold mb-6" aria-label="About Bittive Oy" data-editable="true">
+                        About Us
+                    </h2>
+                    <p className="text-lg text-gray-700 mb-4" aria-label="Bittive Oy description" data-editable="true">
+                        At Bittive Oy, our passion is to build robust software that not only meets your business requirements but also paves the way for
+                        future innovations. Our team of experts is dedicated to delivering quality solutions tailored to elevate your operations.
+                    </p>
+                    <p className="text-lg text-gray-700" aria-label="Our mission" data-editable="true">
+                        We believe in the power of technology to transform ideas into reality. Join us on this journey to achieve excellence in software development.
+                    </p>
+                </div>
+            </motion.section>
+
+            {/* Services Section */}
+            <motion.section
+                data-file-location="/app/index/page.tsx"
+                id="services"
+                className="py-16 px-4 bg-gray-50"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
-                className="py-16 px-4 bg-white"
             >
-                <div className="max-w-4xl mx-auto">
-                    <h2 className="text-4xl font-bold text-center mb-8" aria-label="About Bittive" data-editable="true">
-                        About Us
+                <div className="max-w-6xl mx-auto">
+                    <h2 className="text-3xl font-bold text-center mb-12" aria-label="Our Services" data-editable="true">
+                        Our Services
                     </h2>
-                    <p className="text-lg leading-relaxed mb-4" aria-label="Bittive is a cutting-edge software development agency dedicated to turning your vision into a reality. With a team of experienced developers and designers, we create custom solutions tailored to your business needs." data-editable="true">
-                        Bittive is a cutting-edge software development agency dedicated to turning your vision into a reality. With a team of experienced developers and designers, we create custom solutions tailored to your business needs.
-                    </p>
-                    <p className="text-lg leading-relaxed" aria-label="Our commitment to innovation, quality, and client satisfaction drives us to deliver industry-leading solutions that empower businesses around the globe." data-editable="true">
-                        Our commitment to innovation, quality, and client satisfaction drives us to deliver industry-leading solutions that empower businesses around the globe.
-                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow duration-300">
+                            <div className="mb-4 flex justify-center">
+                                <Code size={48} className="text-[#EC4899]" aria-hidden="true" />
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2 text-center" aria-label="Custom Software Development" data-editable="true">
+                                Custom Software Development
+                            </h3>
+                            <p className="text-gray-600 text-center" aria-label="Service description" data-editable="true">
+                                Tailored software solutions that fit your business needs, improving productivity and streamlining operations.
+                            </p>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow duration-300">
+                            <div className="mb-4 flex justify-center">
+                                <Smartphone size={48} className="text-[#EC4899]" aria-hidden="true" />
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2 text-center" aria-label="Mobile App Development" data-editable="true">
+                                Mobile App Development
+                            </h3>
+                            <p className="text-gray-600 text-center" aria-label="Service description" data-editable="true">
+                                Innovative mobile applications designed to engage your customers and drive business growth.
+                            </p>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow duration-300">
+                            <div className="mb-4 flex justify-center">
+                                <Briefcase size={48} className="text-[#EC4899]" aria-hidden="true" />
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2 text-center" aria-label="Cloud & Enterprise Solutions" data-editable="true">
+                                Cloud & Enterprise Solutions
+                            </h3>
+                            <p className="text-gray-600 text-center" aria-label="Service description" data-editable="true">
+                                Scalable cloud services and enterprise-grade solutions to optimize your business infrastructure.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </motion.section>
 
             {/* Contact Section */}
             <motion.section
-                data-file-location="/app/page.tsx"
+                data-file-location="/app/index/page.tsx"
                 id="contact"
+                className="py-16 px-4 bg-white"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
-                className="py-16 px-4 bg-blue-50"
             >
                 <div className="max-w-xl mx-auto">
-                    <h2 className="text-4xl font-bold text-center mb-8" aria-label="Contact Us" data-editable="true">
+                    <h2 className="text-3xl font-bold text-center mb-8" aria-label="Get in Touch" data-editable="true">
                         Contact Us
                     </h2>
                     <form className="space-y-6">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                                Name:
+                                Name
                             </label>
                             <input
                                 id="name"
                                 name="name"
                                 type="text"
                                 required
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 p-2"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#EC4899] focus:ring-[#EC4899]"
+                                aria-label="Your Name"
+                                data-editable="true"
                             />
                         </div>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email:
+                                Email
                             </label>
                             <input
                                 id="email"
                                 name="email"
                                 type="email"
                                 required
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 p-2"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#EC4899] focus:ring-[#EC4899]"
+                                aria-label="Your Email"
+                                data-editable="true"
                             />
                         </div>
                         <div>
                             <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-                                Message:
+                                Message
                             </label>
                             <textarea
                                 id="message"
                                 name="message"
-                                rows={4}
-                                required
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 p-2"
+                                rows={5}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#EC4899] focus:ring-[#EC4899]"
+                                aria-label="Your Message"
+                                data-editable="true"
                             />
                         </div>
                         <button
                             type="submit"
-                            className="w-full py-3 px-6 bg-[#10B981] hover:bg-green-600 text-white font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#10B981]"
+                            className="w-full py-3 px-4 bg-[#F59E0B] hover:bg-[#F43F5E] text-white font-semibold rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#EC4899]"
                             aria-label="Submit Contact Form"
                             data-editable="true"
                         >
@@ -231,6 +213,15 @@ export default function ComponentPage() {
                     </form>
                 </div>
             </motion.section>
-        </main>
+
+            {/* Footer */}
+            <footer className="bg-gray-900 text-gray-300 py-6 mt-auto">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <p className="text-sm" aria-label="Footer text" data-editable="true">
+                        © {new Date().getFullYear()} Bittive Oy. All rights reserved.
+                    </p>
+                </div>
+            </footer>
+        </motion.main>
     );
 }
