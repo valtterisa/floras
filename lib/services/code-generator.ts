@@ -7,12 +7,12 @@ export default async function generateWebsite(prompt: string) {
   const { text } = await generateText({
     system: systemPrompt,
     prompt: prompt,
-    // temperature: 0.7, // Adjust temperature for creativity
     // maxTokens: 3000,
-    model: openai("o3-mini-2025-01-31"),
+    model: openai("o3-mini"),
   });
 
   // Parse the generated content
+  console.log("Generated content:", text);
   const generatedContent = JSON.parse(text);
 
   return generatedContent.trim();

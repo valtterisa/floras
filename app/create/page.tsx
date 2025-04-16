@@ -207,6 +207,8 @@ export default function CreatePage() {
 
   const handleGenerate = async () => {
     setIsGenerating(true);
+    const colors = showCustomColors ? formData.customColors : formData.selectedColors.colors;
+
     try {
       const websiteData = {
         businessInfo: {
@@ -214,8 +216,17 @@ export default function CreatePage() {
           description: formData.description,
           industry: formData.industry
         },
-        colors: showCustomColors ? formData.customColors : formData.selectedColors.colors,
-        components: formData.selectedComponents
+        design: {
+          colors: {
+            primary: colors.primary,
+            secondary: colors.secondary,
+            accent: colors.accent
+          }
+        },
+        components: formData.selectedComponents.map(id => ({
+          type: id,
+          ...componentOptions.find(c => c.id === id)
+        }))
       };
 
       const response = await fetch('/api/generate-website', {
@@ -223,9 +234,7 @@ export default function CreatePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: JSON.stringify(websiteData)
-        }),
+        body: JSON.stringify(websiteData),
       });
 
       if (!response.ok) {
@@ -234,7 +243,7 @@ export default function CreatePage() {
 
       const data = await response.json();
 
-      // Store in localStorage for demo purposes
+      // Store in localStorage for editor
       localStorage.setItem('websiteData', JSON.stringify(websiteData));
 
       // Redirect to editor
@@ -242,6 +251,7 @@ export default function CreatePage() {
     } catch (error) {
       console.error('Error generating website:', error);
       toast.error("Failed to generate website. Please try again.");
+    } finally {
       setIsGenerating(false);
     }
   };
