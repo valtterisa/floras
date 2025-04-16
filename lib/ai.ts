@@ -32,6 +32,8 @@ ${components.map(
   ).join("\n")}
 `;
 
+  console.log("Prompt for AI:", prompt);
+
   const generatedContent = await generateWebsiteCode(prompt);
   return generatedContent;
 }

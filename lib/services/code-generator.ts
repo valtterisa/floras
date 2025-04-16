@@ -11,9 +11,7 @@ export default async function generateWebsite(prompt: string) {
     model: openai("o3-mini"),
   });
 
-  // Parse the generated content
-  console.log("Generated content:", text);
-  const generatedContent = JSON.parse(text);
+  const generatedContent = text
 
   return generatedContent.trim();
 }
