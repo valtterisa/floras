@@ -55,7 +55,7 @@ Design Requirements:
 Required Components:
 - Header (with responsive navigation)
 - Footer (with proper site structure)
-${components.map((component: any) => `- ${component.title}: ${component.content}`).join("\n")}
+${components.map((component: any) => `- ${component.name}: ${component.description}`).join("\n")}
 
 Technical Requirements:
 - Use "use client" directive for client components
