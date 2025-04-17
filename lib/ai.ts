@@ -1,4 +1,5 @@
 import generateValidSectionCode from "./services/code-quality";
+import { generateServerFiles } from "./server"; // Import server generation logic
 
 interface GenerateWebsiteParams {
   businessName: string;
@@ -65,6 +66,7 @@ Technical Requirements:
 - Ensure all components are properly animated
 - Use proper error handling and loading states
 - Implement proper responsive design patterns
+- never ask user any questions
 
 The output must be production-ready, visually stunning websites that can win design awards.`;
 
@@ -87,7 +89,11 @@ The output must be production-ready, visually stunning websites that can win des
     }
   };
 
-  localStorage.setItem('websiteState', JSON.stringify(websiteState));
+  // Call server.ts file generation logic
+  generateServerFiles(generatedContent);
+
+  // LOCAL STORAGE NOT SUPPORTED IN NODE / SERVER ENVIRONMENT
+  // localStorage.setItem('websiteState', JSON.stringify(websiteState));
 
   return generatedContent;
 }
@@ -113,3 +119,4 @@ export function clearStoredWebsiteState(): void {
 // ${prompt}
 
 // Remember: The output must be production-ready, visually stunning, and be able to win design awards.`;
+
