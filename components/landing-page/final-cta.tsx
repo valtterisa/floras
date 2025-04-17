@@ -21,7 +21,7 @@ export function FinalCTA() {
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Ready to Build Your Website?
           </h2>
-          <p className="text-xl text-gray-600 mb-12">
+          <p className="text-xl mb-12">
             Start your 7-day free trial today. No credit card required.
             <br className="hidden md:block" />
             Or talk to our founder directly if you have any questions.
