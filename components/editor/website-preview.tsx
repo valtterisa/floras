@@ -14,7 +14,7 @@ interface IframeEditorProps {
 }
 
 export default function WebsitePreview({
-  initialUrl = "/preview", // @TODO: Make this dynamic
+  initialUrl = "/preview1", // @TODO: Make this dynamic
 }: IframeEditorProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [url, setUrl] = useState(initialUrl);
