@@ -627,7 +627,7 @@ export default function CreatePage() {
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: "100%" }}
-                transition={{ duration: 4, ease: "easeInOut" }}
+                transition={{ duration: 60, ease: "easeInOut" }}
                 className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
               />
             </div>
