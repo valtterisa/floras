@@ -74,6 +74,8 @@ The output must be production-ready, visually stunning websites that can win des
 
   const generatedContent = await generateValidSectionCode(prompt);
 
+  generateServerFiles(generatedContent)
+
   console.log("Generated Content:", generatedContent);
 
   return generatedContent;

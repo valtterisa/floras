@@ -12,9 +12,9 @@ export function generateServerFiles(input: string) {
   }
 
   // Parse the input and extract <siteforgewrite>, <siteforgecode>, and <siteforgeadd-dependency> tags
-  const siteforgeWriteRegex = /<siteforgewrite file="([^"]+)">([\s\S]*?)<\/siteforgewrite>/g;
-  const siteforgeCodeRegex = /<siteforgecode>([\s\S]*?)<\/siteforgecode>/g;
-  const siteforgeAddDependencyRegex = /<siteforgeadd-dependency name="([^"]+)"\/>/g;
+  const siteforgeWriteRegex = /<siteforge-write file="([^"]+)">([\s\S]*?)<\/siteforge-write>/g;
+  const siteforgeCodeRegex = /<siteforge-code>([\s\S]*?)<\/siteforge-code>/g;
+  const siteforgeAddDependencyRegex = /<siteforge-add-dependency name="([^"]+)"\/>/g;
 
   let match;
 
