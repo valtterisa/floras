@@ -61,12 +61,13 @@ Once you've completed your planning, proceed with the implementation. Follow the
 8. Use kebab-case for file names.
 9. Create a new file for every new component or hook, no matter how small.
 10. Implement FULLY FUNCTIONAL code for all components mentioned in the prompt.
-11. Use Tailwind CSS extensively for styling.
+11. Use Tailwind CSS extensively for styling. Create and import correctly TailwindCSS files for project
 12. Utilize shadcn/ui components where appropriate. Shadcn/ui components already exist inside "@/ui/components"
 13. Implement responsive designs.
 14. Use framer-motion for animations to enhance the user experience.
 15. Use lucide-react for icons.
 16. Use placehold.co for placeholder images and videos. https://placehold.co/{width}x{height}
+17. Create necessary Next.js App-router pages and layouts for created components. Correct folder for new components is "/app/components/site-components/component-name"
 
 When updating existing files, use "// ... keep existing code (function-name, class-name, etc)" to indicate unchanged sections. Be descriptive in these comments, specifying exactly what code is being kept the same.
 
@@ -85,7 +86,7 @@ Before you provide your final output, double-check that you have implemented ALL
 Here's an example of how your output should be structured:
 
 <siteforge-code>
-<siteforge-write file="/components/header.tsx">
+<siteforge-write file="/app/components/site-components/header.tsx">
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -103,7 +104,7 @@ const Header: React.FC = () => {
 export default Header;
 </siteforge-write>
 
-<siteforge-write file="/components/footer.tsx">
+<siteforge-write file="/app/components/site-components/footer.tsx">
 // ... implement footer component
 </siteforge-write>
 

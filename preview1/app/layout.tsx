@@ -1,18 +1,22 @@
-"use client"
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-import "./globals.css"
-import { ReactNode } from "react"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export const metadata: Metadata = {
+  title: "Bittive Oy - Bringing Digital Ideas to Life",
+  description: "Bittive is a modern tech company based in Kuopio, Finland, focused on helping businesses and entrepreneurs bring their digital ideas to life.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
-  )
+  );
 }
