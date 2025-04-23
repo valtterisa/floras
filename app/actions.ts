@@ -36,6 +36,7 @@ export async function generateAIResponse(prompt: string) {
         break
       }
       console.log(value)
+      // gather values here
     }
 
   } catch (error) {
