@@ -14,7 +14,7 @@ interface IframeEditorProps {
 }
 
 export default function WebsitePreview({
-  initialUrl = "http://localhost:3001", // @TODO: Make this dynamic
+  initialUrl = "http://localhost:3000/test", // @TODO: Make this dynamic
 }: IframeEditorProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [url, setUrl] = useState(initialUrl);
@@ -136,12 +136,20 @@ export default function WebsitePreview({
   const handleElementSelection = (element: HTMLElement) => {
     if (!element) return;
 
+    // Reset previous element's contentEditable if necessary
+    if (selectedElement && selectedElement !== element) {
+      if (selectedElement.hasAttribute("data-editable-text")) {
+        selectedElement.contentEditable = "false";
+      }
+    }
+
     setSelectedElement(element);
-    setElementType(element.tagName.toLowerCase());
+    const elementTypeLower = element.tagName.toLowerCase();
+    setElementType(elementTypeLower);
 
     // Get element position
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!iframe || !iframe.contentWindow) return; // Added contentWindow check
 
     const iframeRect = iframe.getBoundingClientRect();
     const elementRect = element.getBoundingClientRect();
@@ -155,66 +163,146 @@ export default function WebsitePreview({
     });
 
     setShowToolbar(true);
-    setDebugInfo(`Selected element: ${element.tagName.toLowerCase()}`);
+    setDebugInfo(`Selected element: ${elementTypeLower}`);
 
-    // Only check text formatting for non-image elements
+    // Only check text formatting and enable contentEditable for non-image elements
     if (element.tagName !== "IMG") {
+      // Set contentEditable for text elements
+      if (element.hasAttribute("data-editable-text")) {
+        element.contentEditable = "true";
+      } else {
+        element.contentEditable = "false"; // Ensure non-text elements aren't editable
+      }
+
+      // Focus the element within the iframe's context
+      iframe.contentWindow.focus(); // Focus iframe window first
+      element.focus(); // Then focus the element
+
       checkActiveFormats(element);
 
-      // Focus the element
-      element.focus();
-
-      // Create a selection range if there isn't one
-      if (iframe.contentWindow?.getSelection()?.rangeCount === 0) {
+      // Create a selection range if there isn't one (might be redundant after focus)
+      const selection = iframe.contentWindow.getSelection();
+      if (selection && selection.rangeCount === 0) {
         const range = iframe.contentDocument!.createRange();
         range.selectNodeContents(element);
-        const selection = iframe.contentWindow?.getSelection();
-        if (selection) {
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
+        selection.removeAllRanges();
+        selection.addRange(range);
       }
+    } else {
+      element.contentEditable = "false"; // Ensure images are not contentEditable
     }
   };
 
   // Check which formats are currently active for the selected element
-  const checkActiveFormats = useCallback((element: HTMLElement) => {
-    if (!element || element.tagName === "IMG") return;
+  const checkActiveFormats = useCallback(
+    (element: HTMLElement) => {
+      if (!element || element.tagName === "IMG") return;
 
-    try {
-      const iframe = iframeRef.current;
-      if (!iframe || !iframe.contentDocument) return;
+      try {
+        const iframe = iframeRef.current;
+        if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
 
-      setActiveFormats({
-        bold: iframe.contentDocument.queryCommandState("bold"),
-        italic: iframe.contentDocument.queryCommandState("italic"),
-        underline: iframe.contentDocument.queryCommandState("underline"),
-      });
-    } catch (error) {
-      console.error("Error checking active formats:", error);
-    }
-  }, []);
+        const selection = iframe.contentWindow.getSelection();
+        let isBold = false;
+        let isItalic = false;
+        let isUnderline = false;
+
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          let node: Node | null = range.commonAncestorContainer;
+
+          // Traverse up from the common ancestor to the editable element
+          while (node && node !== element.parentElement) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const style = iframe.contentWindow.getComputedStyle(
+                node as Element
+              );
+              if (
+                style.fontWeight === "bold" ||
+                parseInt(style.fontWeight, 10) >= 700
+              ) {
+                isBold = true;
+              }
+              if (style.fontStyle === "italic") {
+                isItalic = true;
+              }
+              if (style.textDecorationLine.includes("underline")) {
+                isUnderline = true;
+              }
+            }
+            // Stop if we found all formats or reached the top
+            if (isBold && isItalic && isUnderline) break;
+            if (node === element) break; // Stop at the selected element itself
+            node = node.parentNode;
+          }
+
+          // If traversal didn't find styles, check the element itself
+          if (!isBold || !isItalic || !isUnderline) {
+            const elementStyle = iframe.contentWindow.getComputedStyle(element);
+            if (
+              !isBold &&
+              (elementStyle.fontWeight === "bold" ||
+                parseInt(elementStyle.fontWeight, 10) >= 700)
+            ) {
+              isBold = true;
+            }
+            if (!isItalic && elementStyle.fontStyle === "italic") {
+              isItalic = true;
+            }
+            if (
+              !isUnderline &&
+              elementStyle.textDecorationLine.includes("underline")
+            ) {
+              isUnderline = true;
+            }
+          }
+        } else {
+          // Fallback for no selection: check the element's style directly
+          const style = iframe.contentWindow.getComputedStyle(element);
+          isBold =
+            style.fontWeight === "bold" ||
+            parseInt(style.fontWeight, 10) >= 700;
+          isItalic = style.fontStyle === "italic";
+          isUnderline = style.textDecorationLine.includes("underline");
+        }
+
+        setActiveFormats({
+          bold: isBold,
+          italic: isItalic,
+          underline: isUnderline,
+        });
+      } catch (error) {
+        console.error("Error checking active formats:", error);
+        setDebugInfo(`Error checking formats: ${error}`);
+      }
+    },
+    [selectedElement]
+  ); // Depend on selectedElement
 
   // Format text
   const formatText = (command: string, value = "") => {
+    const iframe = iframeRef.current; // Get iframe ref
     if (
       !selectedElement ||
-      !iframeRef.current?.contentDocument ||
+      !iframe || // Check iframe ref
+      !iframe.contentDocument ||
       selectedElement.tagName === "IMG"
     )
       return;
 
+    // Ensure the element is contentEditable if it's supposed to be
+    if (!selectedElement.hasAttribute("data-editable-text")) return;
+    selectedElement.contentEditable = "true"; // Ensure it's editable for the command
+
     try {
-      // Focus the element to ensure it's the active editing target
+      // Focus the iframe window and the element to ensure correct context for execCommand
+      iframe.contentWindow?.focus();
       selectedElement.focus();
 
-      // Create a selection if there isn't one
-      const iframe = iframeRef.current;
+      // Create a selection if there isn't one or if it's collapsed
       const selection = iframe.contentWindow?.getSelection();
-
-      if (!selection || selection.rangeCount === 0) {
-        const iframe = iframeRef.current;
-        if (iframe && iframe.contentDocument) {
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        if (iframe.contentDocument) {
           const range = iframe.contentDocument.createRange();
           range.selectNodeContents(selectedElement);
           selection?.removeAllRanges();
@@ -224,24 +312,41 @@ export default function WebsitePreview({
 
       // Execute command in the iframe's document
       if (iframe.contentDocument) {
+        // Log before command
+        console.log(
+          `Executing command: ${command} with value: ${value || "none"}`
+        );
+        setDebugInfo(`Executing command: ${command}`);
+
         const result = iframe.contentDocument.execCommand(
           command,
           false,
           value
         );
 
+        // Log after command
+        console.log(`Command ${command} result: ${result}`);
         if (!result) {
           console.warn(`Command ${command} failed`);
           setDebugInfo(`Command ${command} failed`);
+          toast({
+            title: "Formatting Error",
+            description: `Could not apply ${command} formatting. The browser denied the command.`,
+            variant: "destructive",
+          });
         } else {
           setDebugInfo(
             `Applied ${command} ${value ? `with value ${value}` : ""}`
           );
+          // Trigger manual update if needed, e.g., save state
         }
       }
 
-      // Update active formats
+      // Re-check active formats after applying changes
       checkActiveFormats(selectedElement);
+
+      // Optional: Refocus element after potential focus loss from execCommand
+      // selectedElement.focus();
     } catch (error) {
       console.error(`Error applying format ${command}:`, error);
       setDebugInfo(
@@ -330,59 +435,96 @@ export default function WebsitePreview({
 
     const doc = iframe.contentDocument;
 
+    // Elements suitable for direct text editing
+    const textEditableTags = new Set([
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "p",
+      "span",
+      "li",
+      "button",
+      "a",
+    ]);
+    // All elements we want to be selectable/styleable
+    const selectableElementsSelector =
+      "h1, h2, h3, h4, h5, h6, p, span, section, header, nav, footer, li, div, button, a, img";
+
     // Select all relevant elements inside the iframe
-    const editableElements = doc.querySelectorAll(
-      "h1, h2, h3, h4, h5, h6, p, span, section, header, nav, footer, li, div, button, a, img"
-    );
+    const selectableElements = doc.querySelectorAll(selectableElementsSelector);
 
     let currentHoveredElement: HTMLElement | null = null; // Track the currently hovered element
 
-    editableElements.forEach((el) => {
-      // Skip elements that shouldn't be editable
+    selectableElements.forEach((el) => {
+      // Skip elements that shouldn't be editable at all
       if (el.closest("script, style, noscript, svg")) return;
 
-      // Make element editable
-      el.setAttribute("data-editable", "true");
-      // Here we can add more types of editable elements
-      el.setAttribute("data-editable-type", "text");
-      el.setAttribute("data-editable-tag", el.tagName.toLowerCase());
+      const htmlEl = el as HTMLElement; // Cast to HTMLElement
+      const tagNameLower = htmlEl.tagName.toLowerCase();
 
-      // Add hover and focus event listeners
-      el.addEventListener("mouseenter", () => {
+      // Mark element as selectable
+      htmlEl.setAttribute("data-editable", "true");
+      htmlEl.setAttribute("data-editable-tag", tagNameLower);
+
+      // Check if element type is suitable for text editing
+      if (textEditableTags.has(tagNameLower)) {
+        htmlEl.setAttribute("data-editable-type", "text");
+        // Set contentEditable initially false, enable on selection
+        htmlEl.contentEditable = "false";
+        htmlEl.setAttribute("data-editable-text", "true"); // Mark as text editable
+        // Prevent browsers default drag behavior for contentEditable elements
+        htmlEl.draggable = false;
+      } else {
+        htmlEl.setAttribute("data-editable-type", "block"); // Or 'image' etc.
+        htmlEl.contentEditable = "false"; // Ensure non-text elements are not editable
+      }
+
+      // Add hover and focus event listeners (keep existing logic)
+      htmlEl.addEventListener("mouseenter", () => {
         // Remove hover styles from the previously hovered element
-        if (currentHoveredElement && currentHoveredElement !== el) {
+        if (currentHoveredElement && currentHoveredElement !== htmlEl) {
           currentHoveredElement.classList.remove("hover-active");
         }
 
         // Add hover style to the current element
-        el.classList.add("hover-active");
-        currentHoveredElement = el as HTMLElement; // Update the currently hovered element
+        htmlEl.classList.add("hover-active");
+        currentHoveredElement = htmlEl; // Update the currently hovered element
       });
 
-      el.addEventListener("mouseleave", () => {
+      htmlEl.addEventListener("mouseleave", () => {
         // Remove hover style from the current element
-        el.classList.remove("hover-active");
-        if (currentHoveredElement === el) {
+        htmlEl.classList.remove("hover-active");
+        if (currentHoveredElement === htmlEl) {
           currentHoveredElement = null; // Reset the currently hovered element
         }
       });
 
-      el.addEventListener("focus", () => {
-        // Remove focus styles from all other elements
-        editableElements.forEach((otherEl) => {
-          if (otherEl !== el) {
-            otherEl.classList.remove("focus-active");
-          }
-        });
-        el.classList.add("focus-active");
+      // We handle focus via handleElementSelection now, but keep blur styling
+      htmlEl.addEventListener("blur", () => {
+        htmlEl.classList.remove("focus-active");
+        // Important: Turn off contentEditable when focus is lost to prevent accidental edits
+        // if (htmlEl.hasAttribute("data-editable-text")) {
+        //    htmlEl.contentEditable = "false";
+        // }
       });
 
-      el.addEventListener("blur", () => {
-        el.classList.remove("focus-active");
-      });
+      // Add click listener (already exists, ensure it calls handleElementSelection)
+      // Check if listener already exists to prevent duplicates if makeElementsEditable runs multiple times
+      if (!(htmlEl as any).__clickListenerAttached) {
+        htmlEl.addEventListener("click", (e) => {
+          console.log("element clicked", htmlEl);
+          e.preventDefault();
+          e.stopPropagation();
+          handleElementSelection(htmlEl);
+        });
+        (htmlEl as any).__clickListenerAttached = true;
+      }
     });
 
-    console.log(`Made ${editableElements.length} elements editable`);
+    console.log(`Made ${selectableElements.length} elements selectable`);
   };
 
   // Debugging Iframe Ref

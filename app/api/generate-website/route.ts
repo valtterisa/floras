@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import generateValidSectionCode from "@/lib/services/code-quality";
 import { userPrompt } from "@/lib/prompts/user";
 import { generateAIResponse } from "@/app/actions";
 
@@ -14,12 +13,11 @@ export async function POST(request: NextRequest) {
       components: websiteData.components,
     });
 
-    // Query AI and get streaming response
-    const generatedContent = await generateAIResponse(prompt);
+    const generatedContentJSON = await generateAIResponse(prompt);
 
-    console.log("Generated Content:", generatedContent);
+    console.log("Generated Content:", generatedContentJSON);
 
-    return NextResponse.json({ data: generatedContent });
+    return NextResponse.json({ data: generatedContentJSON });
   } catch (error) {
     console.error("Error generating website:", error);
     return NextResponse.json(
