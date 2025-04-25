@@ -15,7 +15,7 @@ export async function generateAIResponse(prompt: string): Promise<Operation[]> {
   const operations: Operation[] = [];
 
   try {
-    const result = await streamText({
+    const result = streamText({
       system: systemPrompt,
       prompt: prompt,
       temperature: 0,
@@ -30,7 +30,6 @@ export async function generateAIResponse(prompt: string): Promise<Operation[]> {
     });
 
     const reader = result.textStream.getReader();
-    const decoder = new TextDecoder();
     let buffer = "";
 
     const siteforgeWriteRegex =
@@ -56,7 +55,6 @@ export async function generateAIResponse(prompt: string): Promise<Operation[]> {
         break;
       }
 
-      // buffer += value.trim();
       buffer += value;
 
       processBuffer();
@@ -68,12 +66,10 @@ export async function generateAIResponse(prompt: string): Promise<Operation[]> {
     );
     return operations;
 
-    // --- Updated processBuffer Function ---
     function processBuffer() {
       let changed = true;
       while (changed) {
         changed = false;
-        // No need to trim start here, as indexOf will find the first match
 
         // Find the index of the first occurrence of each tag
         const writeMatchInfo = findFirstMatch(buffer, siteforgeWriteRegex);
@@ -146,22 +142,18 @@ export async function generateAIResponse(prompt: string): Promise<Operation[]> {
           }
         }
 
-        // If an earliest match was found, process it
         if (earliestMatch !== null) {
           operations.push({
             operation: earliestMatch.type,
             ...earliestMatch.data,
           });
           console.log(`Parsed ${earliestMatch.type} operation.`);
-          // Remove the processed part (including text before the match) from the buffer
           buffer = buffer.substring(earliestMatch.index + earliestMatch.length);
-          changed = true; // Indicate a change was made, loop again
+          changed = true;
         }
-        // If no match found in this pass, changed remains false, loop terminates
       }
     }
 
-    // Helper function to find the first match and its index
     function findFirstMatch(
       text: string,
       regex: RegExp
@@ -172,7 +164,6 @@ export async function generateAIResponse(prompt: string): Promise<Operation[]> {
       }
       return null;
     }
-    // --- End Updated processBuffer Function ---
   } catch (error) {
     console.error("Error in generateAIResponse:", error);
     return [];
