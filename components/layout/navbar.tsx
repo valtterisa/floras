@@ -37,23 +37,22 @@ export default function Navbar({ user }: any) {
         </div>
         <div className="flex items-center gap-4">
           {user ? (
-            <Link className="" href="/dashboard">
-              Dashboard
-            </Link>
+            <Button href="/dashboard">Dashboard</Button>
           ) : (
             <div>
-              <Link
+              <Button
                 href="/login"
                 className="hidden md:flex text-purple-600 border-purple-600 hover:bg-purple-50"
+                variant="outline"
               >
                 Sign In
-              </Link>
-              <Link
+              </Button>
+              <Button
                 href="signup"
                 className="hidden md:flex bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
               >
                 Get Started
-              </Link>
+              </Button>
             </div>
           )}
 
