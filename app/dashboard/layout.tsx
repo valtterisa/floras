@@ -2,8 +2,8 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   Globe,
@@ -32,46 +32,15 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
+import { logout } from "../(auth)/actions";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    // Check if user is authenticated
-    const checkAuth = localStorage.getItem("isAuthenticated") === "true";
-    setIsAuthenticated(checkAuth);
-
-    if (!checkAuth) {
-      router.push("/");
-      return;
-    }
-
-    // Check if mobile
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    router.push("/");
-  };
-
-  if (!isAuthenticated) {
-    return <div className="container py-10 px-4 md:px-6">Redirecting...</div>;
-  }
 
   return (
     <SidebarProvider>
@@ -183,7 +152,7 @@ export default function DashboardLayout({
           <SidebarFooter className="border-t">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout}>
+                <SidebarMenuButton onClick={logout}>
                   <LogOut className="h-5 w-5 mr-3" />
                   Logout
                 </SidebarMenuButton>
@@ -339,7 +308,7 @@ export default function DashboardLayout({
                       <Button
                         variant="ghost"
                         className="w-full justify-start"
-                        onClick={handleLogout}
+                        onClick={logout}
                       >
                         <LogOut className="h-5 w-5 mr-3" />
                         Logout

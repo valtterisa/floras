@@ -41,15 +41,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Only redirect to login if:
+  // 1. No authenticated user
+  // 2. Trying to access a protected route like dashboard or admin
+  // 3. Not already on an auth-related page
   if (
     !user &&
-    (!request.nextUrl.pathname.startsWith("/dashboard") ||
-      !request.nextUrl.pathname.startsWith("/admin"))
+    (request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname.startsWith("/admin")) &&
+    !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/(auth)")
   ) {
-    // // no user, potentially respond by redirecting the user to the login page
-    // const url = request.nextUrl.clone();
-    // url.pathname = "/login";
-    // return NextResponse.redirect(url);
+    // no user, redirect to login page
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

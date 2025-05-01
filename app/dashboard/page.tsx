@@ -31,26 +31,6 @@ export default function DashboardPage() {
   const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">("starter");
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Get website data from localStorage
-    const data = localStorage.getItem("websiteData");
-    if (data) {
-      const parsedData = JSON.parse(data);
-      setWebsiteData(parsedData);
-
-      // Set plan
-      if (parsedData.plan) {
-        setPlan(parsedData.plan);
-      }
-    }
-
-    setIsLoading(false);
-  }, []);
-
-  if (isLoading) {
-    return <div className="container py-10 px-4 md:px-6">Loading...</div>;
-  }
-
   return (
     <div className="container py-10 px-4 md:px-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
@@ -105,8 +85,8 @@ export default function DashboardPage() {
               {plan === "starter"
                 ? "Free plan"
                 : plan === "pro"
-                ? "$19/month"
-                : "$49/month"}
+                  ? "$19/month"
+                  : "$49/month"}
             </p>
           </CardContent>
         </Card>
