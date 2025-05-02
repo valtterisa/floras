@@ -1,23 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Upload, Image as ImageIcon } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Upload, Image as ImageIcon } from "lucide-react";
 
 interface MediaUploaderProps {
-  onUpload: (mediaUrl: string) => void
+  onUpload: (mediaUrl: string) => void;
 }
 
 export default function MediaUploader({ onUpload }: MediaUploaderProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleImageSelect = (url: string) => {
-    onUpload(url)
-    setIsOpen(false)
-  }
+    onUpload(url);
+    setIsOpen(false);
+  };
 
   const placeholderImages = [
     "/social-media-post.png",
@@ -26,7 +32,7 @@ export default function MediaUploader({ onUpload }: MediaUploaderProps) {
     "/portrait-photography.png",
     "/vibrant-pasta-dish.png",
     "/travel-photography.png",
-  ]
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -51,7 +57,9 @@ export default function MediaUploader({ onUpload }: MediaUploaderProps) {
               <div className="flex flex-col items-center">
                 <Upload className="h-10 w-10 text-muted-foreground mb-2" />
                 <h3 className="font-medium text-lg">Drag and drop files</h3>
-                <p className="text-muted-foreground text-sm mb-4">or click to browse files</p>
+                <p className="text-muted-foreground text-sm mb-4">
+                  or click to browse files
+                </p>
                 <Input
                   type="file"
                   className="max-w-xs"
@@ -60,11 +68,13 @@ export default function MediaUploader({ onUpload }: MediaUploaderProps) {
                     // In a real app, this would upload the file to a server
                     // For this demo, we'll just use a placeholder
                     if (e.target.files && e.target.files[0]) {
-                      handleImageSelect(placeholderImages[0])
+                      handleImageSelect(placeholderImages[0]);
                     }
                   }}
                 />
-                <p className="text-xs text-muted-foreground mt-4">Supported formats: JPEG, PNG, GIF, MP4, MOV</p>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Supported formats: JPEG, PNG, GIF, MP4, MOV
+                </p>
               </div>
             </div>
           </TabsContent>
@@ -105,5 +115,5 @@ export default function MediaUploader({ onUpload }: MediaUploaderProps) {
         </Tabs>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

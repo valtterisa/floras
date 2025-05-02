@@ -34,7 +34,7 @@ export default function ContentLibrary() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [isPostDetailsOpen, setIsPostDetailsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"list">("list");
+  const [viewMode, setViewMode] = useState<"grid">("grid");
   const [filters, setFilters] = useState({
     platforms: [] as string[],
     status: "all", // 'all', 'scheduled', 'published'
@@ -254,162 +254,82 @@ export default function ContentLibrary() {
 
             {/* Content List */}
             {filteredPosts.length > 0 ? (
-              viewMode === "list" ? (
-                <div className="space-y-3 mt-2">
-                  {filteredPosts.map((post, index) => (
-                    <div
-                      key={index}
-                      className="p-4 border rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => handlePostClick(post)}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex gap-2 items-center">
-                          <div className="flex gap-1">
-                            {post.platforms.map((platform: string) => (
-                              <div key={platform} className="h-5 w-5">
-                                {platform === "twitter" && (
-                                  <svg
-                                    className="fill-blue-500"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5549 21H20.7996L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
-                                  </svg>
-                                )}
-                                {platform === "instagram" && (
-                                  <svg
-                                    className="fill-pink-500"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path d="M12 2.982c2.937 0 3.285.011 4.445.064 1.072.049 1.655.228 2.042.379.514.2.88.439 1.265.823.385.385.624.751.824 1.265.15.387.33.97.379 2.042.053 1.16.064 1.508.064 4.445 0 2.937-.011 3.285-.064 4.445-.049 1.072-.228 1.655-.379 2.042-.2.514-.439.88-.823 1.265-.385.385-.751.624-1.265.824-.387.15-.97.33-2.042.379-1.16.053-1.508.064-4.445.064-2.937 0-3.285-.011-4.445-.064-1.072-.049-1.655-.228-2.042-.379-.514-.2-.88-.439-1.265-.823-.385-.385-.624-.751-.824-1.265-.15-.387-.33-.97-.379-2.042-.053-1.16-.064-1.508-.064-4.445 0-2.937.011-3.285.064-4.445.049-1.072.228-1.655.379-2.042.2-.514.439-.88.823-1.265.385-.385.751-.624 1.265-.824.387-.15.97-.33 2.042-.379 1.16-.053 1.508-.064 4.445-.064M12 1c-2.987 0-3.362.013-4.535.066-1.171.054-1.97.24-2.67.512-.724.281-1.337.657-1.949 1.27-.613.612-.989 1.225-1.27 1.949-.272.7-.458 1.499-.512 2.67C1.013 8.638 1 9.013 1 12s.013 3.362.066 4.535c.054 1.171.24 1.97.512 2.67.281.724.657 1.337 1.27 1.949.612.613 1.225.989 1.949 1.27.7.272 1.499.458 2.67.512C8.638 22.987 9.013 23 12 23s3.362-.013 4.535-.066c1.171-.054 1.97-.24 2.67-.512.724-.281 1.337-.657 1.949-1.27.613-.612.989-1.225 1.27-1.949.272-.7.458-1.499.512-2.67C22.987 15.362 23 14.987 23 12s-.013-3.362-.066-4.535c-.054-1.171-.24-1.97-.512-2.67-.281-.724-.657-1.337-1.27-1.949-.612-.613-1.225-.989-1.949-1.27-.7-.272-1.499-.458-2.67-.512C15.362 1.013 14.987 1 12 1Zm0 5.351c-3.121 0-5.649 2.528-5.649 5.649 0 3.121 2.528 5.649 5.649 5.649 3.121 0 5.649-2.528 5.649-5.649 0-3.121-2.528-5.649-5.649-5.649Zm0 9.316c-2.026 0-3.667-1.641-3.667-3.667 0-2.026 1.641-3.667 3.667-3.667 2.026 0 3.667 1.641 3.667 3.667 0 2.026-1.641 3.667-3.667 3.667Zm7.192-9.539c0 .729-.592 1.32-1.321 1.32-.729 0-1.32-.591-1.32-1.32 0-.729.591-1.32 1.32-1.32.729 0 1.321.591 1.321 1.32Z" />
-                                  </svg>
-                                )}
-                                {platform === "tiktok" && (
-                                  <svg
-                                    className="fill-gray-900"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path d="M19.321 5.562a5.124 5.124 0 0 1-3.414-1.267 5.124 5.124 0 0 1-1.53-3.295h-3.643v13.636c0 1.355-1.095 2.45-2.45 2.45s-2.45-1.095-2.45-2.45 1.095-2.45 2.45-2.45c.273 0 .537.045.784.127v-3.688a6.13 6.13 0 0 0-.784-.05c-3.362 0-6.088 2.729-6.088 6.09a6.089 6.089 0 0 0 6.088 6.088c3.361 0 6.09-2.727 6.09-6.088V8.967a8.78 8.78 0 0 0 4.948 1.514V7a5.127 5.127 0 0 1-1 .188 5.127 5.127 0 0 1-1-.188V5.562h.001Z" />
-                                  </svg>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                          <div className="ml-1">
-                            {getStatusBadge(post.date)}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {post.date.toLocaleDateString("default", {
-                            month: "short",
-                            day: "numeric",
-                          })}{" "}
-                          at{" "}
-                          {post.date.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                {filteredPosts.map((post, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-md overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handlePostClick(post)}
+                  >
+                    {post.media && post.media.length > 0 ? (
+                      <div className="aspect-video w-full overflow-hidden bg-muted">
+                        <img
+                          src={post.media[0] || "/placeholder.svg"}
+                          alt="Post media"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-video w-full bg-muted flex items-center justify-center">
+                        <div className="text-muted-foreground text-sm">
+                          No media
                         </div>
                       </div>
-                      <div className="mt-2">
-                        <p className="line-clamp-2">{post.content}</p>
-                      </div>
-                      {post.media && post.media.length > 0 && (
-                        <div className="mt-2 flex gap-2 overflow-x-auto">
-                          {post.media.map((media: string, idx: number) => (
-                            <img
-                              key={idx}
-                              src={media || "/placeholder.svg"}
-                              alt={`Media ${idx + 1}`}
-                              className="h-12 w-12 rounded-md object-cover flex-shrink-0"
-                            />
+                    )}
+                    <div className="p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex gap-1">
+                          {post.platforms.map((platform: string) => (
+                            <div key={platform} className="h-4 w-4">
+                              {platform === "twitter" && (
+                                <svg
+                                  className="fill-blue-500"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5549 21H20.7996L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
+                                </svg>
+                              )}
+                              {platform === "instagram" && (
+                                <svg
+                                  className="fill-pink-500"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path d="M12 2.982c2.937 0 3.285.011 4.445.064 1.072.049 1.655.228 2.042.379.514.2.88.439 1.265.823.385.385.624.751.824 1.265.15.387.33.97.379 2.042.053 1.16.064 1.508.064 4.445 0 2.937-.011 3.285-.064 4.445-.049 1.072-.228 1.655-.379 2.042-.2.514-.439.88-.823 1.265-.385.385-.751.624-1.265.824-.387.15-.97.33-2.042.379-1.16.053-1.508.064-4.445.064-2.937 0-3.285-.011-4.445-.064-1.072-.049-1.655-.228-2.042-.379-.514-.2-.88-.439-1.265-.823-.385-.385-.624-.751-.824-1.265-.15-.387-.33-.97-.379-2.042-.053-1.16-.064-1.508-.064-4.445 0-2.937.011-3.285.064-4.445.049-1.072.228-1.655.379-2.042.2-.514.439-.88.823-1.265.385-.385.751-.624 1.265-.824.387-.15.97-.33 2.042-.379 1.16-.053 1.508-.064 4.445-.064M12 1c-2.987 0-3.362.013-4.535.066-1.171.054-1.97.24-2.67.512-.724.281-1.337.657-1.949 1.27-.613.612-.989 1.225-1.27 1.949-.272.7-.458 1.499-.512 2.67C1.013 8.638 1 9.013 1 12s.013 3.362.066 4.535c.054 1.171.24 1.97.512 2.67.281.724.657 1.337 1.27 1.949.612.613 1.225.989 1.949 1.27.7.272 1.499.458 2.67.512C8.638 22.987 9.013 23 12 23s3.362-.013 4.535-.066c1.171-.054 1.97-.24 2.67-.512.724-.281 1.337-.657 1.949-1.27.613-.612.989-1.225 1.27-1.949.272-.7.458-1.499.512-2.67C22.987 15.362 23 14.987 23 12s-.013-3.362-.066-4.535c-.054-1.171-.24-1.97-.512-2.67-.281-.724-.657-1.337-1.27-1.949-.612-.613-1.225-.989-1.949-1.27-.7-.272-1.499-.458-2.67-.512C15.362 1.013 14.987 1 12 1Zm0 5.351c-3.121 0-5.649 2.528-5.649 5.649 0 3.121 2.528 5.649 5.649 5.649 3.121 0 5.649-2.528 5.649-5.649 0-3.121-2.528-5.649-5.649-5.649Zm0 9.316c-2.026 0-3.667-1.641-3.667-3.667 0-2.026 1.641-3.667 3.667-3.667 2.026 0 3.667 1.641 3.667 3.667 0 2.026-1.641 3.667-3.667 3.667Zm7.192-9.539c0 .729-.592 1.32-1.321 1.32-.729 0-1.32-.591-1.32-1.32 0-.729.591-1.32 1.32-1.32.729 0 1.321.591 1.321 1.32Z" />
+                                </svg>
+                              )}
+                              {platform === "tiktok" && (
+                                <svg
+                                  className="fill-gray-900"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path d="M19.321 5.562a5.124 5.124 0 0 1-3.414-1.267 5.124 5.124 0 0 1-1.53-3.295h-3.643v13.636c0 1.355-1.095 2.45-2.45 2.45s-2.45-1.095-2.45-2.45 1.095-2.45 2.45-2.45c.273 0 .537.045.784.127v-3.688a6.13 6.13 0 0 0-.784-.05c-3.362 0-6.088 2.729-6.088 6.09a6.089 6.089 0 0 0 6.088 6.088c3.361 0 6.09-2.727 6.09-6.088V8.967a8.78 8.78 0 0 0 4.948 1.514V7a5.127 5.127 0 0 1-1 .188 5.127 5.127 0 0 1-1-.188V5.562h.001Z" />
+                                </svg>
+                              )}
+                            </div>
                           ))}
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-                  {filteredPosts.map((post, index) => (
-                    <div
-                      key={index}
-                      className="border rounded-md overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => handlePostClick(post)}
-                    >
-                      {post.media && post.media.length > 0 ? (
-                        <div className="aspect-video w-full overflow-hidden bg-muted">
-                          <img
-                            src={post.media[0] || "/placeholder.svg"}
-                            alt="Post media"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video w-full bg-muted flex items-center justify-center">
-                          <div className="text-muted-foreground text-sm">
-                            No media
-                          </div>
-                        </div>
-                      )}
-                      <div className="p-3">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex gap-1">
-                            {post.platforms.map((platform: string) => (
-                              <div key={platform} className="h-4 w-4">
-                                {platform === "twitter" && (
-                                  <svg
-                                    className="fill-blue-500"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5549 21H20.7996L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
-                                  </svg>
-                                )}
-                                {platform === "instagram" && (
-                                  <svg
-                                    className="fill-pink-500"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path d="M12 2.982c2.937 0 3.285.011 4.445.064 1.072.049 1.655.228 2.042.379.514.2.88.439 1.265.823.385.385.624.751.824 1.265.15.387.33.97.379 2.042.053 1.16.064 1.508.064 4.445 0 2.937-.011 3.285-.064 4.445-.049 1.072-.228 1.655-.379 2.042-.2.514-.439.88-.823 1.265-.385.385-.751.624-1.265.824-.387.15-.97.33-2.042.379-1.16.053-1.508.064-4.445.064-2.937 0-3.285-.011-4.445-.064-1.072-.049-1.655-.228-2.042-.379-.514-.2-.88-.439-1.265-.823-.385-.385-.624-.751-.824-1.265-.15-.387-.33-.97-.379-2.042-.053-1.16-.064-1.508-.064-4.445 0-2.937.011-3.285.064-4.445.049-1.072.228-1.655.379-2.042.2-.514.439-.88.823-1.265.385-.385.751-.624 1.265-.824.387-.15.97-.33 2.042-.379 1.16-.053 1.508-.064 4.445-.064M12 1c-2.987 0-3.362.013-4.535.066-1.171.054-1.97.24-2.67.512-.724.281-1.337.657-1.949 1.27-.613.612-.989 1.225-1.27 1.949-.272.7-.458 1.499-.512 2.67C1.013 8.638 1 9.013 1 12s.013 3.362.066 4.535c.054 1.171.24 1.97.512 2.67.281.724.657 1.337 1.27 1.949.612.613 1.225.989 1.949 1.27.7.272 1.499.458 2.67.512C8.638 22.987 9.013 23 12 23s3.362-.013 4.535-.066c1.171-.054 1.97-.24 2.67-.512.724-.281 1.337-.657 1.949-1.27.613-.612.989-1.225 1.27-1.949.272-.7.458-1.499.512-2.67C22.987 15.362 23 14.987 23 12s-.013-3.362-.066-4.535c-.054-1.171-.24-1.97-.512-2.67-.281-.724-.657-1.337-1.27-1.949-.612-.613-1.225-.989-1.949-1.27-.7-.272-1.499-.458-2.67-.512C15.362 1.013 14.987 1 12 1Zm0 5.351c-3.121 0-5.649 2.528-5.649 5.649 0 3.121 2.528 5.649 5.649 5.649 3.121 0 5.649-2.528 5.649-5.649 0-3.121-2.528-5.649-5.649-5.649Zm0 9.316c-2.026 0-3.667-1.641-3.667-3.667 0-2.026 1.641-3.667 3.667-3.667 2.026 0 3.667 1.641 3.667 3.667 0 2.026-1.641 3.667-3.667 3.667Zm7.192-9.539c0 .729-.592 1.32-1.321 1.32-.729 0-1.32-.591-1.32-1.32 0-.729.591-1.32 1.32-1.32.729 0 1.321.591 1.321 1.32Z" />
-                                  </svg>
-                                )}
-                                {platform === "tiktok" && (
-                                  <svg
-                                    className="fill-gray-900"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path d="M19.321 5.562a5.124 5.124 0 0 1-3.414-1.267 5.124 5.124 0 0 1-1.53-3.295h-3.643v13.636c0 1.355-1.095 2.45-2.45 2.45s-2.45-1.095-2.45-2.45 1.095-2.45 2.45-2.45c.273 0 .537.045.784.127v-3.688a6.13 6.13 0 0 0-.784-.05c-3.362 0-6.088 2.729-6.088 6.09a6.089 6.089 0 0 0 6.088 6.088c3.361 0 6.09-2.727 6.09-6.088V8.967a8.78 8.78 0 0 0 4.948 1.514V7a5.127 5.127 0 0 1-1 .188 5.127 5.127 0 0 1-1-.188V5.562h.001Z" />
-                                  </svg>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                          {getStatusBadge(post.date)}
-                        </div>
-                        <p className="line-clamp-3 text-sm">{post.content}</p>
-                        <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {post.date.toLocaleDateString("default", {
-                            month: "short",
-                            day: "numeric",
-                          })}{" "}
-                          at{" "}
-                          {post.date.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
+                        {getStatusBadge(post.date)}
+                      </div>
+                      <p className="line-clamp-3 text-sm">{post.content}</p>
+                      <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {post.date.toLocaleDateString("default", {
+                          month: "short",
+                          day: "numeric",
+                        })}{" "}
+                        at{" "}
+                        {post.date.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
@@ -437,7 +357,7 @@ export default function ContentLibrary() {
 
       {/* Post Details Dialog */}
       <Dialog open={isPostDetailsOpen} onOpenChange={setIsPostDetailsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Post Details</DialogTitle>
           </DialogHeader>
@@ -458,15 +378,57 @@ export default function ContentLibrary() {
                           "bg-gray-900 text-white border-gray-700"
                       )}
                     >
-                      {platform === "twitter"
-                        ? "X"
-                        : platform === "instagram"
-                          ? "Instagram"
-                          : "TikTok"}
+                      <a
+                        href={
+                          platform === "twitter"
+                            ? "https://twitter.com"
+                            : platform === "instagram"
+                              ? "https://instagram.com"
+                              : "https://tiktok.com"
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1"
+                      >
+                        {platform === "twitter" && (
+                          <svg
+                            className="h-3.5 w-3.5 fill-blue-600"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5549 21H20.7996L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
+                          </svg>
+                        )}
+                        {platform === "instagram" && (
+                          <svg
+                            className="h-3.5 w-3.5 fill-pink-600"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path d="M12 2.982c2.937 0 3.285.011 4.445.064 1.072.049 1.655.228 2.042.379.514.2.88.439 1.265.823.385.385.624.751.824 1.265.15.387.33.97.379 2.042.053 1.16.064 1.508.064 4.445 0 2.937-.011 3.285-.064 4.445-.049 1.072-.228 1.655-.379 2.042-.2.514-.439.88-.823 1.265-.385.385-.751.624-1.265.824-.387.15-.97.33-2.042.379-1.16.053-1.508.064-4.445.064-2.937 0-3.285-.011-4.445-.064-1.072-.049-1.655-.228-2.042-.379-.514-.2-.88-.439-1.265-.823-.385-.385-.624-.751-.824-1.265-.15-.387-.33-.97-.379-2.042-.053-1.16-.064-1.508-.064-4.445 0-2.937.011-3.285.064-4.445.049-1.072.228-1.655.379-2.042.2-.514.439-.88.823-1.265.385-.385.751-.624 1.265-.824.387-.15.97-.33 2.042-.379 1.16-.053 1.508-.064 4.445-.064M12 1c-2.987 0-3.362.013-4.535.066-1.171.054-1.97.24-2.67.512-.724.281-1.337.657-1.949 1.27-.613.612-.989 1.225-1.27 1.949-.272.7-.458 1.499-.512 2.67C1.013 8.638 1 9.013 1 12s.013 3.362.066 4.535c.054 1.171.24 1.97.512 2.67.281.724.657 1.337 1.27 1.949.612.613 1.225.989 1.949 1.27.7.272 1.499.458 2.67.512C8.638 22.987 9.013 23 12 23s3.362-.013 4.535-.066c1.171-.054 1.97-.24 2.67-.512.724-.281 1.337-.657 1.949-1.27.613-.612.989-1.225 1.27-1.949.272-.7.458-1.499.512-2.67C22.987 15.362 23 14.987 23 12s-.013-3.362-.066-4.535c-.054-1.171-.24-1.97-.512-2.67-.281-.724-.657-1.337-1.27-1.949-.612-.613-1.225-.989-1.949-1.27-.7-.272-1.499-.458-2.67-.512C15.362 1.013 14.987 1 12 1Zm0 5.351c-3.121 0-5.649 2.528-5.649 5.649 0 3.121 2.528 5.649 5.649 5.649 3.121 0 5.649-2.528 5.649-5.649 0-3.121-2.528-5.649-5.649-5.649Zm0 9.316c-2.026 0-3.667-1.641-3.667-3.667 0-2.026 1.641-3.667 3.667-3.667 2.026 0 3.667 1.641 3.667 3.667 0 2.026-1.641 3.667-3.667 3.667Zm7.192-9.539c0 .729-.592 1.32-1.321 1.32-.729 0-1.32-.591-1.32-1.32 0-.729.591-1.32 1.32-1.32.729 0 1.321.591 1.321 1.32Z" />
+                          </svg>
+                        )}
+                        {platform === "tiktok" && (
+                          <svg
+                            className="h-3.5 w-3.5 fill-gray-900"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path d="M19.321 5.562a5.124 5.124 0 0 1-3.414-1.267 5.124 5.124 0 0 1-1.53-3.295h-3.643v13.636c0 1.355-1.095 2.45-2.45 2.45s-2.45-1.095-2.45-2.45 1.095-2.45 2.45-2.45c.273 0 .537.045.784.127v-3.688a6.13 6.13 0 0 0-.784-.05c-3.362 0-6.088 2.729-6.088 6.09a6.089 6.089 0 0 0 6.088 6.088c3.361 0 6.09-2.727 6.09-6.088V8.967a8.78 8.78 0 0 0 4.948 1.514V7a5.127 5.127 0 0 1-1 .188 5.127 5.127 0 0 1-1-.188V5.562h.001Z" />
+                          </svg>
+                        )}
+                        {platform === "twitter"
+                          ? "X"
+                          : platform === "instagram"
+                            ? "Instagram"
+                            : "TikTok"}
+                      </a>
                     </Badge>
                   ))}
                 </div>
-                <div className="text-sm text-muted-foreground">
+
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
                   {selectedPost.date.toLocaleDateString("default", {
                     weekday: "short",
                     month: "short",
@@ -480,45 +442,176 @@ export default function ContentLibrary() {
                 </div>
               </div>
 
-              <div className="border-t border-b py-3">
-                <p>{selectedPost.content}</p>
+              {/* Post status indicator */}
+              <div className="flex justify-start">
+                {getStatusBadge(selectedPost.date)}
               </div>
 
+              {/* Post content */}
+              <div className="border-t border-b py-4">
+                <p className="text-base whitespace-pre-wrap">
+                  {selectedPost.content}
+                </p>
+              </div>
+
+              {/* Media display */}
               {selectedPost.media && selectedPost.media.length > 0 && (
-                <div className="grid grid-cols-2 gap-2">
-                  {selectedPost.media.map((media: string, idx: number) => (
-                    <img
-                      key={idx}
-                      src={media || "/placeholder.svg"}
-                      alt={`Media ${idx + 1}`}
-                      className="rounded-md w-full object-cover aspect-square"
-                    />
-                  ))}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium">Media</h4>
+                  {selectedPost.media.length === 1 ? (
+                    <div className="relative rounded-md overflow-hidden">
+                      <img
+                        src={selectedPost.media[0] || "/placeholder.svg"}
+                        alt="Post media"
+                        className="w-full rounded-md object-contain max-h-80"
+                      />
+                      <a
+                        href={selectedPost.media[0]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute bottom-2 right-2 bg-black/70 text-white p-1.5 rounded-full"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M15 3H21V9"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M21 3L8 16"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M10 3H3V21H21V14"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      {selectedPost.media.map((media: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="relative rounded-md overflow-hidden"
+                        >
+                          <img
+                            src={media || "/placeholder.svg"}
+                            alt={`Media ${idx + 1}`}
+                            className="rounded-md w-full object-cover aspect-square"
+                          />
+                          <a
+                            href={media}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute bottom-2 right-2 bg-black/70 text-white p-1.5 rounded-full"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M15 3H21V9"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M21 3L8 16"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M10 3H3V21H21V14"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsPostDetailsOpen(false)}
-                >
-                  Close
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <MoreHorizontal className="h-4 w-4 mr-1" />
-                      Actions
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Edit Post</DropdownMenuItem>
-                    <DropdownMenuItem>Duplicate Post</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
-                      Delete Post
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              {/* Analytics summary if available */}
+              {selectedPost.analytics && (
+                <div className="grid grid-cols-3 gap-2 bg-muted/50 p-3 rounded-md">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Impressions</p>
+                    <p className="font-medium">
+                      {selectedPost.analytics.impressions || 0}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Engagements</p>
+                    <p className="font-medium">
+                      {selectedPost.analytics.engagements || 0}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Clicks</p>
+                    <p className="font-medium">
+                      {selectedPost.analytics.clicks || 0}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex justify-between gap-2 border-t pt-3">
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <MoreHorizontal className="h-4 w-4 mr-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          (window.location.href = `/app/create?edit=${selectedPost.id || ""}`)
+                        }
+                      >
+                        Edit Post
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          (window.location.href = `/app/create?duplicate=${selectedPost.id || ""}`)
+                        }
+                      >
+                        Duplicate Post
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive">
+                        Delete Post
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
           )}
