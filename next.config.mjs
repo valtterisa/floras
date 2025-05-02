@@ -14,6 +14,15 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-}
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/analytics",
+        destination: "/dashboard",
+        permanent: false,
+      },
+    ];
+  },
+};
 
-export default nextConfig
+export default nextConfig;
