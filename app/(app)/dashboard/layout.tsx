@@ -17,6 +17,8 @@ import {
   Menu,
   Images,
   ChartColumn,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -34,6 +36,11 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { logout } from "../../(auth)/actions";
 
 export default function DashboardLayout({
@@ -43,6 +50,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [contentMenuOpen, setContentMenuOpen] = useState(true);
 
   return (
     <SidebarProvider>
@@ -55,7 +63,7 @@ export default function DashboardLayout({
               <span className="font-bold text-xl">SiteForge</span>
             </div>
           </SidebarHeader>
-          <SidebarContent>
+          <SidebarContent className="flex flex-col justify-between">
             <SidebarGroup>
               <SidebarGroupLabel>Main</SidebarGroupLabel>
               <SidebarGroupContent>
@@ -67,21 +75,61 @@ export default function DashboardLayout({
                     >
                       <Link href="/dashboard">
                         <LayoutDashboard className="h-5 w-5 mr-3" />
-                        Dashboard
+                        Home
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === "/dashboard/content"}
-                    >
-                      <Link href="/dashboard/content">
-                        <Images className="h-5 w-5 mr-3" />
-                        Content
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+
+                  {/* Collapsible Content Menu */}
+                  <Collapsible
+                    open={contentMenuOpen}
+                    onOpenChange={setContentMenuOpen}
+                    className="w-full"
+                  >
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton className="justify-between">
+                          <div className="flex items-center">
+                            <Images className="h-5 w-5 mr-3" />
+                            Content
+                          </div>
+                          {contentMenuOpen ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                    </SidebarMenuItem>
+
+                    <CollapsibleContent className="pl-8 space-y-1 mt-1">
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === "/dashboard/content/pages"}
+                        >
+                          <Link href="/dashboard/content/pages">Pages</Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === "/dashboard/content/blog"}
+                        >
+                          <Link href="/dashboard/content/blog">Blog</Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === "/dashboard/content/media"}
+                        >
+                          <Link href="/dashboard/content/media">Media</Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </CollapsibleContent>
+                  </Collapsible>
+
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
