@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 import ContentOverview from "@/components/content/content-overview";
-import PerformanceMetrics from "@/components/content/performance-metrics";
 
 export const metadata: Metadata = {
   title: "Content Dashboard - Social Media Platform",
@@ -34,9 +33,6 @@ export default function HomePage() {
         </TabsList>
         <TabsContent value="overview" className="mt-0">
           <ContentOverview />
-          {/* <div className="mt-6">
-              <PerformanceMetrics />
-            </div> */}
         </TabsContent>
         <TabsContent value="calendar" className="mt-0">
           <EnhancedCalendar />
