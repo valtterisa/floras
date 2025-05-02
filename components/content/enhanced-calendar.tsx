@@ -279,27 +279,26 @@ export default function EnhancedCalendar() {
                 </Button>
                 <div className="border rounded-md p-0.5 sm:p-1 flex">
                   {" "}
-                  {/* Adjusted padding & added flex */}
                   <Button
-                    variant={viewMode === "month" ? "secondary" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className="rounded-r-none px-2 sm:px-3" // Adjusted padding
+                    className={`rounded-r-none px-2 sm:px-3 ${viewMode === "month" ? "bg-muted" : ""}`}
                     onClick={() => setViewMode("month")}
                   >
                     Month
                   </Button>
                   <Button
-                    variant={viewMode === "week" ? "secondary" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className="rounded-none border-l border-r px-2 sm:px-3" // Adjusted padding & border
+                    className={`rounded-none border-l border-r px-2 sm:px-3 ${viewMode === "week" ? "bg-muted" : ""}`}
                     onClick={() => setViewMode("week")}
                   >
                     Week
                   </Button>
                   <Button
-                    variant={viewMode === "3day" ? "secondary" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className="rounded-l-none px-2 sm:px-3" // Adjusted padding
+                    className={`rounded-l-none px-2 sm:px-3 ${viewMode === "3day" ? "bg-muted" : ""}`}
                     onClick={() => setViewMode("3day")}
                   >
                     3 Day

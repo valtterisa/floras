@@ -87,29 +87,6 @@ export default function ContentOverview() {
     "Friday",
     "Saturday",
   ];
-  const postsByDay = daysOfWeek.map((day) => {
-    const dayIndex = daysOfWeek.indexOf(day);
-    // Generate random engagement and reach metrics for demonstration
-    const count = scheduledPosts.filter(
-      (post) => new Date(post.date).getDay() === dayIndex
-    ).length;
-    const engagementRate = Math.round(Math.random() * 8 + 2); // Random 2-10%
-    const reach = Math.round(Math.random() * 900 + 100); // Random 100-1000
-
-    return {
-      name: day.substring(0, 3),
-      posts: count,
-      engagement: engagementRate,
-      reach: reach,
-      // Add color based on engagement rate for visual cue
-      color:
-        engagementRate > 7
-          ? "#22c55e"
-          : engagementRate > 4
-            ? "#eab308"
-            : "#ef4444",
-    };
-  });
 
   // Platform distribution data (for pie chart)
   const platformData = [
@@ -146,18 +123,6 @@ export default function ContentOverview() {
     { date: "May 25", posts: 6, engagement: 5.8, reach: 1050 },
     { date: "May 30", posts: 4, engagement: 7.2, reach: 1200 },
   ];
-
-  // Get the color for the chart based on metric
-  const getMetricColor = (metric: string) => {
-    switch (metric) {
-      case "engagement":
-        return "#8b5cf6"; // Purple
-      case "reach":
-        return "#06b6d4"; // Cyan
-      default:
-        return "#6366f1"; // Indigo
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -209,7 +174,7 @@ export default function ContentOverview() {
           <Card className="transition-all hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">
-                Platform Distribution
+                Platform Views
               </CardTitle>
               <UITooltip>
                 <TooltipTrigger asChild>
@@ -219,19 +184,9 @@ export default function ContentOverview() {
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p>
-                    Distribution of your content across different social media
+                    Views of your content across different social media
                     platforms.
                   </p>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                    {platformData.map((platform) => (
-                      <div key={platform.name} className="text-center">
-                        <div className="font-medium">{platform.name}</div>
-                        <div className="text-muted-foreground">
-                          Engagement: {platform.engagementRate}%
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </TooltipContent>
               </UITooltip>
             </CardHeader>
@@ -419,14 +374,13 @@ export default function ContentOverview() {
                           </div>
                           <div className="flex h-8 w-8 items-center justify-center rounded-full border">
                             {new Date(post.date).getDate()}{" "}
-                            {/* getDate is safe */}
                           </div>
                         </div>
-                        <div className="flex-1 space-y-1">
+                        <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="flex gap-1">
+                            <div className="flex gap-2">
                               {post.platforms.map((platform) => (
-                                <div key={platform} className="h-3 w-3">
+                                <div key={platform} className="h-4 w-4">
                                   {platform === "twitter" && (
                                     <svg
                                       className="fill-blue-500"
@@ -457,7 +411,7 @@ export default function ContentOverview() {
                                 </div>
                               ))}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-sm font-medium">
                               <ClientFormattedDate
                                 date={post.date}
                                 options={{ hour: "2-digit", minute: "2-digit" }}
@@ -465,7 +419,9 @@ export default function ContentOverview() {
                               />
                             </div>
                           </div>
-                          <p className="text-xs line-clamp-1">{post.content}</p>
+                          <p className="text-sm line-clamp-2 font-medium">
+                            {post.content}
+                          </p>
                         </div>
                       </div>
                     </PopoverTrigger>
@@ -509,7 +465,7 @@ export default function ContentOverview() {
                   </Popover>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-6 text-center">
+                <div className="flex flex-col items-center justify-between py-6 text-center">
                   <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">
                     No upcoming posts scheduled
