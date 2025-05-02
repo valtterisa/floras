@@ -90,8 +90,8 @@ export default function DashboardLayout({
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton className="justify-between">
                           <div className="flex items-center">
-                            <Images className="h-5 w-5 mr-3" />
-                            Content
+                            <Globe className="h-4 w-4 mr-3" />
+                            Website
                           </div>
                           {contentMenuOpen ? (
                             <ChevronDown className="h-4 w-4" />
@@ -108,7 +108,7 @@ export default function DashboardLayout({
                           asChild
                           isActive={pathname === "/dashboard/content/pages"}
                         >
-                          <Link href="/dashboard/content/pages">Pages</Link>
+                          <Link href="/dashboard/content/pages">Domains</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
@@ -124,7 +124,7 @@ export default function DashboardLayout({
                           asChild
                           isActive={pathname === "/dashboard/content/media"}
                         >
-                          <Link href="/dashboard/content/media">Media</Link>
+                          <Link href="/dashboard/content/media">Editor</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     </CollapsibleContent>
@@ -133,11 +133,11 @@ export default function DashboardLayout({
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={pathname === "/dashboard/website"}
+                      isActive={pathname === "/dashboard/content"}
                     >
-                      <Link href="/dashboard/website">
-                        <Globe className="h-5 w-5 mr-3" />
-                        Website
+                      <Link href="/dashboard/content">
+                        <Images className="h-5 w-5 mr-3" />
+                        Social Media
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

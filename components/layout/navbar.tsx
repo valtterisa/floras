@@ -49,10 +49,9 @@ export default function Navbar({ user }: any) {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-4">
-              <Button href="/dashboard" size="sm">
+              <Button href="/dashboard" size="sm" variant={"outline"}>
                 Dashboard
               </Button>
-              <SignOutButton className="hidden md:flex" />
             </div>
           ) : (
             <div className="flex gap-2">

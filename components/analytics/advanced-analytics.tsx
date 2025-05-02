@@ -184,8 +184,6 @@ export default function AdvancedAnalytics({
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h3 className="text-lg font-medium">Advanced Analytics</h3>
-
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-2">
             <Label

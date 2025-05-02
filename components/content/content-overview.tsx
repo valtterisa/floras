@@ -42,10 +42,6 @@ import {
 import { ClientFormattedDate } from "@/components/client-formatted-date";
 
 export default function ContentOverview() {
-  const [selectedMetric, setSelectedMetric] = useState<
-    "posts" | "engagement" | "reach"
-  >("posts");
-
   // Get current date
   const currentDate = new Date();
 
@@ -76,42 +72,6 @@ export default function ContentOverview() {
       return postDate > currentDate && postDate <= nextWeek;
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  // Posts by day of week (for bar chart)
-  const daysOfWeek = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-
-  // Platform distribution data (for pie chart)
-  const platformData = [
-    {
-      name: "X (Twitter)",
-      value: platformCounts.twitter,
-      color: "#1DA1F2",
-      engagementRate: 4.2,
-      reach: 750,
-    },
-    {
-      name: "Instagram",
-      value: platformCounts.instagram,
-      color: "#E1306C",
-      engagementRate: 6.8,
-      reach: 920,
-    },
-    {
-      name: "TikTok",
-      value: platformCounts.tiktok,
-      color: "#000000",
-      engagementRate: 8.5,
-      reach: 1200,
-    },
-  ];
 
   // Performance trend over time (for line chart)
   const performanceTrend = [
