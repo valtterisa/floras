@@ -13,7 +13,6 @@ import {
   LogOut,
   LayoutDashboard,
   LinkIcon,
-  Mail,
   Menu,
   Images,
   ChartColumn,
@@ -89,7 +88,7 @@ export default function DashboardLayout({
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton className="justify-between">
-                          <div className="flex items-center">
+                          <div className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md text-left outline-none">
                             <Globe className="h-4 w-4 mr-3" />
                             Website
                           </div>
@@ -106,35 +105,33 @@ export default function DashboardLayout({
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           asChild
-                          isActive={pathname === "/dashboard/content/blog"}
+                          isActive={pathname === "/dashboard/website/blog"}
                         >
-                          <Link href="/dashboard/content/blog">Blog</Link>
+                          <Link href="/dashboard/website/blog">Blog</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           asChild
-                          isActive={pathname === "/dashboard/content/media"}
+                          isActive={pathname === "/dashboard/website/editor"}
                         >
-                          <Link href="/dashboard/content/media">Editor</Link>
+                          <Link href="/dashboard/website/editor">Editor</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           asChild
-                          isActive={pathname === "/dashboard/content/media"}
+                          isActive={pathname === "/dashboard/my-websites"}
                         >
-                          <Link href="/dashboard/content/media">
-                            My websites
-                          </Link>
+                          <Link href="/dashboard/my-websites">My websites</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           asChild
-                          isActive={pathname === "/dashboard/content/pages"}
+                          isActive={pathname === "/dashboard/website/domains"}
                         >
-                          <Link href="/dashboard/content/pages">Domains</Link>
+                          <Link href="/dashboard/website/domains">Domains</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     </CollapsibleContent>
@@ -244,7 +241,7 @@ export default function DashboardLayout({
                   className="w-[250px] sm:w-[300px]"
                   title="Dashboard Navigation"
                 >
-                  <div className="flex flex-col h-full">
+                  <div className="flex flex-col justify-between h-full">
                     <div className="flex items-center gap-2 py-4 border-b">
                       <Globe className="h-5 w-5" />
                       <span className="font-bold text-xl">SiteForge</span>
@@ -262,69 +259,136 @@ export default function DashboardLayout({
                             className="w-full justify-start"
                           >
                             <LayoutDashboard className="h-5 w-5 mr-3" />
-                            Dashboard
+                            Home
                           </Button>
                         </Link>
+
+                        {/* Website Collapsible Menu */}
+                        <Collapsible
+                          className="w-full"
+                          open={contentMenuOpen}
+                          onOpenChange={setContentMenuOpen}
+                        >
+                          <CollapsibleTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-between"
+                            >
+                              <div className="flex items-center">
+                                <Globe className="h-5 w-5 mr-3" />
+                                Website
+                              </div>
+                              {contentMenuOpen ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="pl-8 space-y-1 mt-1">
+                            <Link
+                              href="/dashboard/website/blog"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Button
+                                variant={
+                                  pathname === "/dashboard/website/blog"
+                                    ? "default"
+                                    : "ghost"
+                                }
+                                className="w-full justify-start"
+                              >
+                                Blog
+                              </Button>
+                            </Link>
+                            <Link
+                              href="/dashboard/website/editor"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Button
+                                variant={
+                                  pathname === "/dashboard/website/editor"
+                                    ? "default"
+                                    : "ghost"
+                                }
+                                className="w-full justify-start"
+                              >
+                                Editor
+                              </Button>
+                            </Link>
+                            <Link
+                              href="/dashboard/my-websites"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Button
+                                variant={
+                                  pathname === "/dashboard/my-websites"
+                                    ? "default"
+                                    : "ghost"
+                                }
+                                className="w-full justify-start"
+                              >
+                                My websites
+                              </Button>
+                            </Link>
+                            <Link
+                              href="/dashboard/website/domains"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Button
+                                variant={
+                                  pathname === "/dashboard/website/domains"
+                                    ? "default"
+                                    : "ghost"
+                                }
+                                className="w-full justify-start"
+                              >
+                                Domains
+                              </Button>
+                            </Link>
+                          </CollapsibleContent>
+                        </Collapsible>
+
                         <Link
-                          href="/dashboard/websites"
+                          href="/dashboard/content"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <Button
                             variant={
-                              pathname === "/dashboard/websites"
+                              pathname === "/dashboard/content"
                                 ? "default"
                                 : "ghost"
                             }
                             className="w-full justify-start"
                           >
-                            <Globe className="h-5 w-5 mr-3" />
-                            My Websites
+                            <Images className="h-5 w-5 mr-3" />
+                            Social Media
                           </Button>
                         </Link>
-                        <Link
-                          href="/dashboard/domains"
-                          onClick={() => setMobileMenuOpen(false)}
+
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start opacity-70 cursor-not-allowed"
+                          disabled
                         >
-                          <Button
-                            variant={
-                              pathname === "/dashboard/domains"
-                                ? "default"
-                                : "ghost"
-                            }
-                            className="w-full justify-start"
-                          >
-                            <LinkIcon className="h-5 w-5 mr-3" />
-                            Domains
-                          </Button>
-                        </Link>
-                        <Link
-                          href="/dashboard/integrations"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <Button
-                            variant={
-                              pathname === "/dashboard/integrations"
-                                ? "default"
-                                : "ghost"
-                            }
-                            className="w-full justify-start"
-                          >
-                            <Mail className="h-5 w-5 mr-3" />
-                            Integrations
-                          </Button>
-                        </Link>
+                          <ChartColumn className="h-5 w-5 mr-3" />
+                          Analytics
+                          <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full ml-2">
+                            coming soon
+                          </span>
+                        </Button>
                       </div>
 
                       <div className="h-px bg-border my-4" />
 
                       <div className="space-y-1">
                         <Link
-                          href="/dashboard/billing"
+                          href="/dashboard/account/billing"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <Button
                             variant={
-                              pathname === "/dashboard/billing"
+                              pathname === "/dashboard/account/billing"
                                 ? "default"
                                 : "ghost"
                             }
@@ -335,12 +399,12 @@ export default function DashboardLayout({
                           </Button>
                         </Link>
                         <Link
-                          href="/dashboard/team"
+                          href="/dashboard/account/team"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <Button
                             variant={
-                              pathname === "/dashboard/team"
+                              pathname === "/dashboard/account/team"
                                 ? "default"
                                 : "ghost"
                             }
@@ -351,12 +415,12 @@ export default function DashboardLayout({
                           </Button>
                         </Link>
                         <Link
-                          href="/dashboard/settings"
+                          href="/dashboard/account/settings"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <Button
                             variant={
-                              pathname === "/dashboard/settings"
+                              pathname === "/dashboard/account/settings"
                                 ? "default"
                                 : "ghost"
                             }
@@ -384,7 +448,6 @@ export default function DashboardLayout({
             </div>
           </header>
 
-          {/* Main Content */}
           <main className="flex-1">{children}</main>
         </div>
       </div>

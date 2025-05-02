@@ -22,8 +22,6 @@ import {
   FormInput,
 } from "lucide-react";
 
-import { Hero } from "./site-components/Hero";
-
 export type ComponentType = {
   id: string;
   name: string;
@@ -38,7 +36,7 @@ const availableComponents: ComponentType[] = [
     id: "hero",
     name: "Hero Section",
     category: "hero",
-    component: <Hero />,
+    component: <div>Hero Component</div>,
     preview: (
       <div className="h-24 flex items-center justify-center bg-muted/50 rounded-md">
         <span className="text-sm font-medium">Hero Section</span>

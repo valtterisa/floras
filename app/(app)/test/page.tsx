@@ -619,18 +619,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Alert */}
-      <div className="fixed bottom-6 right-6 w-full max-w-sm">
-        <Alert className="bg-white border border-gray-200 shadow-lg">
-          <AlertTitle className="text-gray-900">
-            New feature available!
-          </AlertTitle>
-          <AlertDescription className="text-gray-600">
-            Check out our new analytics dashboard. Powerful insights await!
-          </AlertDescription>
-        </Alert>
-      </div>
-
       {/* Footer */}
       <footer id="contact" className="bg-gray-900 text-gray-300">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -775,7 +763,7 @@ const FloatingElements = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent): void => {
       setMousePosition({
         x: e.clientX / window.innerWidth,
         y: e.clientY / window.innerHeight,
