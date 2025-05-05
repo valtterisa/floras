@@ -141,7 +141,7 @@ export default function DashboardLayout({
                     </CollapsibleContent>
                   </Collapsible>
 
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={pathname === "/dashboard/content"}
@@ -151,9 +151,9 @@ export default function DashboardLayout({
                         Social Media
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
 
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       disabled
                       className="opacity-70 cursor-not-allowed relative"
@@ -166,7 +166,7 @@ export default function DashboardLayout({
                         </span>
                       </div>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -353,7 +353,7 @@ export default function DashboardLayout({
                           </CollapsibleContent>
                         </Collapsible>
 
-                        <Link
+                        {/* <Link
                           href="/dashboard/content"
                           onClick={() => setMobileMenuOpen(false)}
                         >
@@ -368,9 +368,9 @@ export default function DashboardLayout({
                             <Images className="h-5 w-5 mr-3" />
                             Social Media
                           </Button>
-                        </Link>
+                        </Link> */}
 
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           className="w-full justify-start opacity-70 cursor-not-allowed"
                           disabled
@@ -380,7 +380,7 @@ export default function DashboardLayout({
                           <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full ml-2">
                             coming soon
                           </span>
-                        </Button>
+                        </Button> */}
                       </div>
 
                       <div className="h-px bg-border my-4" />

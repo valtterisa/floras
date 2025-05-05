@@ -37,7 +37,6 @@ import { useMobile } from "@/hooks/use-mobile";
 import WebsitePreview from "./website-preview";
 import { VirtualFileSystem } from "@/lib/virtual-fs";
 import Link from "next/link";
-import { MediaLibraryModal } from "../media-library/media-library-modal";
 import { MediaLibrary } from "../media-library/media-library";
 
 type ViewportSize = "desktop" | "mobile";
