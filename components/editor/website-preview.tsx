@@ -134,7 +134,7 @@ export default function WebsitePreview({
         }
         
         .editor-active [data-editable="true"].focus-active {
-          outline: 2px solid #7c3aed !important;
+          outline: 2px dotted #7c3aed !important;
           outline-offset: 2px !important;
           box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1) !important;
         }
@@ -390,6 +390,15 @@ export default function WebsitePreview({
   const handleElementSelection = (element: HTMLElement) => {
     if (!isEditMode || !element) return;
 
+    // Remove focus from all editable elements before setting new selection
+    const iframe = iframeRef.current;
+    if (iframe && iframe.contentDocument) {
+      const allEditable = iframe.contentDocument.querySelectorAll(
+        '[data-editable-text="true"]'
+      );
+      allEditable.forEach((s) => s.classList.remove("focus-active"));
+    }
+
     if (selectedElement && selectedElement !== element) {
       if (selectedElement.hasAttribute("data-editable-text")) {
         selectedElement.contentEditable = "false";
@@ -404,17 +413,37 @@ export default function WebsitePreview({
     const elementTypeLower = element.tagName.toLowerCase();
     setElementType(elementTypeLower);
 
-    const iframe = iframeRef.current;
-    if (!iframe || !iframe.contentWindow) return;
+    if (!iframe) return;
+    if (
+      iframe &&
+      iframe.contentDocument &&
+      element.hasAttribute("data-editable-text")
+    ) {
+      // Add focus-active to the selected editable element
+      element.classList.add("focus-active");
+      // Update activeFormats state based on the element's styles
+      setActiveFormats({
+        bold:
+          element.style.fontWeight === "700" ||
+          element.style.fontWeight === "bold",
+        italic: element.style.fontStyle === "italic",
+        underline: element.style.textDecoration.includes("underline"),
+      });
+      setActiveTextColor(element.style.color || null);
+    }
 
-    const iframeRect = iframe.getBoundingClientRect();
+    const iframeRect = iframe?.getBoundingClientRect();
     const elementRect = element.getBoundingClientRect();
 
     const toolbarHeight = 40;
 
     setToolbarPosition({
-      top: elementRect.top + iframeRect.top - toolbarHeight - 10,
-      left: elementRect.left + elementRect.width / 2 + iframeRect.left - 150,
+      top: elementRect.top + (iframeRect?.top ?? 0) - toolbarHeight - 10,
+      left:
+        elementRect.left +
+        elementRect.width / 2 +
+        (iframeRect?.left ?? 0) -
+        150,
     });
 
     setShowToolbar(true);
@@ -433,10 +462,10 @@ export default function WebsitePreview({
       // Make all child text spans editable
       setAllTextEditable(element);
 
-      iframe.contentWindow.focus();
+      iframe?.contentWindow?.focus();
       element.focus();
 
-      const selection = iframe.contentWindow.getSelection();
+      const selection = iframe?.contentWindow?.getSelection();
       if (selection && selection.rangeCount === 0) {
         const range = iframe.contentDocument!.createRange();
         range.selectNodeContents(element);
@@ -450,6 +479,19 @@ export default function WebsitePreview({
       setActiveTextColor(null);
     }
   };
+
+  // Remove focus from all editable elements when toolbar is closed
+  useEffect(() => {
+    if (!showToolbar) {
+      const iframe = iframeRef.current;
+      if (iframe && iframe.contentDocument) {
+        const allEditable = iframe.contentDocument.querySelectorAll(
+          '[data-editable-text="true"]'
+        );
+        allEditable.forEach((s) => s.classList.remove("focus-active"));
+      }
+    }
+  }, [showToolbar]);
 
   // Converts RGB color format to HEX format
   const rgbToHex = useCallback((rgb: string | null): string | null => {
@@ -931,78 +973,117 @@ export default function WebsitePreview({
     if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
     const win = iframe.contentWindow;
     const sel = win.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const hasSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed;
 
-    const range = sel.getRangeAt(0);
+    // Helper to visually focus the span
+    const visuallyFocusSpan = (span: HTMLElement) => {
+      // Remove focus-active from all spans first
+      const allSpans = iframe.contentDocument!.querySelectorAll(
+        'span[data-editable-text="true"]'
+      );
+      allSpans.forEach((s) => s.classList.remove("focus-active"));
+      // Add focus-active to the current span
+      span.classList.add("focus-active");
+    };
 
-    // Only operate on text selections
-    if (
-      range.startContainer === range.endContainer &&
-      range.startContainer.nodeType === Node.TEXT_NODE &&
-      range.startOffset !== range.endOffset
-    ) {
-      // Prevent wrapping whitespace-only selections
-      const selectedText = range.toString();
-      if (selectedText.trim().length === 0) {
-        setDebugInfo("Cannot style: selection is only whitespace.");
-        return;
-      }
-      // Check if already inside a span
-      let parent: Node | null = range.startContainer.parentNode;
-      let span: HTMLElement | null = null;
-      while (parent && parent !== iframe.contentDocument.body) {
-        if (
-          parent.nodeType === Node.ELEMENT_NODE &&
-          (parent as HTMLElement).tagName === "SPAN" &&
-          (parent as HTMLElement).getAttribute("data-editable-text") === "true"
-        ) {
-          span = parent as HTMLElement;
-          break;
-        }
-        parent = parent.parentNode;
-      }
-
-      // If not inside a span, wrap in a new span
-      if (!span) {
-        span = iframe.contentDocument.createElement("span");
-        span.setAttribute("data-editable", "true");
-        span.setAttribute("data-editable-type", "text");
-        span.setAttribute("data-editable-text", "true");
-        span.setAttribute("data-editor-id", `editor-span-${Date.now()}`);
-        span.style.display = "inline";
-        try {
-          range.surroundContents(span);
-          // Reselect the new span
-          sel.removeAllRanges();
-          const newRange = iframe.contentDocument.createRange();
-          newRange.selectNodeContents(span);
-          sel.addRange(newRange);
-        } catch (e) {
-          setDebugInfo(
-            "Could not wrap selection: " +
-              (e instanceof Error ? e.message : String(e))
-          );
+    if (hasSelection) {
+      const range = sel!.getRangeAt(0);
+      // Only operate on text selections
+      if (
+        range.startContainer === range.endContainer &&
+        range.startContainer.nodeType === Node.TEXT_NODE &&
+        range.startOffset !== range.endOffset
+      ) {
+        // Prevent wrapping whitespace-only selections
+        const selectedText = range.toString();
+        if (selectedText.trim().length === 0) {
+          setDebugInfo("Cannot style: selection is only whitespace.");
           return;
         }
-      }
+        // Check if already inside a span
+        let parent: Node | null = range.startContainer.parentNode;
+        let span: HTMLElement | null = null;
+        while (parent && parent !== iframe.contentDocument.body) {
+          if (
+            parent.nodeType === Node.ELEMENT_NODE &&
+            (parent as HTMLElement).tagName === "SPAN" &&
+            (parent as HTMLElement).getAttribute("data-editable-text") ===
+              "true"
+          ) {
+            span = parent as HTMLElement;
+            break;
+          }
+          parent = parent.parentNode;
+        }
 
-      // Now apply the style to the span
+        // If not inside a span, wrap in a new span
+        if (!span) {
+          span = iframe.contentDocument.createElement("span");
+          span.setAttribute("data-editable", "true");
+          span.setAttribute("data-editable-type", "text");
+          span.setAttribute("data-editable-text", "true");
+          span.setAttribute("data-editor-id", `editor-span-${Date.now()}`);
+          span.style.display = "inline";
+          try {
+            range.surroundContents(span);
+            // Reselect the new span
+            sel!.removeAllRanges();
+            const newRange = iframe.contentDocument.createRange();
+            newRange.selectNodeContents(span);
+            sel!.addRange(newRange);
+          } catch (e) {
+            setDebugInfo(
+              "Could not wrap selection: " +
+                (e instanceof Error ? e.message : String(e))
+            );
+            return;
+          }
+        }
+
+        // Now apply the style to the span
+        if (command === "bold") {
+          span.style.fontWeight =
+            span.style.fontWeight === "700" ? "400" : "700";
+        } else if (command === "italic") {
+          span.style.fontStyle =
+            span.style.fontStyle === "italic" ? "normal" : "italic";
+        } else if (command === "underline") {
+          span.style.textDecoration =
+            span.style.textDecoration === "underline" ? "none" : "underline";
+        } else if (command === "color") {
+          span.style.color = value;
+        }
+        // ... handle other styles as needed
+
+        // Update selection and toolbar
+        setSelectedElement(span);
+        handleElementSelection(span);
+        visuallyFocusSpan(span);
+        return;
+      }
+    }
+
+    // If no text selection but selectedElement is a standalone span, style it
+    if (
+      selectedElement &&
+      selectedElement.tagName === "SPAN" &&
+      selectedElement.getAttribute("data-editable-text") === "true"
+    ) {
       if (command === "bold") {
-        span.style.fontWeight = span.style.fontWeight === "700" ? "400" : "700";
+        selectedElement.style.fontWeight =
+          selectedElement.style.fontWeight === "700" ? "400" : "700";
       } else if (command === "italic") {
-        span.style.fontStyle =
-          span.style.fontStyle === "italic" ? "normal" : "italic";
+        selectedElement.style.fontStyle =
+          selectedElement.style.fontStyle === "italic" ? "normal" : "italic";
       } else if (command === "underline") {
-        span.style.textDecoration =
-          span.style.textDecoration === "underline" ? "none" : "underline";
+        selectedElement.style.textDecoration =
+          selectedElement.style.textDecoration === "underline"
+            ? "none"
+            : "underline";
       } else if (command === "color") {
-        span.style.color = value;
+        selectedElement.style.color = value;
       }
-      // ... handle other styles as needed
-
-      // Update selection and toolbar
-      setSelectedElement(span);
-      handleElementSelection(span);
+      visuallyFocusSpan(selectedElement);
       return;
     }
 
