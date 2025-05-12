@@ -146,12 +146,22 @@ export async function assignMachineToUser(
     // Generate a unique machine name that includes user info for easier identification
     const machineName = `${websiteName}-${userId.slice(0, 8)}`;
 
+    // Generate/locate AI output directory for the user
+    const aiOutputDir = "/path/to/ai/output"; // Replace with actual path
+    // Clone Next.js repo, inject AI files, build and push Docker image
+    const imageTag = await buildAndPushUserApp({
+      userId,
+      aiComponentsDir: aiOutputDir, // Path to AI-generated files
+      flyAppName: appName,
+      flyRegistryToken: process.env.FLY_REGISTRY_TOKEN!,
+      log: (msg) => console.log(`[DOCKER] ${msg}`),
+    });
+
     // Create machine configuration for users Fly.io machine
     const config: MachineConfig = {
       name: machineName,
       region: "arn",
-      image:
-        "registry.fly.io/plain-nextjs-app-ljnfng:deployment-a2b8fc6f15444909638798488a6c6ae3",
+      image: imageTag,
       guest: {
         cpu_kind: "shared",
         cpus: 1,
