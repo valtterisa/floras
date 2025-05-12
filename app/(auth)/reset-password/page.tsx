@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Sparkles } from "lucide-react";
-import { supabase } from "@/lib/supabase/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ResetPasswordPage() {
@@ -29,6 +29,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
     // Check if we have a session when the component mounts
@@ -71,7 +72,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase!.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password,
       });
 
