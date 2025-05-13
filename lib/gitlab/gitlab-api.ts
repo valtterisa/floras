@@ -1,3 +1,9 @@
+// Funktiot mitä tarvitaan
+// 1. Forkkaa template repo
+// 2. Lisää domain repoon
+// 3. Lisää files tiettyyn repoon
+// 4. Remove files tietystä reposta
+
 const GITLAB_API_URL = "https://gitlab.com/api/v4";
 
 export class GitlabApi {
