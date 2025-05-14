@@ -2,7 +2,6 @@
 
 import {
   assignMachineToUser,
-  getUserMachines,
   startUserMachine,
   stopUserMachine,
   deleteUserMachine,
@@ -16,6 +15,7 @@ import {
 } from "@/lib/fly/file-manager";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 
+// Create site
 export async function createWebsite(
   userId: string,
   websiteName: string,
@@ -27,7 +27,7 @@ export async function createWebsite(
     // 1. Get a Fly.io machine assigned to this user
     console.log("Assigning Fly.io machine...");
     const machineResult = await assignMachineToUser(userId, websiteName, files);
-
+    
     if (!machineResult.success || !machineResult.data) {
       console.error("Error assigning machine:", machineResult.error);
       throw new Error(
@@ -273,65 +273,65 @@ export async function updateWebsiteFiles(
   }
 }
 
-export async function getWebsiteFiles(userId: string, websiteId: string) {
-  try {
-    // Get website and verify ownership
-    const supabase = await createServerClient();
-    const { data: website, error: fetchError } = await supabase
-      .from("websites")
-      .select("*")
-      .eq("id", websiteId)
-      .eq("user_id", userId)
-      .single();
+// export async function getWebsiteFiles(userId: string, websiteId: string) {
+//   try {
+//     // Get website and verify ownership
+//     const supabase = await createServerClient();
+//     const { data: website, error: fetchError } = await supabase
+//       .from("websites")
+//       .select("*")
+//       .eq("id", websiteId)
+//       .eq("user_id", userId)
+//       .single();
 
-    if (fetchError || !website) {
-      throw new Error("Website not found or unauthorized");
-    }
+//     if (fetchError || !website) {
+//       throw new Error("Website not found or unauthorized");
+//     }
 
-    // Get files from the machine
-    const result = await getMachineFiles(website.machine_id);
+//     // Get files from the machine
+//     const result = await getMachineFiles(website.machine_id);
 
-    if (!result.success) {
-      throw new Error(result.error);
-    }
+//     if (!result.success) {
+//       throw new Error(result.error);
+//     }
 
-    return { success: true, data: result.data };
-  } catch (error) {
-    return { success: false, error: (error as Error).message };
-  }
-}
+//     return { success: true, data: result.data };
+//   } catch (error) {
+//     return { success: false, error: (error as Error).message };
+//   }
+// }
 
-export async function deleteWebsiteFiles(
-  userId: string,
-  websiteId: string,
-  paths: string[]
-) {
-  try {
-    // Get website and verify ownership
-    const supabase = await createServerClient();
-    const { data: website, error: fetchError } = await supabase
-      .from("websites")
-      .select("*")
-      .eq("id", websiteId)
-      .eq("user_id", userId)
-      .single();
+// export async function deleteWebsiteFiles(
+//   userId: string,
+//   websiteId: string,
+//   paths: string[]
+// ) {
+//   try {
+//     // Get website and verify ownership
+//     const supabase = await createServerClient();
+//     const { data: website, error: fetchError } = await supabase
+//       .from("websites")
+//       .select("*")
+//       .eq("id", websiteId)
+//       .eq("user_id", userId)
+//       .single();
 
-    if (fetchError || !website) {
-      throw new Error("Website not found or unauthorized");
-    }
+//     if (fetchError || !website) {
+//       throw new Error("Website not found or unauthorized");
+//     }
 
-    // Delete files from the machine
-    const result = await deleteMachineFiles(website.machine_id, paths);
+//     // Delete files from the machine
+//     const result = await deleteMachineFiles(website.machine_id, paths);
 
-    if (!result.success) {
-      throw new Error(result.error);
-    }
+//     if (!result.success) {
+//       throw new Error(result.error);
+//     }
 
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: (error as Error).message };
-  }
-}
+//     return { success: true };
+//   } catch (error) {
+//     return { success: false, error: (error as Error).message };
+//   }
+// }
 
 export async function deployAIResponseToMachine(
   userId: string,

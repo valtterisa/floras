@@ -1,4 +1,4 @@
-import { MachineConfig, MachineFile, updateMachineWithFiles } from "./machine";
+import { MachineFile, updateMachineWithFiles } from "./machine";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 
 export type FileOperation = {

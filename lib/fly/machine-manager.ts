@@ -1,29 +1,12 @@
 import {
-  createMachine,
   stopMachine,
   restartMachine,
   deleteMachine,
   getMachine,
-  createApp,
-  type MachineConfig,
-  MachineConfigSchema,
-  MachineFile,
 } from "./machine";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { FileOperation } from "./file-manager";
 import { getFlyRegistryUrl } from "@/lib/fly/registry";
-
-export type MachineInfo = {
-  id: string;
-  user_id: string;
-  machine_id: string;
-  app_name: string;
-  name: string;
-  region: string;
-  status: "running" | "stopped" | "error";
-  created_at: string;
-  updated_at: string;
-};
 
 /**
  * Create a unique app name for a user's website
@@ -57,37 +40,13 @@ function generateAppName(userId: string): string {
   return appName;
 }
 
-// Allocate an IPv4 address for a Fly.io app
-async function allocateIPv4Address(appName: string) {
-  const FLY_API_TOKEN = process.env.FLY_API_TOKEN;
-  if (!FLY_API_TOKEN) throw new Error("FLY_API_TOKEN is not set");
-  const url = "https://api.fly.io/graphql";
-  const body = JSON.stringify({
-    query: `mutation($input: AllocateIPAddressInput!) { allocateIpAddress(input: $input) { ipAddress { address type region } } }`,
-    variables: {
-      input: {
-        appId: appName,
-        type: "shared_v4",
-      },
-    },
-  });
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${FLY_API_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body,
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to allocate IPv4 address: ${response.status} ${errorText}`
-    );
-  }
-  return await response.json();
-}
-
+/**
+ * Assign a machine to a user's website
+ * @param userId User ID
+ * @param websiteName Website name
+ * @param files File operations to add to the machine
+ * @returns Machine data
+ */
 export async function assignMachineToUser(
   userId: string,
   websiteName: string,
@@ -101,10 +60,6 @@ export async function assignMachineToUser(
         "FLY_API_TOKEN is not set. Please configure your environment variables."
       );
     }
-
-    // Check if FLY_API_BASE is set
-    const apiBase = process.env.FLY_API_BASE || "https://api.machines.dev";
-    console.log("Using Fly.io API base URL:", apiBase);
 
     // Generate a unique app name for the user's website
     const appName = generateAppName(userId);
@@ -120,128 +75,32 @@ export async function assignMachineToUser(
     }
     console.log(`Creating new Fly.io app: ${appName}`);
 
-    // Create the Fly.io app
-    const appResult = await createApp(appName);
-    console.log(
-      "Fly.io createApp response:",
-      JSON.stringify(appResult, null, 2)
-    );
-    if (!appResult || typeof appResult !== "object" || !appResult.id) {
-      console.error(
-        "App creation failed or returned unexpected response:",
-        appResult
-      );
-      throw new Error(
-        `Failed to create Fly.io app. Full response: ${JSON.stringify(appResult)}`
-      );
-    }
-
-    console.log(`App created successfully with ID: ${appResult.id}`);
-
-    // Allocate IPv4 address for the app
-    console.log(`Allocating IPv4 address for app: ${appName}`);
-    await allocateIPv4Address(appName);
-    console.log(`IPv4 address allocated for app: ${appName}`);
-
-    // Always use the correct image tag from the GitLab runner
-    // Convert the trigger-pipeline to actions.ts and export from there no need for API route
     let imageTag = `${getFlyRegistryUrl(websiteName)}:latest`;
 
-    // Create machine configuration for users Fly.io machine
-    const config: MachineConfig = {
-      name: `${websiteName}-${userId.slice(0, 8)}`,
-      region: "arn",
-      image: imageTag,
-      guest: {
-        cpu_kind: "shared",
-        cpus: 1,
-        memory_mb: 1024,
+    const gitlabRepoUrl =
+      "https://gitlab.com/bittive-group/plain-nextjs-app.git";
+
+    const response = await fetch(process.env.PREVIEW_DEPLOY_URL!, {
+      method: "POST",
+      body: JSON.stringify({
+        gitlabRepoUrl: gitlabRepoUrl,
+        imageTag: imageTag,
+        appName: appName,
+        websiteName: websiteName,
+        userId: userId,
+        files: files,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.PREVIEW_DEPLOY_API_KEY!,
       },
-      services: [
-        {
-          protocol: "tcp",
-          internal_port: 3000,
-          ports: [
-            {
-              port: 80,
-              handlers: ["http"],
-            },
-            {
-              port: 443,
-              handlers: ["http", "tls"],
-            },
-          ],
-        },
-      ],
-      processes: [
-        {
-          cmd: ["npm", "start"],
-          env: {
-            NODE_ENV: "production",
-            PORT: "3000",
-          },
-        },
-      ],
-      restart: {
-        policy: "on-failure",
-      },
-    };
+    });
 
-    // Add files to the machine configuration if provided
-    if (files && files.length > 0) {
-      // Filter out delete operations as they're not relevant for new machines
-      const createOrUpdateFiles = files.filter(
-        (file) => file.operation !== "delete"
-      );
-
-      if (createOrUpdateFiles.length > 0) {
-        // Convert our file operations to Fly.io MachineFile format
-        const machineFiles: MachineFile[] = createOrUpdateFiles.map((file) => ({
-          guest_path: `/app/${file.path}`,
-          raw_value: Buffer.from(file.content).toString("base64"),
-        }));
-
-        // Add files to the config
-        config.files = machineFiles;
-
-        console.log(
-          `Adding ${machineFiles.length} files to initial machine configuration`
-        );
-      }
+    if (!response.ok) {
+      throw new Error(`Failed to deploy preview: ${response.statusText}`);
     }
 
-    console.log(
-      "Creating machine with config:",
-      JSON.stringify(
-        {
-          ...config,
-          files: config.files ? `[${config.files.length} files]` : "none",
-        },
-        null,
-        2
-      )
-    );
-
-    // Validate config with schema
-    try {
-      MachineConfigSchema.parse(config);
-    } catch (validationError) {
-      console.error("Invalid machine config:", validationError);
-      throw new Error(
-        `Invalid machine configuration: ${(validationError as Error).message}`
-      );
-    }
-
-    // Create the machine on Fly.io in the user's app
-    const machine = await createMachine(config, appName);
-
-    if (!machine || !machine.id) {
-      throw new Error("Failed to create machine: No valid machine ID returned");
-    }
-
-    console.log(
-      `Machine created successfully with ID: ${machine.id} in app: ${appName}`
-    );
+    const machine = await response.json();
 
     // Return the machine data that will be used in the website record
     return {
@@ -250,7 +109,7 @@ export async function assignMachineToUser(
         machine_id: machine.id,
         app_name: appName,
         name: `${websiteName}-${userId.slice(0, 8)}`,
-        region: config.region,
+        region: "arn",
         status: "creating",
         user_id: userId,
       },

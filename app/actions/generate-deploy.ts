@@ -33,9 +33,7 @@ async function getMockAIResponse(): Promise<string> {
     const mockResponse = `
 
 <siteforge-code>
-<siteforge-add-dependency>
-framer-motion
-</siteforge-add-dependency>
+
 
 <siteforge-write file="/components/site-components/header/header.tsx">
 "use client";
@@ -227,10 +225,6 @@ export async function generateAndDeployWebsite(
     console.log(
       `Website created with ID: ${websiteId}, Machine ID: ${machineId}, App: ${appName}`
     );
-
-    // Wait for machine to fully initialize with files
-    console.log("Waiting for machine to initialize with files...");
-    await new Promise((resolve) => setTimeout(resolve, 15000)); // Wait 15 seconds
 
     // 5. Start the machine (with a few retries if needed)
     console.log("Starting machine...");
