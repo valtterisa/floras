@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
+import { format } from "date-fns";
 
 export type MyWebsite = {
   id: string;
@@ -93,8 +94,8 @@ export default function WebsitesPage() {
         return;
       }
       const { data, error } = await supabase
-        .from("my_websites")
-        .select("*")
+        .from("websites")
+        .select("id, name, url, plan, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
@@ -209,7 +210,7 @@ export default function WebsitesPage() {
               <CardHeader className="pb-2">
                 <CardTitle>{website.name}</CardTitle>
                 <CardDescription>
-                  Created on {new Date(website.createdAt).toLocaleDateString()}
+                  Created on {format(new Date(website.created_at), "MMMM d, yyyy")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
