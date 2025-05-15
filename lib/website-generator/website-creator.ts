@@ -288,7 +288,7 @@ export async function createAndDeployWebsite(
               console.log(`Updating website with custom domain: ${customDomain}`);
 
               await updateWebsite(website.id, {
-                custom_domain: customDomain
+                primary_url: customDomain
               });
 
               console.log(`Website record updated with custom domain: ${customDomain}`);
@@ -364,9 +364,9 @@ export async function createAndDeployWebsite(
 
     // Step 6: Update website record with deployment info
     await updateWebsite(website.id, {
-      url: url,
+      preview_url: url,
       published: true,
-      status: "deployed", // Final status is "deployed" after successful deployment
+      status: "preview",
       machine_id: machineId,
       last_deployed: new Date().toISOString(),
       repository_url: `https://gitlab.com/bittive-group/${appName}`, // Save GitLab repository URL
@@ -493,7 +493,7 @@ export async function deployWebsite(websiteId: string): Promise<{
     return {
       success: true,
       data: {
-        url: website.url || deployData.url,
+        url: website.primary_url || deployData.url,
         status: "deployed",
         message: "Website deployed successfully"
       }
@@ -513,6 +513,65 @@ export async function deployWebsite(websiteId: string): Promise<{
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Delete a project by its ID (UUID).
+ * This will call the backend /api/delete-project endpoint with the correct parameters.
+ * @param id The website/project UUID
+ * @returns Result of the deletion operation
+ */
+export async function deleteProjectById(id: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+  details?: any;
+}> {
+  try {
+    // Get the website/project from Supabase
+    const website = await getWebsite(id);
+    if (!website) {
+      return { success: false, error: "Project not found" };
+    }
+    if (!website.app_name) {
+      return { success: false, error: "Project app_name not found" };
+    }
+
+    // Prepare parameters for the backend API
+    const gitlabRepo = `bittive-group/${website.app_name}`;
+    const cloudflareProject = website.app_name;
+    const slug = website.app_name;
+
+    // Call the backend API endpoint
+    const response = await fetch("http://localhost:3001/api/delete-project", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gitlabRepo, cloudflareProject, slug }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      return {
+        success: false,
+        error: result.error || "Failed to delete project",
+        details: result.details,
+      };
+    }
+
+    // Mark the website record as deleted in Supabase (set deleted_at to now)
+    await updateWebsite(id, { deleted_at: new Date().toISOString() });
+
+    return {
+      success: true,
+      message: result.message || "Project deleted successfully",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error?.message || "Unknown error",
     };
   }
 }

@@ -43,19 +43,31 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
-import { deployWebsite } from "@/lib/website-generator/website-creator";
+import { deployWebsite, deleteProjectById } from "@/lib/website-generator/website-creator";
 
 export type MyWebsite = {
   id: string;
   user_id: string;
   name: string;
-  url: string;
+  primary_url: string;
   template?: string;
   plan?: string;
   created_at: string;
   visits?: number;
   custom_domain?: string;
   status?: string;
+  description?: string; // Added optional description field
+  content?: string; // Added optional content field
+  published?: boolean; // Added optional published field
+  template_id?: string; // Added optional template_id field
+  settings?: Record<string, any>; // Added optional settings field
+  machine_id?: string; // Added optional machine_id field
+  app_name?: string; // Added optional app_name field
+  preview_url?: string; // Added optional preview_url field
+  last_deployed?: string; // Added optional last_deployed field
+  repository_url?: string; // Added optional repository_url field
+  subdomain?: string; // Added optional subdomain field
+  primary_domain?: string; // Added optional primary_domain field
 };
 
 // Helper to slugify a string
@@ -71,15 +83,7 @@ function slugify(text: string): string {
 
 // Helper to construct unique url
 function constructWebsiteUrl(website: MyWebsite): string {
-  // Use custom domain if available
-  if (website.custom_domain) {
-    return `https://${website.custom_domain}`;
-  }
-
-  // Fall back to default URL format
-  const slug = slugify(website.name);
-  const shortId = website.id.split("-")[0];
-  return `/site/${slug}-${shortId}`;
+  return `https://${website.primary_url}`;
 }
 
 export default function WebsitesPage() {
@@ -107,7 +111,9 @@ export default function WebsitesPage() {
       }
       const { data, error } = await supabase
         .from("websites")
-        .select("id, name, url, plan, created_at, custom_domain, visits, status")
+        .select(
+          "id, name, description, content, published, template_id, primary_url, settings, visits, machine_id, app_name, status, preview_url, last_deployed, repository_url, subdomain, primary_domain, created_at"
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {
@@ -127,12 +133,8 @@ export default function WebsitesPage() {
 
   const confirmDelete = async () => {
     if (websiteToDelete) {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("my_websites")
-        .delete()
-        .eq("id", websiteToDelete);
-      if (!error) {
+      const result = await deleteProjectById(websiteToDelete);
+      if (result.success) {
         setWebsites(
           websites.filter((website) => website.id !== websiteToDelete)
         );
@@ -143,7 +145,7 @@ export default function WebsitesPage() {
       } else {
         toast({
           title: "Error",
-          description: "Failed to delete website. Please try again.",
+          description: result.error || "Failed to delete website. Please try again.",
           variant: "destructive",
         });
       }
@@ -335,12 +337,12 @@ export default function WebsitesPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel hidden>Actions</DropdownMenuLabel>
                       <DropdownMenuItem
-                        onClick={() => router.push("/dashboard/domains")}
+                        onClick={() => router.push("/dashboard/website/domains")}
                       >
                         Set up custom domain
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => router.push("/dashboard/integrations")}
+                        onClick={() => router.push("/dashboard/website/integrations")}
                       >
                         Connect integrations
                       </DropdownMenuItem>

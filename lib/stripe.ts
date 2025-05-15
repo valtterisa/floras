@@ -1,24 +1,29 @@
 import Stripe from "stripe";
 
+// Ensure the Stripe secret key is available
+// if (!process.env.STRIPE_SECRET_KEY) {
+//   throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+// }
+
 // Initialize Stripe with your secret key
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+export const stripe = new Stripe("sk_test_51R7g3uGWWj6eMRDBzAMysbAyWVh0OEOyW6gTX18X7oIJ7OT8Vixxct2j3Pq8kNcxLJcq9gYHnrYoNoIrwuush00b00UFl0kTB3", {
   apiVersion: "2025-03-31.basil",
 });
 
-// Update the PLANS object with hardcoded price IDs
+// Update the PLANS object with price IDs from environment variables
 export const PLANS = {
   PRO: {
     name: "Pro",
     yearly: {
       price: 29,
-      // Hardcoded price ID for yearly subscription
-      priceId: "price_1OvXYZABCDEFGHIJKLMNOPQR", // Replace with your actual yearly price ID
+      // Use environment variable for yearly subscription price ID
+      priceId: process.env.STRIPE_PRO_YEARLY_PRICE_ID || process.env.STRIPE_PRO_PRICE_ID,
       interval: "year",
     },
     monthly: {
       price: 5,
-      // Hardcoded price ID for monthly subscription
-      priceId: "price_1OvXYZABCDEFGHIJKLMNOPQS", // Replace with your actual monthly price ID
+      // Use environment variable for monthly subscription price ID
+      priceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || process.env.STRIPE_PRO_PRICE_ID,
       interval: "month",
     },
     features: [
@@ -27,6 +32,26 @@ export const PLANS = {
       "Testimonials section",
       "Basic analytics",
       "Email integrations",
+    ],
+  },
+  ENTERPRISE: {
+    name: "Enterprise",
+    yearly: {
+      price: null, // Custom pricing
+      priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID,
+      interval: "year",
+    },
+    monthly: {
+      price: null, // Custom pricing
+      priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID,
+      interval: "month",
+    },
+    features: [
+      "Everything in Pro",
+      "Custom integrations",
+      "Dedicated account manager",
+      "Priority support",
+      "Advanced analytics",
     ],
   },
 };

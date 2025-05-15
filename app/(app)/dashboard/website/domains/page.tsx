@@ -22,6 +22,8 @@ import {
   RefreshCw,
   Lock,
   ExternalLink,
+  ChevronDown,
+  Filter,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,12 +36,19 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function DomainsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">("starter");
+  const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">("pro");
   const [showAddDomainDialog, setShowAddDomainDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [domains, setDomains] = useState<any[]>([]);
@@ -48,13 +57,23 @@ export default function DomainsPage() {
   const [websites, setWebsites] = useState<any[]>([]);
 
   useEffect(() => {
-    // Create a mock website entry
+    // Create mock websites
     setWebsites([
       {
         id: "1",
         name: "Bittive Oy",
         url: `https://siteforge.app/bittive-oy`,
       },
+      {
+        id: "2",
+        name: "Tech Solutions Inc",
+        url: `https://siteforge.app/tech-solutions`,
+      },
+      {
+        id: "3",
+        name: "Coffee Shop",
+        url: `https://siteforge.app/coffee-shop`,
+      }
     ]);
 
     setSelectedWebsite("1");
@@ -72,11 +91,61 @@ export default function DomainsPage() {
             Date.now() - 30 * 24 * 60 * 60 * 1000
           ).toISOString(),
         },
+        {
+          id: "2",
+          name: "bittive.fi",
+          status: "active",
+          websiteId: "1",
+          ssl: true,
+          createdAt: new Date(
+            Date.now() - 15 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        },
+        {
+          id: "3",
+          name: "tech-solutions.com",
+          status: "active",
+          websiteId: "2",
+          ssl: true,
+          createdAt: new Date(
+            Date.now() - 45 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        },
+        {
+          id: "4",
+          name: "tech-solutions.io",
+          status: "pending",
+          websiteId: "2",
+          ssl: false,
+          createdAt: new Date(
+            Date.now() - 2 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        },
+        {
+          id: "5",
+          name: "mycoffeeshop.com",
+          status: "pending",
+          websiteId: "3",
+          ssl: false,
+          createdAt: new Date(
+            Date.now() - 1 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        }
       ]);
     }
 
     setIsLoading(false);
   }, [plan]);
+
+  // Add a helper function to filter domains by website ID
+  const getDomainsForWebsite = (websiteId: string) => {
+    return domains.filter(domain => domain.websiteId === websiteId);
+  };
+
+  // Add function to handle website selection
+  const handleWebsiteChange = (value: string) => {
+    setSelectedWebsite(value);
+  };
 
   const handleAddDomain = () => {
     if (plan === "starter") {
@@ -98,7 +167,7 @@ export default function DomainsPage() {
 
   const handleUpgrade = () => {
     setShowUpgradeDialog(false);
-    router.push("/dashboard/upgrade");
+    router.push("/dashboard/plan/upgrade");
   };
 
   if (isLoading) {
@@ -124,7 +193,31 @@ export default function DomainsPage() {
         </div>
       </div>
 
+      {plan !== "starter" && (
+        <div className="mb-6">
+          <Label htmlFor="website-select" className="mb-2 block">Select Website</Label>
+          <Select value={selectedWebsite || ""} onValueChange={handleWebsiteChange}>
+            <SelectTrigger className="w-full md:w-[300px]">
+              <SelectValue placeholder="Select a website" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Websites</SelectItem>
+              {websites.map((website) => (
+                <SelectItem key={website.id} value={website.id}>
+                  {website.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <Tabs defaultValue="domains" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="domains">Domains</TabsTrigger>
+          <TabsTrigger value="dns">DNS Records</TabsTrigger>
+          <TabsTrigger value="ssl">SSL Certificates</TabsTrigger>
+        </TabsList>
         <TabsContent value="domains" className="space-y-4">
           {plan === "starter" ? (
             <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
@@ -153,7 +246,10 @@ export default function DomainsPage() {
             </Card>
           ) : domains.length > 0 ? (
             <div className="grid gap-4">
-              {domains.map((domain) => (
+              {(selectedWebsite === "all"
+                ? domains
+                : domains.filter(domain => domain.websiteId === selectedWebsite)
+              ).map((domain) => (
                 <Card key={domain.id}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
@@ -517,3 +613,4 @@ export default function DomainsPage() {
     </div>
   );
 }
+

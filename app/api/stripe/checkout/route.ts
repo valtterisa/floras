@@ -44,6 +44,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (priceId === undefined || priceId === null) {
+        return NextResponse.json(
+            { error: "Price ID not found" },
+            { status: 400 }
+        );
+    }
+
     // Create a checkout session
     const checkoutSession = await createCheckoutSession({
       customerId: profile.stripe_customer_id,

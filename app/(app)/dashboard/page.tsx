@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react"; // Removed useEffect as it's not used
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Card,
   CardContent,
   CardDescription,
-  // CardFooter, // Removed unused component
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,7 +22,12 @@ import {
   CalendarClock,
   UploadCloud,
   FileText,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
+import { getWebsitesForUser, Website } from "@/lib/database";
+import { createClient } from "@/lib/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Mock data for notifications and scheduled posts (replace with actual data fetching)
 const notifications = [
@@ -40,34 +44,37 @@ const scheduledPosts = [
   },
 ];
 
-// Mock data for websites with custom domains (replace with actual data fetching)
-const websites = [
-  {
-    id: 1,
-    name: "My Portfolio",
-    url: "https://app-name-1.fly.dev",
-    custom_domain: "portfolio.johndoe.com",
-    published: true
-  },
-  {
-    id: 2,
-    name: "Company Website",
-    url: "https://app-name-2.fly.dev",
-    custom_domain: "www.acme-company.com",
-    published: true
-  },
-  {
-    id: 3,
-    name: "Blog Site",
-    url: "https://app-name-3.fly.dev",
-    custom_domain: null,
-    published: false
-  },
-];
-
 export default function DashboardPage() {
   const router = useRouter();
-  // const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">("starter"); // Removed plan state if not needed for this view
+  const [websites, setWebsites] = useState<Website[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    async function fetchWebsites() {
+      try {
+        setIsLoading(true);
+        // Get the current user's ID from Supabase
+        const supabase = createClient();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          throw new Error(userError?.message || "User not authenticated");
+        }
+
+        // Fetch websites for the authenticated user via website_users join table
+        const websiteData: Website[] = await getWebsitesForUser(user.id);
+        setWebsites(websiteData);
+      } catch (err) {
+        console.error("Error fetching websites:", err);
+        setError(err instanceof Error ? err : new Error("Failed to fetch websites"));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchWebsites();
+  }, []);
 
   return (
     <div className="container py-10 px-4 md:px-6 space-y-8">
@@ -255,38 +262,75 @@ export default function DashboardPage() {
             <CardTitle>Custom Domains</CardTitle>
           </CardHeader>
           <CardContent>
-            {websites.filter(site => site.published).length > 0 ? (
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Loading websites...</span>
+              </div>
+            ) : error ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-5 w-5" />
+                <AlertDescription>
+                  Error loading websites: {error.message}
+                </AlertDescription>
+              </Alert>
+            ) : websites.filter((site) => site.published).length > 0 ? (
               <div className="space-y-4">
-                {websites.filter(site => site.published).map((website) => (
-                  <div key={website.id} className="border rounded-md p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{website.name}</h3>
-                        <div className="text-sm mt-1">
-                          <p>Default URL: <a href={website.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{website.url}</a></p>
-                          {website.custom_domain ? (
-                            <p className="text-green-600 mt-1">
-                              Custom Domain: <a href={`https://${website.custom_domain}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{website.custom_domain}</a>
+                {websites
+                  .filter((site) => site.published)
+                  .map((website) => (
+                    <div key={website.id} className="border rounded-md p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium">{website.name}</h3>
+                          <div className="text-sm mt-1">
+                            <p>
+                              Default URL:{" "}
+                              <a
+                                href={website.primary_url ?? "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                {website.primary_url}
+                              </a>
                             </p>
-                          ) : (
-                            <p className="text-muted-foreground mt-1">No custom domain configured</p>
-                          )}
+                            {website.primary_url ? (
+                              <p className="text-green-600 mt-1">
+                                Custom Domain:{" "}
+                                <a
+                                  href={`https://${website.primary_url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline"
+                                >
+                                  {website.primary_url}
+                                </a>
+                              </p>
+                            ) : (
+                              <p className="text-muted-foreground mt-1">
+                                No custom domain configured
+                              </p>
+                            )}
+                          </div>
                         </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/dashboard/website/${website.id}/settings`)
+                          }
+                        >
+                          Configure
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => router.push(`/dashboard/website/${website.id}/settings`)}
-                      >
-                        Configure
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No published websites found. Publish a website to configure a custom domain.
+                No published websites found. Publish a website to configure a
+                custom domain.
               </p>
             )}
             <div className="mt-4">
@@ -308,4 +352,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

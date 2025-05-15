@@ -16,11 +16,11 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: "/dashboard/analytics",
-        destination: "/dashboard",
-        permanent: false,
-      },
+      // {
+      //   source: "/dashboard/analytics",
+      //   destination: "/dashboard",
+      //   permanent: false,
+      // },
     ];
   },
 };

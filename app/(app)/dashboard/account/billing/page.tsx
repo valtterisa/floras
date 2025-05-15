@@ -129,7 +129,7 @@ export default function BillingPage() {
                 <div className="mt-4 sm:mt-0">
                   {plan !== "enterprise" && (
                     <Button asChild variant="outline">
-                      <Link href="/dashboard/upgrade">
+                      <Link href="/dashboard/plan/upgrade">
                         {isActive ? "Change Plan" : "Upgrade Plan"}
                       </Link>
                     </Button>

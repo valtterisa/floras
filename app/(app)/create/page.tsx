@@ -331,7 +331,7 @@ export default function CreatePage() {
       localStorage.setItem("currentWebsiteId", result.data.websiteId);
 
       // Redirect to editor for the new website
-      router.push(`/website/editor/${result.data.websiteId}`);
+      router.push(`/dashboard/website/editor/${result.data.websiteId}`);
     } catch (error) {
       console.error("Error generating website:", error);
       toast.error("Failed to generate website. Please try again.");
