@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAndDeployWebsite } from "@/app/actions/generate-deploy";
-import * as fs from "fs";
-import * as path from "path";
 import { createClient } from "@/lib/supabase/server";
 
 // Mock AI response function
