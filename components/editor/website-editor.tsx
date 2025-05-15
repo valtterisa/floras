@@ -44,7 +44,7 @@ import {
   startWebsite,
   stopWebsite,
 } from "@/app/actions/website";
-import { getMachineUrl } from "@/lib/fly/machine-manager";
+import { getMachineUrl } from "@/lib/fly/fly";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 

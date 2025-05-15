@@ -73,7 +73,7 @@ export default function PromptTool() {
         );
       }
 
-      const { websiteId, url } = result.data;
+      const { websiteId } = result.data;
 
       // Store the website ID in localStorage for the editor
       localStorage.setItem("currentWebsiteId", websiteId);

@@ -1,9 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createWebsite } from "./website";
 import { revalidatePath } from "next/cache";
-import { parseAIResponse } from "@/lib/utils";
+import { generateAppName, parseAIResponse } from "@/lib/utils";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createAppAndAssignMachine } from "@/lib/fly/fly";
+import { createWebsite } from "@/lib/database";
 
 type GenerateDeployResult = {
   success: boolean;
@@ -162,61 +164,38 @@ export async function generateAndDeployWebsite(
       throw new Error("Failed to generate website content");
     }
 
-    // 2. Parse the AI response to extract file operations
-    const fileOperations = await parseAIResponse(aiResponse);
+    const files = await parseAIResponse(aiResponse);
 
-    if (fileOperations.length === 0) {
+    if (files.length === 0) {
       throw new Error("No valid file operations found in AI response");
     }
 
-    console.log(
-      `Found ${fileOperations.length} file operations in AI response`
-    );
+    console.log(`Found ${files.length} file operations in AI response`);
 
-    // 3. Create a website name from the prompt with a timestamp to ensure uniqueness
-    const timestamp = Date.now().toString().slice(-6); // Use last 6 digits of timestamp for uniqueness
-    const websiteName = `${prompt
-      .split(" ")
-      .slice(0, 3)
-      .join("-")
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, "")}-${timestamp}`;
-
-    console.log(`Creating new website with unique name: ${websiteName}`);
-
-    // 4. Create a website record and assign a Fly.io machine with the files already included
-    const websiteResult = await createWebsite(
-      userId,
-      websiteName,
-      fileOperations
-    );
-
-    if (!websiteResult.success) {
-      throw new Error(
-        `Failed to create website: ${websiteResult.error || "Unknown error"}`
-      );
-    }
-
+    const appName = generateAppName(userId);
     if (
-      !websiteResult.data ||
-      !websiteResult.data.website ||
-      !websiteResult.data.website.id ||
-      !websiteResult.data.machine ||
-      !websiteResult.data.machine.machine_id
+      !appName ||
+      appName.length < 3 ||
+      appName.length > 30 ||
+      !/^[a-z0-9-]+$/.test(appName) ||
+      appName.startsWith("-") ||
+      appName.endsWith("-")
     ) {
-      throw new Error(
-        "Failed to create website: No website ID or machine ID returned"
-      );
+      throw new Error(`Generated app name '${appName}' is invalid for Fly.io`);
     }
 
-    const websiteId = websiteResult.data.website.id;
-    const machineId = websiteResult.data.machine.machine_id;
-    const appName = websiteResult.data.machine.app_name;
+    console.log(`Creating new Fly.io app: ${appName}`);
 
-    console.log(
-      `Website created with ID: ${websiteId}, Machine ID: ${machineId}, App: ${appName}`
-    );
-    let url = `https://${appName}.fly.dev`;
+    const result = await createAppAndAssignMachine(userId, appName, files);
+
+    if (!result.success || !result.data) {
+      throw new Error("Failed to create app and assign machine");
+    }
+
+    const machineId = result.data.machine_id;
+    const url = result.data.url;
+
+    console.log(`Machine ID: ${machineId}, App: ${appName}`);
     // Update the website with URL and content
     const supabase = await createClient();
     await supabase
@@ -225,18 +204,18 @@ export async function generateAndDeployWebsite(
         status: "running",
         url: url,
       })
-      .eq("id", websiteId);
+      .eq("id", appName);
 
     // 7. Revalidate relevant paths to update UI
     revalidatePath("/dashboard/website/my-websites");
-    revalidatePath(`/dashboard/website/editor/${websiteId}`);
+    revalidatePath(`/dashboard/website/editor/${appName}`);
 
     console.log("Website deployment completed");
 
     return {
       success: true,
       data: {
-        websiteId,
+        websiteId: appName,
         machineId,
         url,
       },

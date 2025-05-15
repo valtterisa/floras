@@ -37,14 +37,10 @@ export async function createAppAndAssignMachine(
 
     let imageTag = `${getFlyRegistryUrl(appName)}:latest`;
 
-    const gitlabRepoUrl =
-      "https://gitlab.com/bittive-group/plain-nextjs-app.git";
-
     // Call to backend to create app and machines
     const response = await fetch(process.env.PREVIEW_DEPLOY_URL!, {
       method: "POST",
       body: JSON.stringify({
-        gitlabRepoUrl: gitlabRepoUrl,
         imageTag: imageTag,
         appName: appName,
         websiteName: appName,
@@ -56,6 +52,8 @@ export async function createAppAndAssignMachine(
         "x-api-key": process.env.PREVIEW_DEPLOY_API_KEY!,
       },
     });
+
+    console.log("Response:", response);
 
     if (!response.ok) {
       throw new Error(`Failed to deploy preview: ${response.statusText}`);
@@ -70,8 +68,7 @@ export async function createAppAndAssignMachine(
       success: true,
       data: {
         machine_id: machine.id,
-        app_name: appName,
-        name: appName,
+        url: `https://${appName}.fly.dev`,
         region: "arn",
         status: "creating",
         user_id: userId,
