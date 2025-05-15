@@ -180,7 +180,6 @@ export async function POST(request: NextRequest) {
     // Check if we should auto-deploy to Fly.io
     const autoDeploy = requestData.autoDeploy !== false;
 
-    let gitlabRepoUrl: string | undefined = undefined;
     if (autoDeploy) {
       // Use the server action to generate and deploy in one step
       const result = await generateAndDeployWebsite(user.id, userPrompt);
@@ -197,7 +196,6 @@ export async function POST(request: NextRequest) {
           websiteId: result.data?.websiteId,
           machineId: result.data?.machineId,
           url: result.data?.url,
-          repoUrl: gitlabRepoUrl,
         },
         userId: user.id,
       });
