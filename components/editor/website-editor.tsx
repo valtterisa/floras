@@ -39,12 +39,7 @@ import WebsitePreview from "./website-preview";
 import { VirtualFileSystem } from "@/lib/virtual-fs";
 import Link from "next/link";
 import { MediaLibrary } from "../media-library/media-library";
-import {
-  getUserWebsites,
-  startWebsite,
-  stopWebsite,
-} from "@/app/actions/website";
-import { getMachineUrl } from "@/lib/fly/fly";
+
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -66,78 +61,6 @@ export function WebsiteEditor({ id }: { id: string }) {
   const vfs = VirtualFileSystem.getInstance();
 
   const isMobile = useMobile();
-
-  useEffect(() => {
-    vfs.loadFromLocalStorage();
-
-    const loadWebsite = async () => {
-      setIsLoading(true);
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-          throw new Error("User not authenticated");
-        }
-
-        // Get the website details
-        const result = await getUserWebsites(user.id);
-
-        if (!result.success || !result.data) {
-          throw new Error("Failed to fetch websites");
-        }
-
-        // Find the website with the matching ID
-        const siteData = result.data.find((site) => site.id === id);
-
-        if (!siteData) {
-          throw new Error("Website not found");
-        }
-
-        setWebsite(siteData);
-
-        // If the website is not running, start it
-        if (siteData.status !== "running") {
-          await startWebsite(user.id, id);
-          toast({
-            title: "Starting website...",
-            description:
-              "Your website is being started. This may take a few moments.",
-          });
-        }
-
-        // Set the website URL
-        if (siteData.url) {
-          setWebsiteUrl(siteData.url);
-        } else {
-          // Fallback if no URL is set - use app name instead of machine ID
-          setWebsiteUrl(
-            getMachineUrl(siteData.app_name || `${siteData.name}-app`)
-          );
-        }
-      } catch (error) {
-        console.error("Error loading website:", error);
-        toast({
-          title: "Error",
-          description:
-            error instanceof Error ? error.message : "Failed to load website",
-          variant: "destructive",
-        });
-        // Fallback to test URLs
-        setWebsiteUrl(
-          id === "1"
-            ? "http://localhost:3000/test"
-            : "http://localhost:3000/test-two"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadWebsite();
-  }, [id]);
 
   const addComponent = (component: ComponentType) => {
     const newComponents = [...components, component];
@@ -233,46 +156,7 @@ export function WebsiteEditor({ id }: { id: string }) {
     setDraggedIndex(null);
   };
 
-  const handleGoLive = async () => {
-    if (!website) return;
-
-    setIsLoading(true);
-    try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      // For now, just ensure the website is running
-      await startWebsite(user.id, id);
-
-      // Use the direct fly.dev URL
-      const urlToOpen =
-        websiteUrl || getMachineUrl(website.app_name || `${website.name}-app`);
-
-      toast({
-        title: "Website is live!",
-        description: `Your website is now accessible at ${urlToOpen}`,
-      });
-
-      // Open the website in a new tab
-      window.open(urlToOpen, "_blank");
-    } catch (error) {
-      console.error("Error publishing website:", error);
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to publish website",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleGoLive = async () => {};
 
   const [IsMediaModalOpen, setIsMediaModalOpen] = useState(false);
   // Handle image selection from media library
