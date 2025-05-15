@@ -406,6 +406,7 @@ export async function addWebsiteUser(
     if (error) throw error;
     return data as WebsiteUser;
   } catch (error) {
+    console.error(`Failed to add user ${userId} to website ${websiteId} with role ${role}:`, error);
     return handleError(
       error,
       `Failed to add user ${userId} to website ${websiteId}`
@@ -1066,4 +1067,5 @@ export async function getSubscriptionWithPlan(subscriptionId: string): Promise<{
     return handleError(error, `Failed to get subscription with plan details ${subscriptionId}`);
   }
 }
+
 

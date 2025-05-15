@@ -1,6 +1,6 @@
 "use server";
 
-import { createWebsite, updateWebsite, getWebsite } from "@/lib/database";
+import { createWebsite, updateWebsite, getWebsite, addWebsiteUser } from "@/lib/database";
 import { parseAIResponse, generateAppName } from "@/lib/utils";
 import { createAppAndAssignMachine } from "@/lib/fly/fly";
 import { revalidatePath } from "next/cache";
@@ -169,7 +169,6 @@ export async function createAndDeployWebsite(
       content: {}, // Will be populated after content generation
       published: false,
       visits: 0,
-      plan: "starter" as const,
       app_name: appName,
       status: "creating", // Initial status is "creating"
       settings: {
@@ -177,6 +176,9 @@ export async function createAndDeployWebsite(
         components: data.components,
         industry: data.industry,
       },
+      template_id: data.template || null,
+      subdomain: null,
+      primary_domain: null,
     };
 
     // Create the initial website record
@@ -306,6 +308,15 @@ export async function createAndDeployWebsite(
     } catch (error) {
       // Don't fail the whole process if API calls fail
       console.error('Error calling development APIs:', error);
+    }
+
+    // Step 1.6: Add the user as the admin in the website_users table
+    try {
+      console.log(`Adding user ${userId} as admin for website ${website.id}`);
+      await addWebsiteUser(website.id, userId, "admin");
+    } catch (error) {
+      console.error('Error adding user as admin in website_users table:', error);
+      throw new Error("Failed to add user as admin in website_users table");
     }
 
     // Step 2: Generate website content
@@ -575,4 +586,6 @@ export async function deleteProjectById(id: string): Promise<{
     };
   }
 }
+
+
 
