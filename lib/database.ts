@@ -102,22 +102,25 @@ export type Asset = {
   metadata?: any; // JSON metadata
 };
 
-// Error handling
-export class DatabaseError extends Error {
+export type DatabaseError = {
+  name: string;
+  message: string;
   code?: string;
   details?: string;
   hint?: string;
+};
 
-  constructor(message: string, postgrestError?: PostgrestError) {
-    super(message);
-    this.name = "DatabaseError";
-
-    if (postgrestError) {
-      this.code = postgrestError.code;
-      this.details = postgrestError.details;
-      this.hint = postgrestError.hint;
-    }
-  }
+export function createDatabaseError(
+  message: string,
+  postgrestError?: PostgrestError
+): DatabaseError {
+  return {
+    name: "DatabaseError",
+    message,
+    code: postgrestError?.code,
+    details: postgrestError?.details,
+    hint: postgrestError?.hint,
+  };
 }
 
 // Helper function to handle database errors
@@ -125,14 +128,14 @@ function handleError(error: any, customMessage: string): never {
   console.error(`Database error: ${customMessage}`, error);
 
   if (error?.code === "PGRST301") {
-    throw new DatabaseError("Row not found", error);
+    throw createDatabaseError("Row not found", error);
   }
 
   if (error?.code) {
-    throw new DatabaseError(`${customMessage}: ${error.message}`, error);
+    throw createDatabaseError(`${customMessage}: ${error.message}`, error);
   }
 
-  throw new DatabaseError(customMessage);
+  throw createDatabaseError(customMessage);
 }
 
 // Profiles
@@ -209,7 +212,9 @@ export async function getWebsitesForUser(userId: string): Promise<Website[]> {
       return [];
     }
 
-    const websiteIds = (websiteUserRows ?? []).map((row: { website_id: string }) => row.website_id);
+    const websiteIds = (websiteUserRows ?? []).map(
+      (row: { website_id: string }) => row.website_id
+    );
 
     if (websiteIds.length === 0) return [];
 
@@ -226,7 +231,7 @@ export async function getWebsitesForUser(userId: string): Promise<Website[]> {
     }
 
     // Ensure data is serialized into plain objects
-    return data.map((website) => ({ ...website }));
+    return JSON.parse(JSON.stringify(data)) as Website[];
   } catch (error) {
     console.error(`Failed to get websites for user ${userId}:`, error);
     return [];
@@ -334,50 +339,58 @@ export async function incrementWebsiteVisits(websiteId: string): Promise<void> {
 }
 
 // Website Users/Team Members
-export async function getWebsiteUsers(websiteId: string): Promise<(WebsiteUser & { profile: Profile })[]> {
+export async function getWebsiteUsers(
+  websiteId: string
+): Promise<(WebsiteUser & { profile: Profile })[]> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("website_users")
-      .select(`
+      .select(
+        `
         *,
         profile:user_id (*)
-      `)
+      `
+      )
       .eq("website_id", websiteId);
 
     if (error) throw error;
 
-    return data.map(item => ({
+    return data.map((item) => ({
       website_id: item.website_id,
       user_id: item.user_id,
       role: item.role as WebsiteUser["role"],
       created_at: item.created_at,
-      profile: item.profile as Profile
+      profile: item.profile as Profile,
     }));
   } catch (error) {
     return handleError(error, `Failed to get users for website ${websiteId}`);
   }
 }
 
-export async function getUserWebsites(userId: string): Promise<(WebsiteUser & { website: Website })[]> {
+export async function getUserWebsites(
+  userId: string
+): Promise<(WebsiteUser & { website: Website })[]> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("website_users")
-      .select(`
+      .select(
+        `
         *,
         website:website_id (*)
-      `)
+      `
+      )
       .eq("user_id", userId);
 
     if (error) throw error;
 
-    return data.map(item => ({
+    return data.map((item) => ({
       website_id: item.website_id,
       user_id: item.user_id,
       role: item.role as WebsiteUser["role"],
       created_at: item.created_at,
-      website: item.website as Website
+      website: item.website as Website,
     }));
   } catch (error) {
     return handleError(error, `Failed to get websites for user ${userId}`);
@@ -406,7 +419,10 @@ export async function addWebsiteUser(
     if (error) throw error;
     return data as WebsiteUser;
   } catch (error) {
-    console.error(`Failed to add user ${userId} to website ${websiteId} with role ${role}:`, error);
+    console.error(
+      `Failed to add user ${userId} to website ${websiteId} with role ${role}:`,
+      error
+    );
     return handleError(
       error,
       `Failed to add user ${userId} to website ${websiteId}`
@@ -561,7 +577,7 @@ export async function transferWebsiteOwnership(
         .insert({
           website_id: websiteId,
           user_id: newOwnerId,
-          role: "owner"
+          role: "owner",
         });
 
       if (insertError) throw insertError;
@@ -609,463 +625,3 @@ export async function getDomains(websiteId: string): Promise<Domain[]> {
     return handleError(error, `Failed to get domains for website ${websiteId}`);
   }
 }
-
-export async function getDomain(domainId: string): Promise<Domain> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("domains")
-      .select("*")
-      .eq("id", domainId)
-      .single();
-
-    if (error) throw error;
-    return data as Domain;
-  } catch (error) {
-    return handleError(error, `Failed to get domain ${domainId}`);
-  }
-}
-
-export async function createDomain(
-  websiteId: string,
-  domainData: Partial<Domain>
-): Promise<Domain> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("domains")
-      .insert([
-        {
-          website_id: websiteId,
-          ...domainData,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Domain;
-  } catch (error) {
-    return handleError(
-      error,
-      `Failed to create domain for website ${websiteId}`
-    );
-  }
-}
-
-export async function updateDomain(
-  domainId: string,
-  updates: Partial<Domain>
-): Promise<Domain> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("domains")
-      .update(updates)
-      .eq("id", domainId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Domain;
-  } catch (error) {
-    return handleError(error, `Failed to update domain ${domainId}`);
-  }
-}
-
-export async function deleteDomain(domainId: string): Promise<boolean> {
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from("domains")
-      .delete()
-      .eq("id", domainId);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    return handleError(error, `Failed to delete domain ${domainId}`);
-  }
-}
-
-// Integrations
-export async function getIntegrations(
-  userId: string,
-  websiteId?: string
-): Promise<Integration[]> {
-  try {
-    const supabase = await createClient();
-    let query = supabase.from("integrations").select("*").eq("user_id", userId);
-
-    if (websiteId) {
-      query = query.eq("website_id", websiteId);
-    }
-
-    const { data, error } = await query.order("created_at", {
-      ascending: false,
-    });
-
-    if (error) throw error;
-    return data as Integration[];
-  } catch (error) {
-    return handleError(error, `Failed to get integrations for user ${userId}`);
-  }
-}
-
-export async function getIntegration(
-  integrationId: string
-): Promise<Integration> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("integrations")
-      .select("*")
-      .eq("id", integrationId)
-      .single();
-
-    if (error) throw error;
-    return data as Integration;
-  } catch (error) {
-    return handleError(error, `Failed to get integration ${integrationId}`);
-  }
-}
-
-export async function createIntegration(
-  userId: string,
-  integrationData: Partial<Integration>
-): Promise<Integration> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("integrations")
-      .insert([
-        {
-          user_id: userId,
-          status: "pending",
-          ...integrationData,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Integration;
-  } catch (error) {
-    return handleError(
-      error,
-      `Failed to create integration for user ${userId}`
-    );
-  }
-}
-
-export async function updateIntegration(
-  integrationId: string,
-  updates: Partial<Integration>
-): Promise<Integration> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("integrations")
-      .update(updates)
-      .eq("id", integrationId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Integration;
-  } catch (error) {
-    return handleError(error, `Failed to update integration ${integrationId}`);
-  }
-}
-
-export async function deleteIntegration(
-  integrationId: string
-): Promise<boolean> {
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from("integrations")
-      .delete()
-      .eq("id", integrationId);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    return handleError(error, `Failed to delete integration ${integrationId}`);
-  }
-}
-
-// Assets
-export async function getAssets(websiteId: string): Promise<Asset[]> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("assets")
-      .select("*")
-      .eq("website_id", websiteId)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return data as Asset[];
-  } catch (error) {
-    return handleError(error, `Failed to get assets for website ${websiteId}`);
-  }
-}
-
-export async function getAsset(assetId: string): Promise<Asset> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("assets")
-      .select("*")
-      .eq("id", assetId)
-      .single();
-
-    if (error) throw error;
-    return data as Asset;
-  } catch (error) {
-    return handleError(error, `Failed to get asset ${assetId}`);
-  }
-}
-
-export async function createAsset(
-  websiteId: string,
-  assetData: Partial<Asset>
-): Promise<Asset> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("assets")
-      .insert([
-        {
-          website_id: websiteId,
-          ...assetData,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Asset;
-  } catch (error) {
-    return handleError(
-      error,
-      `Failed to create asset for website ${websiteId}`
-    );
-  }
-}
-
-export async function updateAsset(
-  assetId: string,
-  updates: Partial<Asset>
-): Promise<Asset> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("assets")
-      .update(updates)
-      .eq("id", assetId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Asset;
-  } catch (error) {
-    return handleError(error, `Failed to update asset ${assetId}`);
-  }
-}
-
-export async function deleteAsset(assetId: string): Promise<boolean> {
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase.from("assets").delete().eq("id", assetId);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    return handleError(error, `Failed to delete asset ${assetId}`);
-  }
-}
-
-// Plans
-export async function getPlans(isActive: boolean = true): Promise<Plan[]> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("plans")
-      .select("*")
-      .eq("is_active", isActive)
-      .order("price", { ascending: true });
-
-    if (error) throw error;
-    return data as Plan[];
-  } catch (error) {
-    return handleError(error, `Failed to get plans`);
-  }
-}
-
-export async function getPlan(planId: string): Promise<Plan> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("plans")
-      .select("*")
-      .eq("id", planId)
-      .single();
-
-    if (error) throw error;
-    return data as Plan;
-  } catch (error) {
-    return handleError(error, `Failed to get plan ${planId}`);
-  }
-}
-
-export async function createPlan(planData: Omit<Plan, 'id' | 'created_at'>): Promise<Plan> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("plans")
-      .insert([{
-        ...planData,
-        is_active: planData.is_active ?? true,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Plan;
-  } catch (error) {
-    return handleError(error, `Failed to create plan`);
-  }
-}
-
-export async function updatePlan(
-  planId: string,
-  updates: Partial<Plan>
-): Promise<Plan> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("plans")
-      .update(updates)
-      .eq("id", planId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Plan;
-  } catch (error) {
-    return handleError(error, `Failed to update plan ${planId}`);
-  }
-}
-
-// Subscriptions
-export async function getWebsiteSubscription(websiteId: string): Promise<Subscription | null> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("website_id", websiteId)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (error) throw error;
-    return data as Subscription | null;
-  } catch (error) {
-    return handleError(error, `Failed to get subscription for website ${websiteId}`);
-  }
-}
-
-export async function createSubscription(
-  subscriptionData: Partial<Subscription>
-): Promise<Subscription> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .insert([{
-        status: "active",
-        cancel_at_period_end: false,
-        ...subscriptionData,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Subscription;
-  } catch (error) {
-    return handleError(error, `Failed to create subscription`);
-  }
-}
-
-export async function updateSubscription(
-  subscriptionId: string,
-  updates: Partial<Subscription>
-): Promise<Subscription> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .update(updates)
-      .eq("id", subscriptionId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Subscription;
-  } catch (error) {
-    return handleError(error, `Failed to update subscription ${subscriptionId}`);
-  }
-}
-
-export async function cancelSubscription(
-  subscriptionId: string,
-  cancelImmediately: boolean = false
-): Promise<Subscription> {
-  try {
-    const supabase = await createClient();
-    const updates: Partial<Subscription> = cancelImmediately
-      ? { status: "canceled", canceled_at: new Date().toISOString() }
-      : { cancel_at_period_end: true };
-
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .update(updates)
-      .eq("id", subscriptionId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as Subscription;
-  } catch (error) {
-    return handleError(error, `Failed to cancel subscription ${subscriptionId}`);
-  }
-}
-
-export async function getSubscriptionWithPlan(subscriptionId: string): Promise<{ subscription: Subscription; plan: Plan }> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select(`
-        *,
-        plans:plan_id (*)
-      `)
-      .eq("id", subscriptionId)
-      .single();
-
-    if (error) throw error;
-    return {
-      subscription: {
-        ...data,
-        plan_id: data.plan_id,
-      } as Subscription,
-      plan: data.plans as Plan,
-    };
-  } catch (error) {
-    return handleError(error, `Failed to get subscription with plan details ${subscriptionId}`);
-  }
-}
-
-
