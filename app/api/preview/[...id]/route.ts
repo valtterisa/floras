@@ -19,7 +19,9 @@ export async function GET(
   request: NextRequest,
   ctx: { params: { id: string | string[] } }
 ) {
-  const target = getTargetUrl(ctx.params.id, request);
+  console.log(`[PREVIEW PROXY] ${request.method} ${request.url}`);
+  const params = await ctx.params;
+  const target = getTargetUrl(params.id, request);
 
   try {
     const response = await fetch(target, {
@@ -31,12 +33,10 @@ export async function GET(
     const contentType = response.headers.get("content-type") || "";
     if (contentType.includes("text/html")) {
       let html = await response.text();
-      const appName = Array.isArray(ctx.params.id)
-        ? ctx.params.id[0]
-        : ctx.params.id;
+      const appName = Array.isArray(params.id) ? params.id[0] : params.id;
       // Replace all /_next/static/ with /api/preview/appName/_next/static/
       html = html.replace(
-        /\/_next\/static\//g,
+        /\/(_next)\/static\//g,
         `/api/preview/${appName}/_next/static/`
       );
       const resHeaders = new Headers(response.headers);
@@ -51,7 +51,11 @@ export async function GET(
 
     // For non-HTML, just stream as-is
     const resHeaders = new Headers(response.headers);
-    resHeaders.delete("content-encoding");
+    // Only delete content-encoding for non-font files
+    const urlPath = Array.isArray(params.id) ? params.id.join("/") : params.id;
+    if (!urlPath.match(/\.(woff2?|ttf|otf|eot)$/i)) {
+      resHeaders.delete("content-encoding");
+    }
     resHeaders.delete("transfer-encoding");
 
     return new NextResponse(response.body, {
