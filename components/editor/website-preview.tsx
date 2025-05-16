@@ -1458,7 +1458,7 @@ export default function WebsitePreview({
         <iframe
           ref={iframeRef}
           key={`url-${url}`}
-          src={`http://localhost:3001/preview/${url}/`}
+          src={`http://localhost:3000/api/preview/${url}/`}
           className="w-full h-full"
           sandbox="allow-same-origin allow-forms allow-scripts"
         />

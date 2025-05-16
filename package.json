@@ -55,6 +55,7 @@
     "eslint": "^9.24.0",
     "framer-motion": "^12.7.3",
     "fs-extra": "^11.3.0",
+    "http-proxy": "^1.18.1",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
@@ -79,6 +80,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/http-proxy": "^1.17.16",
     "@types/node": "^22.14.1",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
