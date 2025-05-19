@@ -120,6 +120,7 @@ export default function WebsitesPage() {
           "id, name, description, published, template_id, primary_url, settings, machine_id, app_name, status, preview_url, last_deployed, repository_url, subdomain, primary_domain, created_at"
         )
         .eq("user_id", user.id)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) {
         setWebsites([]);

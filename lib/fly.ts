@@ -137,7 +137,7 @@ export async function deleteProjectById(id: string): Promise<{
     if (!response.ok || !result.success) {
       return {
         success: false,
-        error: result.error || "Failed to delete project",
+        error: "Failed to delete project. Try again later.",
         details: result.details,
       };
     }
