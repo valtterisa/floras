@@ -76,10 +76,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex w-full min-h-screen p-4">
+      <div className="flex min-h-screen p-2 md:p-4 w-full">
         <AppSidebar className="hidden md:flex py-4" />
-        <SidebarInset className="rounded-3xl">
-          <main className="flex-1 ">{children}</main>
+        <SidebarInset className="rounded-3xl min-w-0 flex-1">
+          {children}
         </SidebarInset>
       </div>
     </SidebarProvider>

@@ -47,17 +47,17 @@ export default function DashboardClient({
   const isLoading = false; // Data is loaded server-side
 
   return (
-    <div className=" px-4 md:px-6 flex w-full min-h-screen">
-      <div className="flex-1">
+    <div className="px-4 md:px-6 flex min-h-screen min-w-0">
+      <div className="flex-1 min-w-0">
         {/* Header */}
         <SiteHeader title="Dashboard" />
         <div className="space-y-8 pt-4">
           {/* Quick Actions Section */}
           <div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
               {/* Example Quick Action: Create New Website (Duplicate from header for convenience) */}
               <Card
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className="hover:shadow-lg transition-shadow cursor-pointer w-full"
                 onClick={() => router.push("/")}
               >
                 <CardHeader className="flex flex-row items-center space-x-3">
@@ -73,7 +73,7 @@ export default function DashboardClient({
               {/* Add more quick actions as needed */}
               {/* Example Quick Action: Upload Media */}
               <Card
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className="hover:shadow-lg transition-shadow cursor-pointer w-full"
                 onClick={() =>
                   router.push("/dashboard/content?action=uploadMedia")
                 }
@@ -92,9 +92,9 @@ export default function DashboardClient({
           </div>
 
           {/* Notifications and Scheduled Posts */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 min-w-0">
             {/* Notifications Block */}
-            <Card>
+            <Card className="w-full">
               <CardHeader className="flex flex-row items-center space-x-2">
                 <Bell className="h-5 w-5" />
                 <CardTitle>Notifications</CardTitle>
@@ -127,7 +127,7 @@ export default function DashboardClient({
           {/* Domains Section */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Your Domains</h2>
-            <Card>
+            <Card className="w-full">
               <CardHeader className="flex flex-row items-center space-x-2">
                 <Globe className="h-5 w-5" />
                 <CardTitle>Custom Domains</CardTitle>
@@ -151,8 +151,8 @@ export default function DashboardClient({
                       .filter((site) => site.published)
                       .map((website) => (
                         <div key={website.id} className="border rounded-md p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
+                          <div className="flex flex-col gap-2 md:flex-row justify-between items-start min-w-0">
+                            <div className="min-w-0">
                               <h3 className="font-medium">{website.name}</h3>
                               <div className="text-sm mt-1">
                                 <p>
