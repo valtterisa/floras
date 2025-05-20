@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect, JSX} from "react";
+import { useState, useEffect, JSX } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -49,12 +49,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { DashboardShell } from "@/components/ui/sidebar";
 
 type IntegrationType = {
   id: string;
   name: string;
   description: string;
-  category: "analytics" | "marketing" | "ecommerce" | "content" | "developers" | "communication";
+  category:
+    | "analytics"
+    | "marketing"
+    | "ecommerce"
+    | "content"
+    | "developers"
+    | "communication";
   icon: JSX.Element;
   connected: boolean;
   popular?: boolean;
@@ -69,15 +76,18 @@ type ApiKeyType = {
   lastUsed: string | null;
 };
 
-export default function IntegrationsPage() {
+export default function Page() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">("starter");
   const [integrations, setIntegrations] = useState<IntegrationType[]>([]);
-  const [activeIntegrations, setActiveIntegrations] = useState<IntegrationType[]>([]);
+  const [activeIntegrations, setActiveIntegrations] = useState<
+    IntegrationType[]
+  >([]);
   const [apiKeys, setApiKeys] = useState<ApiKeyType[]>([]);
-  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationType | null>(null);
+  const [selectedIntegration, setSelectedIntegration] =
+    useState<IntegrationType | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -201,30 +211,41 @@ export default function IntegrationsPage() {
     ];
 
     // Mock API keys
-    const mockApiKeys: ApiKeyType[] = plan !== "starter" ? [
-      {
-        id: "1",
-        name: "Website Frontend",
-        key: "sk_live_XXXXXXXXXXXXXXXXXXXX",
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        lastUsed: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ] : [];
+    const mockApiKeys: ApiKeyType[] =
+      plan !== "starter"
+        ? [
+            {
+              id: "1",
+              name: "Website Frontend",
+              key: "sk_live_XXXXXXXXXXXXXXXXXXXX",
+              createdAt: new Date(
+                Date.now() - 30 * 24 * 60 * 60 * 1000
+              ).toISOString(),
+              lastUsed: new Date(
+                Date.now() - 2 * 24 * 60 * 60 * 1000
+              ).toISOString(),
+            },
+          ]
+        : [];
 
     setIntegrations(mockIntegrations);
-    setActiveIntegrations(mockIntegrations.filter(i => i.connected));
+    setActiveIntegrations(mockIntegrations.filter((i) => i.connected));
     setApiKeys(mockApiKeys);
     setIsLoading(false);
   }, [plan]);
 
-  const filteredIntegrations = integrations.filter(integration => {
-    const matchesSearch = integration.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           integration.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredIntegrations = integrations.filter((integration) => {
+    const matchesSearch =
+      integration.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      integration.description.toLowerCase().includes(searchQuery.toLowerCase());
 
     // Only show integrations that are available on the user's plan or all plans
-    const isAvailableForPlan = integration.planLevel === "all" ||
-                               (plan === "pro" && (integration.planLevel === "pro" || integration.planLevel === "starter")) ||
-                               (plan === "enterprise");
+    const isAvailableForPlan =
+      integration.planLevel === "all" ||
+      (plan === "pro" &&
+        (integration.planLevel === "pro" ||
+          integration.planLevel === "starter")) ||
+      plan === "enterprise";
 
     return matchesSearch && isAvailableForPlan;
   });
@@ -240,13 +261,17 @@ export default function IntegrationsPage() {
   };
 
   const handleDisconnectIntegration = (integrationId: string) => {
-    setIntegrations(integrations.map(integration =>
-      integration.id === integrationId
-        ? { ...integration, connected: false }
-        : integration
-    ));
+    setIntegrations(
+      integrations.map((integration) =>
+        integration.id === integrationId
+          ? { ...integration, connected: false }
+          : integration
+      )
+    );
 
-    setActiveIntegrations(activeIntegrations.filter(i => i.id !== integrationId));
+    setActiveIntegrations(
+      activeIntegrations.filter((i) => i.id !== integrationId)
+    );
 
     toast({
       title: "Integration disconnected",
@@ -257,15 +282,17 @@ export default function IntegrationsPage() {
   const handleConfirmConnect = () => {
     if (!selectedIntegration) return;
 
-    setIntegrations(integrations.map(integration =>
-      integration.id === selectedIntegration.id
-        ? { ...integration, connected: true }
-        : integration
-    ));
+    setIntegrations(
+      integrations.map((integration) =>
+        integration.id === selectedIntegration.id
+          ? { ...integration, connected: true }
+          : integration
+      )
+    );
 
     setActiveIntegrations([
       ...activeIntegrations,
-      { ...selectedIntegration, connected: true }
+      { ...selectedIntegration, connected: true },
     ]);
 
     setShowConnectDialog(false);
@@ -310,7 +337,7 @@ export default function IntegrationsPage() {
   };
 
   const handleDeleteApiKey = (keyId: string) => {
-    setApiKeys(apiKeys.filter(key => key.id !== keyId));
+    setApiKeys(apiKeys.filter((key) => key.id !== keyId));
 
     toast({
       title: "API key deleted",
@@ -331,9 +358,7 @@ export default function IntegrationsPage() {
     <div className="container py-10 px-4 md:px-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Integrations
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
           <p className="text-muted-foreground">
             Connect your website with third-party services and tools.
           </p>
@@ -350,7 +375,9 @@ export default function IntegrationsPage() {
         <div className="flex justify-between items-center">
           <TabsList>
             <TabsTrigger value="all">All Integrations</TabsTrigger>
-            <TabsTrigger value="active">Active ({activeIntegrations.length})</TabsTrigger>
+            <TabsTrigger value="active">
+              Active ({activeIntegrations.length})
+            </TabsTrigger>
             <TabsTrigger value="api">API & Webhooks</TabsTrigger>
           </TabsList>
           <div className="relative w-[250px]">
@@ -368,7 +395,10 @@ export default function IntegrationsPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredIntegrations.length > 0 ? (
               filteredIntegrations.map((integration) => (
-                <Card key={integration.id} className={integration.popular ? "border-primary/30" : ""}>
+                <Card
+                  key={integration.id}
+                  className={integration.popular ? "border-primary/30" : ""}
+                >
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center space-x-2">
@@ -376,27 +406,37 @@ export default function IntegrationsPage() {
                           {integration.icon}
                         </div>
                         <div>
-                          <CardTitle className="text-xl">{integration.name}</CardTitle>
+                          <CardTitle className="text-xl">
+                            {integration.name}
+                          </CardTitle>
                           {integration.popular && (
-                            <Badge variant="outline" className="mt-1">Popular</Badge>
+                            <Badge variant="outline" className="mt-1">
+                              Popular
+                            </Badge>
                           )}
                         </div>
                       </div>
-                      {integration.planLevel !== "all" && plan === "starter" && (
-                        <Badge className="bg-amber-500">Pro</Badge>
-                      )}
-                      {integration.planLevel === "enterprise" && plan !== "enterprise" && (
-                        <Badge className="bg-purple-500">Enterprise</Badge>
-                      )}
+                      {integration.planLevel !== "all" &&
+                        plan === "starter" && (
+                          <Badge className="bg-amber-500">Pro</Badge>
+                        )}
+                      {integration.planLevel === "enterprise" &&
+                        plan !== "enterprise" && (
+                          <Badge className="bg-purple-500">Enterprise</Badge>
+                        )}
                     </div>
-                    <CardDescription className="mt-2">{integration.description}</CardDescription>
+                    <CardDescription className="mt-2">
+                      {integration.description}
+                    </CardDescription>
                   </CardHeader>
                   <CardFooter className="pt-1">
                     {integration.connected ? (
                       <Button
                         variant="outline"
                         className="w-full"
-                        onClick={() => handleDisconnectIntegration(integration.id)}
+                        onClick={() =>
+                          handleDisconnectIntegration(integration.id)
+                        }
                       >
                         <Check className="mr-2 h-4 w-4 text-green-500" />
                         Connected
@@ -418,9 +458,12 @@ export default function IntegrationsPage() {
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
                   <Search className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold">No integrations found</h3>
+                <h3 className="mt-4 text-lg font-semibold">
+                  No integrations found
+                </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  We couldn't find any integrations matching your search criteria.
+                  We couldn't find any integrations matching your search
+                  criteria.
                 </p>
               </div>
             )}
@@ -437,17 +480,25 @@ export default function IntegrationsPage() {
                       <div className="p-2 rounded-md bg-muted">
                         {integration.icon}
                       </div>
-                      <CardTitle className="text-xl">{integration.name}</CardTitle>
+                      <CardTitle className="text-xl">
+                        {integration.name}
+                      </CardTitle>
                     </div>
-                    <CardDescription className="mt-2">{integration.description}</CardDescription>
+                    <CardDescription className="mt-2">
+                      {integration.description}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between py-2">
-                      <span className="text-sm text-muted-foreground">Status:</span>
+                      <span className="text-sm text-muted-foreground">
+                        Status:
+                      </span>
                       <Badge className="bg-green-500">Connected</Badge>
                     </div>
                     <div className="flex items-center justify-between py-2">
-                      <span className="text-sm text-muted-foreground">Connected since:</span>
+                      <span className="text-sm text-muted-foreground">
+                        Connected since:
+                      </span>
                       <span className="text-sm font-medium">
                         {new Date().toLocaleDateString()}
                       </span>
@@ -457,7 +508,12 @@ export default function IntegrationsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`https://${integration.name.toLowerCase().replace(/\s+/g, '')}.com`, "_blank")}
+                      onClick={() =>
+                        window.open(
+                          `https://${integration.name.toLowerCase().replace(/\s+/g, "")}.com`,
+                          "_blank"
+                        )
+                      }
                     >
                       <ExternalLink className="h-4 w-4 mr-1" />
                       View Dashboard
@@ -465,7 +521,9 @@ export default function IntegrationsPage() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDisconnectIntegration(integration.id)}
+                      onClick={() =>
+                        handleDisconnectIntegration(integration.id)
+                      }
                     >
                       Disconnect
                     </Button>
@@ -483,11 +541,20 @@ export default function IntegrationsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Connect third-party services to enhance your website functionality.
+                  Connect third-party services to enhance your website
+                  functionality.
                 </p>
               </CardContent>
               <CardFooter>
-                <Button onClick={() => (document.querySelector('[data-value="all"]') as HTMLElement)?.click()}>
+                <Button
+                  onClick={() =>
+                    (
+                      document.querySelector(
+                        '[data-value="all"]'
+                      ) as HTMLElement
+                    )?.click()
+                  }
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Browse Integrations
                 </Button>
@@ -501,7 +568,8 @@ export default function IntegrationsPage() {
             <CardHeader>
               <CardTitle>API Keys</CardTitle>
               <CardDescription>
-                Manage your API keys for programmatic access to your website data.
+                Manage your API keys for programmatic access to your website
+                data.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -514,8 +582,8 @@ export default function IntegrationsPage() {
                     </h3>
                   </div>
                   <p className="text-amber-700 dark:text-amber-300 mb-4">
-                    API access is available on Pro and Enterprise plans.
-                    Upgrade to create and manage API keys.
+                    API access is available on Pro and Enterprise plans. Upgrade
+                    to create and manage API keys.
                   </p>
                   <Button
                     className="bg-amber-600 hover:bg-amber-700 text-white"
@@ -537,8 +605,10 @@ export default function IntegrationsPage() {
                           <code>{apiKey.key}</code>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Created: {new Date(apiKey.createdAt).toLocaleDateString()}
-                          {apiKey.lastUsed && ` • Last used: ${new Date(apiKey.lastUsed).toLocaleDateString()}`}
+                          Created:{" "}
+                          {new Date(apiKey.createdAt).toLocaleDateString()}
+                          {apiKey.lastUsed &&
+                            ` • Last used: ${new Date(apiKey.lastUsed).toLocaleDateString()}`}
                         </div>
                       </div>
                       <div>
@@ -578,12 +648,13 @@ export default function IntegrationsPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConnectDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowConnectDialog(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleConfirmConnect}>
-              Connect
-            </Button>
+            <Button onClick={handleConfirmConnect}>Connect</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -593,16 +664,18 @@ export default function IntegrationsPage() {
           <DialogHeader>
             <DialogTitle>Upgrade Required</DialogTitle>
             <DialogDescription>
-              This feature is available on Pro and Enterprise plans. Upgrade to access it.
+              This feature is available on Pro and Enterprise plans. Upgrade to
+              access it.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUpgradeDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowUpgradeDialog(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpgrade}>
-              Upgrade
-            </Button>
+            <Button onClick={handleUpgrade}>Upgrade</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -627,12 +700,13 @@ export default function IntegrationsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowApiKeyDialog(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleCreateApiKey}>
-              Create
-            </Button>
+            <Button onClick={handleCreateApiKey}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,0 +1,87 @@
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
+import { AppSidebar } from "../app-sidebar";
+import { SidebarInset, SidebarProvider } from "../ui/sidebar";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+
+// Define website type
+type Website = {
+  id: string;
+  name: string;
+  custom_domain: string | null;
+  primary_domain: string;
+  status: string;
+  is_active?: boolean; // Optional property to indicate if the website is active
+};
+
+export function DashboardShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [websites, setWebsites] = useState<Website[]>([]);
+  const [activeWebsite, setActiveWebsite] = useState<Website | null>(null);
+  const [isLoadingWebsites, setIsLoadingWebsites] = useState(true);
+
+  // Fetch user's websites
+  useEffect(() => {
+    const fetchWebsites = async () => {
+      setIsLoadingWebsites(true);
+      try {
+        const supabase = createClient();
+        const { data: websitesData, error } = await supabase
+          .from("websites")
+          .select("*")
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (websitesData && websitesData.length > 0) {
+          // Mark websites as active if they are deployed or deploying
+          const processedWebsites = websitesData.map((site) => ({
+            ...site,
+            is_active:
+              site.status === "deployed" || site.status === "deploying",
+          }));
+
+          setWebsites(processedWebsites);
+
+          // Set first website as active if none is selected
+          if (!activeWebsite) {
+            setActiveWebsite(processedWebsites[0]);
+            // Store selection in localStorage
+            localStorage.setItem("activeWebsiteId", processedWebsites[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching websites:", error);
+      } finally {
+        setIsLoadingWebsites(false);
+      }
+    };
+
+    fetchWebsites();
+  }, []);
+
+  // Load active website from localStorage on initial render
+  useEffect(() => {
+    const savedWebsiteId = localStorage.getItem("activeWebsiteId");
+    if (savedWebsiteId && websites.length > 0) {
+      const website = websites.find((site) => site.id === savedWebsiteId);
+      if (website) {
+        setActiveWebsite(website);
+      }
+    }
+  }, [websites]);
+
+  return (
+    <SidebarProvider>
+      <div className="flex w-full min-h-screen p-4">
+        <AppSidebar className="hidden md:flex py-4" />
+        <SidebarInset className="rounded-3xl">
+          <main className="flex-1 ">{children}</main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+}

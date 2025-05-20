@@ -1,7 +1,6 @@
 import React from "react";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
-function MediaLibrary() {
-  return <div>MediaLibrary</div>;
+export default function Page() {
+  return <DashboardShell>Media library here</DashboardShell>;
 }
-
-export default MediaLibrary;

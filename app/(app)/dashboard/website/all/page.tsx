@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -44,6 +44,8 @@ import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 import { deleteProjectById, deployWebsite } from "@/lib/fly";
+import { SiteHeader } from "@/components/site-header";
+import Loading from "@/app/loading";
 
 export type MyWebsite = {
   id: string;
@@ -221,28 +223,11 @@ export default function WebsitesPage() {
     website.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (isLoading) {
-    return <div className="container py-10 px-4 md:px-6">Loading...</div>;
-  }
-
   return (
-    <div className="container py-10 px-4 md:px-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Websites</h1>
-          <p className="text-muted-foreground">
-            Manage all your websites in one place.
-          </p>
-        </div>
-        <div className="mt-4 md:mt-0">
-          <Button onClick={() => router.push("/")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Website
-          </Button>
-        </div>
-      </div>
+    <div className="px-4 md:px-6">
+      <SiteHeader title="My Websites" />
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 pt-4">
         <div className="relative w-full md:w-auto">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input

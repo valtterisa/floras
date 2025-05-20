@@ -1,35 +1,27 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
-export default function Loading() {
+export default function Loading({
+  message = "Loading your dashboard...",
+}: {
+  message?: string;
+}) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 flex items-center justify-center">
-      <motion.div
-        className="w-16 h-16 border-4 border-purple-200 rounded-full"
-        animate={{
-          rotate: 360,
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      >
-        <motion.div
-          className="w-full h-full border-4 border-purple-500 rounded-full border-t-transparent"
-          animate={{
-            rotate: -360,
-            scale: [1.2, 1, 1.2],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "linear",
-          }}
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sidebar/80 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-6">
+        <Loader2
+          className="h-14 w-14 text-purple-600 animate-spin"
+          aria-hidden="true"
         />
-      </motion.div>
+        <span className="text-3xl font-bold text-purple-900 tracking-tight drop-shadow-lg select-none">
+          SiteForge
+        </span>
+        <span className="text-lg text-purple-700 animate-pulse" role="status">
+          {message}
+        </span>
+      </div>
+      <span className="sr-only">Loading...</span>
     </div>
   );
 }

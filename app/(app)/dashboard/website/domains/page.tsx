@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { SiteHeader } from "@/components/site-header";
 export default function DomainsPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -73,7 +73,7 @@ export default function DomainsPage() {
         id: "3",
         name: "Coffee Shop",
         url: `https://siteforge.app/coffee-shop`,
-      }
+      },
     ]);
 
     setSelectedWebsite("1");
@@ -130,7 +130,7 @@ export default function DomainsPage() {
           createdAt: new Date(
             Date.now() - 1 * 24 * 60 * 60 * 1000
           ).toISOString(),
-        }
+        },
       ]);
     }
 
@@ -139,7 +139,7 @@ export default function DomainsPage() {
 
   // Add a helper function to filter domains by website ID
   const getDomainsForWebsite = (websiteId: string) => {
-    return domains.filter(domain => domain.websiteId === websiteId);
+    return domains.filter((domain) => domain.websiteId === websiteId);
   };
 
   // Add function to handle website selection
@@ -170,47 +170,34 @@ export default function DomainsPage() {
     router.push("/dashboard/plan/upgrade");
   };
 
-  if (isLoading) {
-    return <div className="container py-10 px-4 md:px-6">Loading...</div>;
-  }
-
   return (
-    <div className="container py-10 px-4 md:px-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Domain Management
-          </h1>
-          <p className="text-muted-foreground">
-            Connect custom domains to your websites.
-          </p>
-        </div>
-        <div className="mt-4 md:mt-0">
-          <Button onClick={handleAddDomain}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Domain
-          </Button>
-        </div>
+    <div className="px-4 md:px-6">
+      <SiteHeader title="Domains" />
+      <div className="pt-4">
+        {plan !== "starter" && (
+          <div className="mb-6">
+            <Label htmlFor="website-select" className="mb-2 block">
+              Select Website
+            </Label>
+            <Select
+              value={selectedWebsite || ""}
+              onValueChange={handleWebsiteChange}
+            >
+              <SelectTrigger className="w-full md:w-[300px]">
+                <SelectValue placeholder="Select a website" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Websites</SelectItem>
+                {websites.map((website) => (
+                  <SelectItem key={website.id} value={website.id}>
+                    {website.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
-
-      {plan !== "starter" && (
-        <div className="mb-6">
-          <Label htmlFor="website-select" className="mb-2 block">Select Website</Label>
-          <Select value={selectedWebsite || ""} onValueChange={handleWebsiteChange}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Select a website" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Websites</SelectItem>
-              {websites.map((website) => (
-                <SelectItem key={website.id} value={website.id}>
-                  {website.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
 
       <Tabs defaultValue="domains" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
@@ -248,7 +235,9 @@ export default function DomainsPage() {
             <div className="grid gap-4">
               {(selectedWebsite === "all"
                 ? domains
-                : domains.filter(domain => domain.websiteId === selectedWebsite)
+                : domains.filter(
+                    (domain) => domain.websiteId === selectedWebsite
+                  )
               ).map((domain) => (
                 <Card key={domain.id}>
                   <CardHeader className="pb-2">
@@ -613,4 +602,3 @@ export default function DomainsPage() {
     </div>
   );
 }
-

@@ -52,18 +52,29 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
         purple: {
+          "50": "#f9f0ff",
+          "100": "#eedaff",
+          "200": "#ddb5ff",
+          "300": "#c77dff",
+          "400": "#b44aff",
+          "500": "#a520ff",
+          "600": "#8d00f2",
+          "700": "#7700d6",
+          "800": "#6200ad",
+          "900": "#53008f",
+          "950": "#35005c",
           DEFAULT: "#8d00f2",
-          50: "#f9f0ff",
-          100: "#eedaff",
-          200: "#ddb5ff",
-          300: "#c77dff",
-          400: "#b44aff",
-          500: "#a520ff",
-          600: "#8d00f2",
-          700: "#7700d6",
-          800: "#6200ad",
-          900: "#53008f",
-          950: "#35005c",
+        },
+        sidebar: {
+          DEFAULT: "#faefff",
+          hover: "#f3d6ff",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
         },
       },
       borderRadius: {
@@ -73,12 +84,20 @@ const config = {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
         },
       },
       animation: {
@@ -88,7 +107,6 @@ const config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+};
 
-export default config
-
+export default config;
