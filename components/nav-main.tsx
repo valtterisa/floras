@@ -5,12 +5,14 @@ import {
   PlusCircleIcon,
   type LucideIcon,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import React from "react";
 import { cva } from "class-variance-authority";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSidebar } from "@/components/ui/sidebar";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +33,7 @@ import {
 
 export function NavMain({
   items,
+  handleMobileClose,
 }: {
   items: {
     title: string;
@@ -42,17 +45,20 @@ export function NavMain({
       icon?: LucideIcon;
     }[];
   }[];
+  handleMobileClose?: () => void;
 }) {
   const pathname = usePathname();
+
   return (
     <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
+      <SidebarGroupContent className="flex flex-col gap-2 relative">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Quick Create"
               className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
               aria-label="Quick Create"
+              onClick={handleMobileClose}
             >
               <PlusCircleIcon />
               <span>Quick Create</span>
@@ -74,6 +80,7 @@ export function NavMain({
                         aria-label={item.title}
                         role="menuitem"
                         tabIndex={0}
+                        onClick={undefined}
                       >
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
@@ -93,6 +100,7 @@ export function NavMain({
                               aria-current={
                                 pathname === sub.url ? "page" : undefined
                               }
+                              onClick={handleMobileClose}
                             >
                               {sub.icon && <sub.icon />}
                               <span>{sub.title}</span>
@@ -110,6 +118,7 @@ export function NavMain({
                     aria-label={item.title}
                     role="menuitem"
                     tabIndex={0}
+                    onClick={handleMobileClose}
                   >
                     <Link
                       href={item.url}

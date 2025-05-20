@@ -21,6 +21,7 @@ import {
   SearchIcon,
   SettingsIcon,
   UsersIcon,
+  X,
   Zap,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
@@ -112,11 +114,31 @@ export function AppSidebar({
   className = "",
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const { setOpenMobile, isMobile } = useSidebar();
+
+  function handleMobileClose() {
+    if (isMobile) setOpenMobile(false);
+  }
+
+  function SidebarCloseButton() {
+    if (!isMobile) return null;
+    return (
+      <button
+        type="button"
+        aria-label="Close sidebar"
+        className="z-50 p-2 rounded hover:bg-muted"
+        onClick={() => setOpenMobile(false)}
+      >
+        <X className="w-5 h-5" />
+      </button>
+    );
+  }
+
   return (
     <Sidebar collapsible="offcanvas" className={className} {...props}>
       <SidebarHeader className="bg-sidebar">
         <SidebarMenu className="bg-sidebar">
-          <SidebarMenuItem className="bg-sidebar">
+          <SidebarMenuItem className="bg-sidebar flex items-center justify-center">
             <SidebarMenuButton
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
@@ -126,17 +148,19 @@ export function AppSidebar({
                 <span className="text-base font-semibold">SiteForge</span>
               </Link>
             </SidebarMenuButton>
+            <SidebarCloseButton />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className="bg-sidebar">
-        <NavMain items={data.navMain} />
+      <SidebarContent className="flex-1 min-h-0 overflow-auto bg-sidebar">
+        <NavMain items={data.navMain} handleMobileClose={handleMobileClose} />
         <NavSecondary
           items={data.navSecondary}
           className="mt-auto bg-sidebar"
+          handleMobileClose={handleMobileClose}
         />
       </SidebarContent>
-      <SidebarFooter className="">
+      <SidebarFooter>
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>

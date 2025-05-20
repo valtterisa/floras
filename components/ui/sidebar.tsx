@@ -209,7 +209,9 @@ const Sidebar = React.forwardRef<
             side={side}
             title="Navigation Menu"
           >
-            <div className="flex h-full w-full flex-col">{children}</div>
+            <div className="flex flex-col h-screen max-h-screen min-h-0 w-full">
+              {children}
+            </div>
           </SheetContent>
         </Sheet>
       );
