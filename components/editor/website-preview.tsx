@@ -1404,7 +1404,7 @@ export default function WebsitePreview({
   }, [selectedElement, checkCanMakeStandalone]);
 
   return (
-    <div className="flex flex-col h-full w-full gap-4">
+    <div className="flex flex-col h-full w-full gap-4 rounded-3xl">
       {isEditMode && (
         <FloatingToolbar
           show={showToolbar}
@@ -1425,7 +1425,7 @@ export default function WebsitePreview({
         />
       )}
 
-      <div className="relative w-full h-full border rounded-lg overflow-hidden">
+      <div className="relative w-full h-full overflow-hidden">
         {!machine ||
           (!isEditorReady && (
             <div className="w-full h-full bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">

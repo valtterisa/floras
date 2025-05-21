@@ -443,7 +443,7 @@ export function WebsiteEditor({
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-full bg-background rounded-3xl">
       <div className="h-14 border-b flex items-center px-4 gap-2">
         <Link href="/dashboard">
           <Button variant="outline" size="sm">
@@ -495,7 +495,7 @@ export function WebsiteEditor({
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 h-full">
         <div className="flex flex-1 flex-col md:flex-row h-full w-full">
           <div className="flex-1 min-w-0 h-full">
             <WebsitePreview

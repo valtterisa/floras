@@ -160,8 +160,8 @@ export function ChatInterface({
   }
 
   return (
-    <div className="h-full w-full flex flex-col p-4 bg-white">
-      <div className="flex-1 overflow-auto mb-2 bg-gray-50 rounded p-2 flex flex-col gap-2">
+    <div className="h-full w-full flex flex-col p-4 rounded-3xl">
+      <div className="flex-1 overflow-auto mb-2 rounded p-2 flex flex-col gap-2">
         {messages.map((msg, idx) => (
           <div
             key={idx}

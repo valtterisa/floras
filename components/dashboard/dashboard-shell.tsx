@@ -79,11 +79,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   // If on editor page, show chat on left instead of sidebar
   if (pathname?.includes("editor")) {
     return (
-      <div className="flex h-screen w-full">
-        <div className="w-full md:w-[400px] border-r bg-white h-full flex-shrink-0">
+      <div className="flex h-screen w-full p-4">
+        <div className="w-full md:w-[400px] border-r bg-white h-full flex-shrink-0 rounded-3xl mr-4">
           <ChatInterface />
         </div>
-        <div className="flex-1 overflow-auto">{children}</div>
+        <div className="flex-1 overflow-auto rounded-3xl">{children}</div>
       </div>
     );
   }
