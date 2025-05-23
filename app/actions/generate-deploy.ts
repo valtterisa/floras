@@ -198,7 +198,7 @@ export async function generateAndDeployWebsite(
     console.log("Website deployment completed");
 
     return {
-      success: true,
+      success: result.success,
       machine: result.machine,
     };
   } catch (error) {

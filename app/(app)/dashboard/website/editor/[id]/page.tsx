@@ -14,6 +14,8 @@ export default async function EditorPage({
 
   let machine: any;
   const appExists = await checkAppExists(id);
+
+
   if (appExists === true) {
     const response = await fetch(
       `${process.env.FLY_API_BASE}/v1/apps/${id}/machines`,
@@ -29,9 +31,11 @@ export default async function EditorPage({
     machine = await response.json();
   }
 
+  console.log(machine);
+
   return (
     <div className="flex flex-col h-full rounded-3xl">
-      <WebsiteEditor id={id} user={user.user} machine={machine?.[0] || null} />
+      <WebsiteEditor id={id} user={user.user} machine={machine} />
     </div>
   );
 }
