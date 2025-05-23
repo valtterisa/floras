@@ -84,20 +84,9 @@ export function WebsiteEditor({
     const prompt = localStorage.getItem("siteforge_generation_prompt");
     const appName = localStorage.getItem("siteforge_app_name");
 
-    // If we have a prompt and appName and steps are not complete, start generation
+    // If we have a prompt and appName, start generation
     (async () => {
       if (prompt && appName) {
-        const websiteData = {
-          name: `AI Generated Website ${new Date().toLocaleDateString()}`,
-          description: `Website generated from user prompt: ${prompt}`,
-          prompt: prompt,
-          colors: {
-            primary: "#6366F1",
-            secondary: "#8B5CF6",
-            accent: "#EC4899",
-          },
-        };
-
         if (!userId) {
           toast({
             title: "Error",
@@ -106,18 +95,7 @@ export function WebsiteEditor({
           });
           return;
         }
-        // Call createAndDeployWebsite
-        console.log(
-          "Creating and deploying website...",
-          userId,
-          websiteData,
-          appName
-        );
-        const result = await createAndDeployWebsite(
-          userId,
-          websiteData,
-          appName
-        );
+        const result = await createAndDeployWebsite(userId, appName, prompt);
         setMachineData(result.machine);
       }
     })();

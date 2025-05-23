@@ -1,18 +1,10 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Paperclip,
-  Globe,
-  ArrowUpRight,
-  Loader2,
-  ArrowRight,
-} from "lucide-react";
+import { Paperclip, ArrowUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth-modal";
-import { toast } from "@/components/ui/use-toast";
-import { createAndDeployWebsite } from "@/lib/fly";
 import { generateAppName } from "@/lib/utils";
 
 const EXAMPLES = [
@@ -24,14 +16,9 @@ const EXAMPLES = [
 
 export default function PromptTool() {
   const [prompt, setPrompt] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [generationSteps, setGenerationSteps] = useState<string[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
-  const generationInProgress = useRef(false);
 
   // Restore prompt from localStorage if present
   useEffect(() => {
@@ -44,7 +31,6 @@ export default function PromptTool() {
     const checkAuth = async () => {
       const supabase = createClient();
       const { data } = await supabase.auth.getUser();
-      setIsAuthenticated(!!data.user);
       setAuthChecked(true);
     };
     checkAuth();
@@ -160,7 +146,7 @@ export default function PromptTool() {
             <Button
               size="icon"
               className="rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow h-7 w-7"
-              disabled={!prompt.trim() || !authChecked || loading}
+              disabled={!prompt.trim() || !authChecked}
               onClick={handleSend}
             >
               <ArrowUpRight className="h-5 w-5" />
@@ -168,19 +154,7 @@ export default function PromptTool() {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-center gap-4 my-6">
-        <div className="w-24 h-px bg-gray-200" />
-        <span className="text-gray-400 uppercase text-sm">or</span>
-        <div className="w-24 h-px bg-gray-200" />
-      </div>
-      <Button
-        variant="outline"
-        className="group flex items-center gap-2 px-6 py-2.5 rounded-lg border-2 border-purple-200 text-purple-700 font-medium text-sm hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
-        onClick={() => router.push("/create")}
-      >
-        <span>Try Guided Website Builder</span>
-        <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-      </Button>
+
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}

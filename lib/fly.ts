@@ -508,33 +508,12 @@ export default HomePage;
  */
 export async function createAndDeployWebsite(
   userId: string,
-  data: WebsiteCreationData,
-  appName: string
+  appName: string,
+  prompt: string
 ): Promise<WebsiteCreationResult> {
   let website: any = null;
 
   try {
-    // Step 1: Create initial website record
-    const websiteInitialData = {
-      name: data.name,
-      description: data.description || "",
-      published: false,
-      app_name: appName,
-      status: "creating",
-      settings: {
-        colors: data.colors,
-        components: data.components,
-        industry: data.industry,
-      },
-      template_id: data.template || null,
-      subdomain: null,
-      primary_domain: null,
-    };
-    website = await createWebsite(userId, websiteInitialData);
-    if (!website) {
-      throw new Error("Failed to create initial website record");
-    }
-
     // 1. Fork repository with app name as slug
     // const forkResponse = await fetch(`http://localhost:3001/api/fork`, {
     //   method: "POST",
@@ -609,14 +588,8 @@ export async function createAndDeployWebsite(
       throw new Error("Failed to add user as admin in website_users table");
     }
 
-    // Step 2: Generate website content
-    let aiResponse;
-    if (data.prompt) {
-      aiResponse = await getMockAIResponse(data.prompt);
-    } else {
-      const structuredPrompt = `Create a website for ${data.name} in the ${data.industry || "business"} industry.\n${data.description ? `Description: ${data.description}` : ""}\nComponents: ${data.components?.join(", ") || "standard website components"}`;
-      aiResponse = await getMockAIResponse(structuredPrompt);
-    }
+    const aiResponse = await getMockAIResponse(prompt);
+
     if (!aiResponse) {
       await updateWebsite(website.id, { status: "failed" });
       throw new Error("Failed to generate website content");
