@@ -84,6 +84,8 @@ export function WebsiteEditor({
     const prompt = localStorage.getItem("siteforge_generation_prompt");
     const appName = localStorage.getItem("siteforge_app_name");
 
+    console.log("appName", appName);
+
     // If we have a prompt and appName, start generation
     (async () => {
       if (prompt && appName) {
@@ -95,6 +97,11 @@ export function WebsiteEditor({
           });
           return;
         }
+        console.log(
+          "[WebsiteEditor] creating and deploying website:",
+          appName,
+          prompt
+        );
         const result = await createAndDeployWebsite(userId, appName, prompt);
         setMachineData(result.machine);
       }

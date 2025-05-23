@@ -49,6 +49,8 @@ export default function PromptTool() {
 
     const appName = generateAppName(authData.user.id);
 
+    console.log("appName", appName);
+
     // Store the prompt, appName, and clear steps in localStorage for the editor/chat
     localStorage.setItem("siteforge_generation_prompt", prompt);
     localStorage.setItem("siteforge_generation_steps", JSON.stringify([]));

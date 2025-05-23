@@ -53,6 +53,8 @@ export default function WebsitePreview({
   const [isApplyingChanges, setIsApplyingChanges] = useState(false);
   const [canMakeStandalone, setCanMakeStandalone] = useState(false);
   const [canRemoveStandalone, setCanRemoveStandalone] = useState(false);
+  const [iframeReady, setIframeReady] = useState(false);
+  const [iframeError, setIframeError] = useState<string | null>(null);
 
   const closeToolbar = useCallback(() => {
     setShowToolbar(false);
@@ -1403,6 +1405,34 @@ export default function WebsitePreview({
     checkCanMakeStandalone();
   }, [selectedElement, checkCanMakeStandalone]);
 
+  // Poll preview endpoint until ready
+  useEffect(() => {
+    let cancelled = false;
+    if (!url) return;
+    setIframeReady(false);
+    setIframeError(null);
+    const checkReady = async () => {
+      try {
+        const res = await fetch(`/api/preview/${url}/`, { method: "GET" });
+        if (res.status === 200) {
+          if (!cancelled) setIframeReady(true);
+        } else if (res.status === 202) {
+          // Not ready, poll again
+          setTimeout(checkReady, 1500);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          if (!cancelled) setIframeError(data.error || `Error: ${res.status}`);
+        }
+      } catch (err: any) {
+        if (!cancelled) setIframeError(err.message || "Unknown error");
+      }
+    };
+    checkReady();
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
   console.log("machine", machine);
   console.log("isEditorReady", isEditorReady);
 
@@ -1429,21 +1459,29 @@ export default function WebsitePreview({
       )}
 
       <div className="relative w-full h-full overflow-hidden">
-        {!isEditorReady && (
+        {iframeError && (
           <div className="w-full h-full bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
             <div className="text-center">
-              <p className="mb-2">Loading editor...</p>
+              <p className="mb-2 text-red-500">{iframeError}</p>
             </div>
           </div>
         )}
-        isEditorReady: {isEditorReady.toString()}
-        <iframe
-          ref={iframeRef}
-          key={`url-${url}`}
-          src={`http://localhost:3000/api/preview/${url}/`}
-          className="w-full h-full"
-          sandbox="allow-same-origin allow-scripts"
-        />
+        {!iframeReady && !iframeError && (
+          <div className="w-full h-full bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+            <div className="text-center">
+              <p className="mb-2">Waiting for website to be ready...</p>
+            </div>
+          </div>
+        )}
+        {iframeReady && (
+          <iframe
+            ref={iframeRef}
+            key={`url-${url}`}
+            src={`http://localhost:3000/api/preview/${url}/`}
+            className="w-full h-full"
+            sandbox="allow-same-origin allow-scripts"
+          />
+        )}
       </div>
     </div>
   );

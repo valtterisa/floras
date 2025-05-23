@@ -60,6 +60,7 @@ export async function createAppAndAssignMachine(
   appName: string,
   files?: FileOperation[]
 ) {
+  console.log("[createAppAndAssignMachine] starting");
   // Check if FLY_API_TOKEN is set
   if (!process.env.FLY_API_TOKEN) {
     console.error("FLY_API_TOKEN environment variable is not set");
@@ -88,7 +89,7 @@ export async function createAppAndAssignMachine(
 
   const machine = await response.json();
 
-  console.log("Machine", machine);
+  console.log("Machine in createAppAndAssignMachine:", machine);
 
   // Return the machine data that will be used in the website record
   return { machine: machine, success: machine.success };
@@ -159,7 +160,7 @@ export async function deleteProjectById(id: string): Promise<{
 async function getMockAIResponse(prompt: string): Promise<string> {
   // In production, this would call an actual AI service
   // For now, we'll use a mock response
-  console.log("Using mock AI response for prompt:", prompt);
+  console.log("Using mock AI response for prompt");
 
   // Using a hardcoded mock response
   const mockResponse = `
@@ -503,7 +504,6 @@ export default HomePage;
  * @param userId The authenticated user ID
  * @param data Website creation data from form or prompt
  * @param appName The app name (slug) for the website
- * @param onStep Optional callback to update step status
  * @returns Result with website and deployment information
  */
 export async function createAndDeployWebsite(
@@ -512,6 +512,7 @@ export async function createAndDeployWebsite(
   prompt: string
 ): Promise<WebsiteCreationResult> {
   let website: any = null;
+  console.log("[createAndDeployWebsite] starting");
 
   try {
     // 1. Fork repository with app name as slug
@@ -605,14 +606,26 @@ export async function createAndDeployWebsite(
     // Step 4: Update status to "deploying" before starting the deployment process
     await updateWebsite(website.id, { status: "deploying" });
 
+    console.log(
+      "[createAndDeployWebsite] creating app and assigning machine:",
+      appName
+    );
+
     // Step 5: Deploy to Fly.io
     const deployResult = await createAppAndAssignMachine(
       userId,
       appName,
       files
     );
+    console.log("deployResult", deployResult);
+
     if (!deployResult.success) {
+      console.error("Failed to create app and assign machine", deployResult);
       await updateWebsite(website.id, { status: "failed" });
+      return {
+        success: false,
+        error: "Failed to create app and assign machine",
+      };
     }
 
     const machine = deployResult.machine.appMachines[0];
@@ -630,8 +643,8 @@ export async function createAndDeployWebsite(
     });
 
     // Step 7: Revalidate paths
-    revalidatePath("/dashboard/website/all");
-    revalidatePath(`/website/editor/${appName}`);
+    // revalidatePath("/dashboard/website/all");
+    // revalidatePath(`/website/editor/${appName}`);
 
     return {
       success: true,
@@ -639,11 +652,10 @@ export async function createAndDeployWebsite(
       appName,
     };
   } catch (error) {
-    try {
-      if (typeof website !== "undefined" && website && website.id) {
-        await updateWebsite(website.id, { status: "failed" });
-      }
-    } catch {}
+    if (typeof website !== "undefined" && website && website.id) {
+      await updateWebsite(website.id, { status: "failed" });
+    }
+    console.error("[createAndDeployWebsite] error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

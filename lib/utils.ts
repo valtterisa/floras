@@ -30,8 +30,8 @@ export function generateAppName(userId: string): string {
     .toLowerCase()
     .slice(0, 8);
   if (!userPart) userPart = randomString(6);
-  let rand = randomString(8);
-  let appName = `app-${userPart}-${rand}`;
+  let rand = randomString(16);
+  let appName = `${userPart}-${rand}`;
   // Remove any non-alphanumeric or dash, and ensure no leading/trailing dash
   appName = appName.replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "");
   // Enforce length and no leading/trailing dash
