@@ -67,6 +67,9 @@ export default function EditorPageClient({
       }
     };
 
+    // @TODO: Rewise this solution.
+    // We need to check if project exists in the supabase db before creating.
+    // Also we need supabase db stuff to this too
     const loadExistingWebsite = async () => {
       try {
         // Check if this website already exists in Redis

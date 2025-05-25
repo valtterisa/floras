@@ -5,7 +5,6 @@ import { AppSidebar } from "../app-sidebar";
 import { SidebarInset, SidebarProvider } from "../ui/sidebar";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { ChatInterface } from "@/components/chat/chat-interface";
 
 // Define website type
 type Website = {
