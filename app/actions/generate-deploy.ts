@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { generateAppName, parseAIResponse } from "@/lib/utils";
+import {
+  generateAppName,
+  getMockAIResponse,
+  parseAIResponse,
+} from "@/lib/utils";
 import { createAppAndAssignMachine } from "@/lib/fly";
 
 type GenerateDeployResult = {
