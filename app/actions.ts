@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { redis } from "@/lib/redis";
+import { generateAppName } from "@/lib/utils";
 
 interface Operation {
   operation: "write" | "update" | "delete" | "code" | "rename" | "dependency";
@@ -185,8 +186,8 @@ You are SiteForge, a professional AI frontend engineer. A user is asking to upda
 
 Current project files:
 ${Object.keys(currentFiles)
-  .map((path) => `- ${path}`)
-  .join("\n")}
+        .map((path) => `- ${path}`)
+        .join("\n")}
 
 Based on the user's request, determine which files need to be updated, created, renamed, or deleted.
 When responding, use the format:
@@ -544,21 +545,21 @@ export async function processChatMessage(
       operations.length === 0
         ? "No changes were made to your website."
         : [
-            operations.filter((op) => op.type === "write").length > 0
-              ? `Updated ${operations.filter((op) => op.type === "write").length} file(s)`
-              : "",
-            operations.filter((op) => op.type === "delete").length > 0
-              ? `Deleted ${operations.filter((op) => op.type === "delete").length} file(s)`
-              : "",
-            operations.filter((op) => op.type === "rename").length > 0
-              ? `Renamed ${operations.filter((op) => op.type === "rename").length} file(s)`
-              : "",
-            operations.filter((op) => op.type === "dependency").length > 0
-              ? `Added ${operations.filter((op) => op.type === "dependency").length} dependenc${operations.filter((op) => op.type === "dependency").length > 1 ? "ies" : "y"}`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(", ") + ".";
+          operations.filter((op) => op.type === "write").length > 0
+            ? `Updated ${operations.filter((op) => op.type === "write").length} file(s)`
+            : "",
+          operations.filter((op) => op.type === "delete").length > 0
+            ? `Deleted ${operations.filter((op) => op.type === "delete").length} file(s)`
+            : "",
+          operations.filter((op) => op.type === "rename").length > 0
+            ? `Renamed ${operations.filter((op) => op.type === "rename").length} file(s)`
+            : "",
+          operations.filter((op) => op.type === "dependency").length > 0
+            ? `Added ${operations.filter((op) => op.type === "dependency").length} dependenc${operations.filter((op) => op.type === "dependency").length > 1 ? "ies" : "y"}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(", ") + ".";
 
     sendChatMessage(userId, appName, responseMessage, false); // fire-and-forget
 
@@ -575,7 +576,7 @@ export async function processChatMessage(
         "Sorry, I encountered an error processing your request.",
         false
       );
-    } catch {}
+    } catch { }
     return {
       success: false,
       error:
@@ -718,6 +719,126 @@ export async function generateSite(
     return {
       success: true,
       machine: { id: "error-machine-id", name: appName },
+    };
+  }
+}
+
+interface FlyAppResponse {
+  id: string;
+  name: string;
+  // Add other relevant fields
+}
+
+interface FlyMachineResponse {
+  id: string;
+  name: string;
+  // Add other relevant fields
+}
+
+interface PreviewEnvironment {
+  id: string;
+  app_name: string;
+  machine_id: string;
+  status: string;
+  assigned_at: string;
+}
+
+// Bulk create apps and machines for user and update them to supabase
+export async function bulkCreate(
+  userId: string,
+  count: number
+): Promise<{ success: boolean; error?: string }> {
+  const createdResources: { appName: string; machineId?: string }[] = [];
+
+  try {
+    // Create all apps in parallel
+    const appPromises = Array.from({ length: count }, async () => {
+      const appName = generateAppName(userId);
+      const response = await fetch(`${process.env.FLY_API_BASE}/v1/apps`, {
+        method: "POST",
+        body: JSON.stringify({ app_name: appName, org_slug: "personal" }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create app: ${response.statusText}`);
+      }
+
+      const appData: FlyAppResponse = await response.json();
+      createdResources.push({ appName });
+      return appName;
+    });
+
+    const appNames = await Promise.all(appPromises);
+
+    // Create all machines in parallel
+    const machinePromises = appNames.map(async (appName) => {
+      const response = await fetch(`${process.env.FLY_API_BASE}/v1/apps/${appName}/machines`, {
+        method: "POST",
+        body: JSON.stringify({ name: appName }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create machine: ${response.statusText}`);
+      }
+
+      const machineData: FlyMachineResponse = await response.json();
+      const resource = createdResources.find(r => r.appName === appName);
+      if (resource) {
+        resource.machineId = machineData.id;
+      }
+      return { appName, machineId: machineData.id };
+    });
+
+    const machines = await Promise.all(machinePromises);
+
+    // @TODO: allocate shared ip's for each machine using graphql api
+
+
+    // Update Supabase with all machines in parallel
+    const supabase = await createClient();
+    const dbPromises = machines.map(async ({ appName, machineId }) => {
+      const { error } = await supabase.from("preview_environments").insert({
+        id: userId,
+        app_name: appName,
+        machine_id: machineId,
+        status: "assigned",
+        assigned_at: new Date().toISOString(),
+      } as PreviewEnvironment);
+
+      if (error) {
+        throw new Error(`Failed to update Supabase: ${error.message}`);
+      }
+    });
+
+    await Promise.all(dbPromises);
+
+    return { success: true };
+  } catch (error) {
+    // Cleanup created resources in case of error
+    await Promise.all(
+      createdResources.map(async ({ appName, machineId }) => {
+        if (machineId) {
+          try {
+            await fetch(`${process.env.FLY_API_BASE}/v1/apps/${appName}/machines/${machineId}`, {
+              method: "DELETE",
+            });
+          } catch (e) {
+            console.error(`Failed to delete machine ${machineId}:`, e);
+          }
+        }
+        try {
+          await fetch(`${process.env.FLY_API_BASE}/v1/apps/${appName}`, {
+            method: "DELETE",
+          });
+        } catch (e) {
+          console.error(`Failed to delete app ${appName}:`, e);
+        }
+      })
+    );
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
 }
