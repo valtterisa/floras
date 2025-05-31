@@ -707,6 +707,8 @@ export async function generateSite(
   // Deploy (keep as is, but error handling is now more targeted)
   let result;
   try {
+    // @TODO: this api call does not work.
+    // Move the fly.io preview deploy logic from the route to here.
     result = await fetch("/api/deploy-preview", {
       method: "POST",
       body: JSON.stringify({ files, userId }),
@@ -741,6 +743,7 @@ interface PreviewEnvironment {
   machine_id: string;
   status: string;
   assigned_at: string;
+  ip_address?: string;
 }
 
 // Bulk create apps and machines for user and update them to supabase
@@ -748,7 +751,8 @@ export async function bulkCreate(
   userId: string,
   count: number
 ): Promise<{ success: boolean; error?: string }> {
-  const createdResources: { appName: string; machineId?: string }[] = [];
+  const createdResources: { appName: string; machineId?: string; ipAddress?: string }[] = [];
+  const orgSlug = process.env.FLY_ORG_SLUG || "personal";
 
   try {
     // Create all apps in parallel
@@ -756,7 +760,10 @@ export async function bulkCreate(
       const appName = generateAppName(userId);
       const response = await fetch(`${process.env.FLY_API_BASE}/v1/apps`, {
         method: "POST",
-        body: JSON.stringify({ app_name: appName, org_slug: "personal" }),
+        body: JSON.stringify({
+          app_name: appName,
+          org_slug: orgSlug
+        }),
       });
 
       if (!response.ok) {
@@ -791,18 +798,40 @@ export async function bulkCreate(
 
     const machines = await Promise.all(machinePromises);
 
-    // @TODO: allocate shared ip's for each machine using graphql api
+    // Allocate shared IPs for each machine
+    const ipAllocationPromises = machines.map(async ({ appName, machineId }) => {
+      const response = await fetch(`${process.env.FLY_API_BASE}/v1/apps/${appName}/machines/${machineId}/allocate-ip`, {
+        method: "POST",
+        body: JSON.stringify({
+          type: "shared",
+          region: process.env.FLY_DEFAULT_REGION || "iad"
+        }),
+      });
 
+      if (!response.ok) {
+        throw new Error(`Failed to allocate IP for machine ${machineId}: ${response.statusText}`);
+      }
+
+      const ipData = await response.json();
+      const resource = createdResources.find(r => r.appName === appName);
+      if (resource) {
+        resource.ipAddress = ipData.ip;
+      }
+      return { appName, machineId, ipAddress: ipData.ip };
+    });
+
+    const machinesWithIps = await Promise.all(ipAllocationPromises);
 
     // Update Supabase with all machines in parallel
     const supabase = await createClient();
-    const dbPromises = machines.map(async ({ appName, machineId }) => {
+    const dbPromises = machinesWithIps.map(async ({ appName, machineId, ipAddress }) => {
       const { error } = await supabase.from("preview_environments").insert({
         id: userId,
         app_name: appName,
         machine_id: machineId,
         status: "assigned",
         assigned_at: new Date().toISOString(),
+        ip_address: ipAddress
       } as PreviewEnvironment);
 
       if (error) {
