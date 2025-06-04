@@ -1,19 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
-  Menu,
-  X,
   MoreVerticalIcon,
   UserCircleIcon,
   CreditCardIcon,
   LogOutIcon,
   LayoutDashboard,
 } from "lucide-react";
-import { SignOutButton } from "../auth/sign-out-button";
-import { usePathname } from "next/navigation";
 import Logo from "../logo";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
@@ -27,18 +22,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/app/(auth)/actions";
+import { useState, useEffect } from "react";
 
 export default function Navbar({ user }: any) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const pathname = usePathname();
+  const [scrolled, setScrolled] = useState(false);
 
-  // Close the menu when the pathname changes (navigation completes)
   useEffect(() => {
-    setIsMenuOpen(false);
-  }, [pathname]);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <motion.header className="sticky top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
+    <motion.header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out
+        ${scrolled ? "bg-white/80 backdrop-blur-sm shadow-md border-b border-gray-200" : "bg-transparent"}
+      `}
+    >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Desktop */}
         <div className="flex items-center gap-1">
