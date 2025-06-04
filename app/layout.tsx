@@ -1,18 +1,18 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Suspense } from "react";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "builddrr - Create Your Business Website in Minutes",
+  title: "Builddrr",
   description:
     "Generate a professional one-page website with AI or customize a template. No coding required.",
   generator: "builddrr",
 };
+
+const geist = Geist({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${geist.className}`}>
         <Suspense fallback={null}>{children}</Suspense>
         <Toaster />
       </body>

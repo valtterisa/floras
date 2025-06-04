@@ -6,5 +6,13 @@ export default async function Header() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return <Navbar user={user} />;
+  // Only pass serializable user info (not the whole user object)
+  const safeUser = user
+    ? {
+        name: user.user_metadata?.name || user.email || "User",
+        email: user.email,
+        avatar: user.user_metadata?.avatar_url || undefined,
+      }
+    : null;
+  return <Navbar user={safeUser} />;
 }

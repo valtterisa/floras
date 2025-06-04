@@ -94,12 +94,6 @@ export function NavUser({
                   Billing
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/account/notifications">
-                  <BellIcon />
-                  Notifications
-                </Link>
-              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
