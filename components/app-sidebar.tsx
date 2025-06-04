@@ -138,7 +138,7 @@ export function AppSidebar({
         <SidebarMenu className="bg-sidebar">
           <SidebarMenuItem className="bg-sidebar flex items-center justify-between">
             <Link href="/" className="flex items-center gap-1 py-2 md:py-0">
-              <Logo width={30} height={30} />
+              <Logo className="h-4 w-4 md:h-8 md:w-8" />
               <span className="font-bold text-2xl">Builddrr</span>
             </Link>
             <SidebarCloseButton />

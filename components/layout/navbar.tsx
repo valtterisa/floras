@@ -42,7 +42,8 @@ export default function Navbar({ user }: any) {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Desktop */}
         <div className="flex items-center gap-1">
-          <Logo width={30} height={30} />
+          <Logo className="h-4 w-4 md:h-8 md:w-8" />
+
           <span className="text-2xl font-bold">Builddrr</span>
         </div>
         <div className="flex items-center gap-4">
@@ -132,52 +133,8 @@ export default function Navbar({ user }: any) {
               </Button>
             </div>
           )}
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </Button>
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100">
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
-            <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
-              {user ? (
-                <div className="flex items-center gap-4">
-                  <SignOutButton />
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <Button
-                    href="/login"
-                    variant="outline"
-                    className="w-full justify-center text-purple-600 border-purple-600 hover:bg-purple-50"
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    href="/signup"
-                    className="w-full justify-center bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
-                  >
-                    Get Started
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </motion.header>
   );
 }
