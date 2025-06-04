@@ -1,5 +1,6 @@
 import PromptTool from "@/components/interactive/prompt-tool";
 import { DemoVideo } from "@/components/landing-page/demo-video";
+import Pricing from "@/components/landing-page/pricing-section";
 import Footer from "@/components/layout/footer";
 import Navbar from "@/components/layout/navbar";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +21,7 @@ export default async function LandingPage() {
 
   return (
     <>
-      <div className="relative w-full overflow-hidden">
+      <div className="relative">
         {/* Responsive SVG background */}
         <svg
           className="svg-hero absolute inset-0 w-full h-full z-0 select-none pointer-events-none"

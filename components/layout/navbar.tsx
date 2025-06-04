@@ -37,11 +37,11 @@ export default function Navbar({ user }: any) {
 
   return (
     <motion.header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out
+      className={`fixed w-screen top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out
         ${scrolled ? "bg-white/80 backdrop-blur-sm shadow-md border-b border-gray-200" : "bg-transparent"}
       `}
     >
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Desktop */}
         <div className="flex items-center gap-1">
           <Logo className="h-4 w-4 md:h-8 md:w-8" />

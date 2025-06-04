@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, ArrowUpRight } from "lucide-react";
+import { Paperclip, ArrowUpRight, ArrowDown, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth-modal";
 import Logo from "../logo";
+import { motion } from "framer-motion";
 
 export default function PromptTool({ user }: { user: any }) {
   const [prompt, setPrompt] = useState("");
@@ -100,7 +101,7 @@ export default function PromptTool({ user }: { user: any }) {
   }, [displayedPlaceholder, isErasing, currentPromptIndex, promptPlaceholders]);
 
   return (
-    <div className="min-h-[70vh] w-full flex flex-col items-center justify-center pb-8 pt-12 md:pt-8 px-2 relative overflow-hidden">
+    <div className="min-h-[100vh] w-full flex flex-col items-center justify-center pb-8 pt-12 md:pt-8 px-2 relative">
       <div className="relative z-10 w-full flex flex-col items-center">
         {/* Loading overlay removed; editor/chat will show progress */}
         <h1 className="pt-4 flex items-center text-2xl md:text-5xl font-bold text-gray-900 text-center ">
@@ -166,6 +167,13 @@ export default function PromptTool({ user }: { user: any }) {
           ))}
         </div>
       </div>
+      <motion.div
+        className="absolute bottom-2 left-0 right-0 w-10 h-10 mx-auto"
+        animate={{ y: [0, -12, 0] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <ArrowDown className="w-10 h-10" />
+      </motion.div>
     </div>
   );
 }
