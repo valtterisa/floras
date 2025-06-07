@@ -28,7 +28,15 @@ export default function PromptTool({ user }: { user: any }) {
     // Instantly redirect to the editor
     // @TODO: get app name that is generated from the prompt
     // Supabase call
-    // router.push(`/dashboard/website/editor/${appName}`);
+    const supabase = createClient();
+    const data = await supabase
+      .from("preview_environments")
+      .select("*")
+      .eq("status", "inactive")
+      .limit(1);
+
+    
+    router.push(`/dashboard/website/editor/${data.data[0].app_name}`);
   };
 
   const examples = [
