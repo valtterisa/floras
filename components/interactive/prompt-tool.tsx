@@ -35,8 +35,20 @@ export default function PromptTool({ user }: { user: any }) {
       .eq("status", "inactive")
       .limit(1);
 
+    // If no app is found, create a pool of 20 new apps
+    if (!data.data || data.data.length === 0) {
+      // Create a new app
+      const response = await fetch("/api/create-apps", {
+        method: "POST",
+      });
+      if (response.ok) {
+        throw new Error("No app found");
+      }
+    }
+
     
-    router.push(`/dashboard/website/editor/${data.data[0].app_name}`);
+
+    // router.push(`/dashboard/website/editor/${data.data[0].app_name}`);
   };
 
   const examples = [
