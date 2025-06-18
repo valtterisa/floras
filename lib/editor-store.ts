@@ -3,7 +3,23 @@ import { create } from "zustand";
 export type EditorElement = {
   className: string;
   tagName: string;
-  // Add more fields as needed (e.g., style, attributes)
+  fontSize?: string;
+  fontWeight?: string;
+  textAlign?: string;
+  lineHeight?: string;
+  letterSpacing?: string;
+  textDecoration?: string;
+  textTransform?: string;
+  bgGradient?: string;
+  borderWidth?: string;
+  borderRadius?: string;
+  shadow?: string;
+  spacing?: string;
+  width?: string;
+  height?: string;
+  display?: string;
+  flexAlign?: string;
+  // Add more as needed
 };
 
 export type EditorSnapshot = {
@@ -28,6 +44,14 @@ export interface EditorState {
   pushHistory: (snapshot: EditorSnapshot) => void;
   undo: () => void;
   redo: () => void;
+  /**
+   * Remove all classes from a given group (e.g., all border-*, shadow-*, p-*, m-*, rounded-*, etc.)
+   */
+  removeClassGroup: (id: string, groupPrefix: string) => void;
+  /**
+   * Toggle a class in a group (removes all other group classes, adds the new one)
+   */
+  setClassGroup: (id: string, groupPrefix: string, newClass: string) => void;
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
@@ -124,6 +148,36 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         elements: next.elements,
       };
     }),
+  removeClassGroup: (id, groupPrefix) =>
+    set((state) => {
+      const prev = state.elements[id]?.className || "";
+      const filtered = prev
+        .split(" ")
+        .filter((cls) => !cls.startsWith(groupPrefix))
+        .filter(Boolean)
+        .join(" ");
+      return {
+        elements: {
+          ...state.elements,
+          [id]: { ...state.elements[id], className: filtered },
+        },
+      };
+    }),
+  setClassGroup: (id, groupPrefix, newClass) =>
+    set((state) => {
+      const prev = state.elements[id]?.className || "";
+      const filtered = prev
+        .split(" ")
+        .filter((cls) => !cls.startsWith(groupPrefix))
+        .filter(Boolean);
+      if (newClass) filtered.push(newClass);
+      return {
+        elements: {
+          ...state.elements,
+          [id]: { ...state.elements[id], className: filtered.join(" ") },
+        },
+      };
+    }),
 }));
 
 // Add a helper to add a new element with tagName
@@ -135,3 +189,27 @@ export const addEditorElement = (id: string, tagName: string) => {
     },
   }));
 };
+
+// Helper to build className from style fields
+export function buildClassName(el: EditorElement): string {
+  return [
+    el.fontSize,
+    el.fontWeight,
+    el.textAlign,
+    el.lineHeight,
+    el.letterSpacing,
+    el.textDecoration,
+    el.textTransform,
+    el.bgGradient,
+    el.borderWidth,
+    el.borderRadius,
+    el.shadow,
+    el.spacing,
+    el.width,
+    el.height,
+    el.display,
+    el.flexAlign,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}

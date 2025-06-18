@@ -20,6 +20,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEditorStore } from "@/lib/editor-store";
 import type { EditorState, EditorElement } from "@/lib/editor-store";
+import { ColorPicker } from "./color-picker";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { buildClassName } from "@/lib/editor-store";
 
 export interface ActiveFormats {
   bold: boolean;
@@ -71,6 +86,10 @@ export default function DevMode({
   const elements = useEditorStore((s: EditorState) => s.elements);
   const makeTextBigger = useEditorStore((s: EditorState) => s.makeTextBigger);
   const updateElement = useEditorStore((s: EditorState) => s.updateElement);
+  const removeClassGroup = useEditorStore(
+    (s: EditorState) => s.removeClassGroup
+  );
+  const setClassGroup = useEditorStore((s: EditorState) => s.setClassGroup);
 
   const TAILWIND_TEXT_SIZES = [
     "text-xs",
@@ -88,150 +107,551 @@ export default function DevMode({
     "text-9xl",
   ];
 
+  const TAILWIND_FONT_WEIGHTS = [
+    "font-thin",
+    "font-extralight",
+    "font-light",
+    "font-normal",
+    "font-medium",
+    "font-semibold",
+    "font-bold",
+    "font-extrabold",
+    "font-black",
+  ];
+
+  const TAILWIND_TEXT_ALIGN = [
+    "text-left",
+    "text-center",
+    "text-right",
+    "text-justify",
+  ];
+
+  const TAILWIND_LINE_HEIGHTS = [
+    "leading-none",
+    "leading-tight",
+    "leading-snug",
+    "leading-normal",
+    "leading-relaxed",
+    "leading-loose",
+  ];
+
+  const TAILWIND_LETTER_SPACING = [
+    "tracking-tighter",
+    "tracking-tight",
+    "tracking-normal",
+    "tracking-wide",
+    "tracking-wider",
+    "tracking-widest",
+  ];
+
+  const TAILWIND_TEXT_DECORATION = [
+    "underline",
+    "line-through",
+    "no-underline",
+  ];
+
+  const TAILWIND_TEXT_TRANSFORM = [
+    "uppercase",
+    "lowercase",
+    "capitalize",
+    "normal-case",
+  ];
+
+  const TAILWIND_BG_GRADIENTS = [
+    "bg-gradient-to-r",
+    "bg-gradient-to-l",
+    "bg-gradient-to-t",
+    "bg-gradient-to-b",
+  ];
+
+  const TAILWIND_BORDER_WIDTHS = [
+    "border",
+    "border-2",
+    "border-4",
+    "border-8",
+    "border-0",
+  ];
+
+  const TAILWIND_BORDER_RADIUS = [
+    "rounded-none",
+    "rounded-sm",
+    "rounded",
+    "rounded-md",
+    "rounded-lg",
+    "rounded-xl",
+    "rounded-2xl",
+    "rounded-3xl",
+    "rounded-full",
+  ];
+
+  const TAILWIND_SHADOWS = [
+    "shadow-none",
+    "shadow-sm",
+    "shadow",
+    "shadow-md",
+    "shadow-lg",
+    "shadow-xl",
+    "shadow-2xl",
+  ];
+
+  const TAILWIND_SPACING = [
+    "p-0",
+    "p-2",
+    "p-4",
+    "p-6",
+    "p-8",
+    "m-0",
+    "m-2",
+    "m-4",
+    "m-6",
+    "m-8",
+  ];
+
+  const TAILWIND_WIDTHS = [
+    "w-auto",
+    "w-px",
+    "w-1\/2",
+    "w-1\/3",
+    "w-2\/3",
+    "w-1\/4",
+    "w-3\/4",
+    "w-full",
+    "w-screen",
+  ];
+
+  const TAILWIND_HEIGHTS = [
+    "h-auto",
+    "h-px",
+    "h-1\/2",
+    "h-1\/3",
+    "h-2\/3",
+    "h-1\/4",
+    "h-3\/4",
+    "h-full",
+    "h-screen",
+  ];
+
+  const TAILWIND_DISPLAY = [
+    "block",
+    "inline-block",
+    "inline",
+    "flex",
+    "inline-flex",
+    "grid",
+    "inline-grid",
+    "hidden",
+  ];
+
+  const TAILWIND_FLEX_ALIGN = [
+    "items-start",
+    "items-center",
+    "items-end",
+    "justify-start",
+    "justify-center",
+    "justify-end",
+    "justify-between",
+    "justify-around",
+    "justify-evenly",
+  ];
+
   const [textSize, setTextSize] = useState<string>("");
+  const [textContent, setTextContent] = useState<string>("");
+  const [originalClasses, setOriginalClasses] = useState<
+    Record<string, string>
+  >({});
 
   const tagName =
     selectedElementId && (elements[selectedElementId] as EditorElement)?.tagName
       ? (elements[selectedElementId] as EditorElement).tagName
       : null;
 
+  useEffect(() => {
+    if (selectedElement) {
+      setTextContent(selectedElement.textContent || "");
+      const classList = (selectedElement.className || "").split(" ");
+      setOriginalClasses({
+        "text-size":
+          classList.find((cls) => TAILWIND_TEXT_SIZES.includes(cls)) || "",
+        "font-weight":
+          classList.find((cls) => TAILWIND_FONT_WEIGHTS.includes(cls)) || "",
+        "text-align":
+          classList.find((cls) => TAILWIND_TEXT_ALIGN.includes(cls)) || "",
+        "line-height":
+          classList.find((cls) => TAILWIND_LINE_HEIGHTS.includes(cls)) || "",
+        "letter-spacing":
+          classList.find((cls) => TAILWIND_LETTER_SPACING.includes(cls)) || "",
+        "text-decoration":
+          classList.find((cls) => TAILWIND_TEXT_DECORATION.includes(cls)) || "",
+        "text-transform":
+          classList.find((cls) => TAILWIND_TEXT_TRANSFORM.includes(cls)) || "",
+        "bg-gradient":
+          classList.find((cls) => TAILWIND_BG_GRADIENTS.includes(cls)) || "",
+        "border-width":
+          classList.find((cls) => TAILWIND_BORDER_WIDTHS.includes(cls)) || "",
+        "border-radius":
+          classList.find((cls) => TAILWIND_BORDER_RADIUS.includes(cls)) || "",
+        "shadow": classList.find((cls) => TAILWIND_SHADOWS.includes(cls)) || "",
+        "spacing":
+          classList.find((cls) => TAILWIND_SPACING.includes(cls)) || "",
+        "width": classList.find((cls) => TAILWIND_WIDTHS.includes(cls)) || "",
+        "height": classList.find((cls) => TAILWIND_HEIGHTS.includes(cls)) || "",
+        "display":
+          classList.find((cls) => TAILWIND_DISPLAY.includes(cls)) || "",
+        "flex-align":
+          classList.find((cls) => TAILWIND_FLEX_ALIGN.includes(cls)) || "",
+      });
+    }
+  }, [selectedElement]);
+
   const handleTextSizeChange = (size: string) => {
     setTextSize(size);
+    if (!selectedElementId) return;
+    updateElement(selectedElementId, (el) => ({
+      ...el,
+      fontSize: size,
+      className: buildClassName({ ...el, fontSize: size }),
+    }));
+  };
+
+  const handleTextContentChange = (val: string) => {
+    setTextContent(val);
     if (selectedElementId) {
-      updateElement(selectedElementId, (el) => {
-        // Remove any previous text size classes
-        const filtered = (el.className || "")
-          .split(" ")
-          .filter((cls) => !TAILWIND_TEXT_SIZES.includes(cls))
-          .concat(size)
-          .filter(Boolean)
-          .join(" ");
-        return { ...el, className: filtered };
-      });
+      updateElement(selectedElementId, (el) => ({ ...el, textContent: val }));
     }
   };
 
-  return (
-    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col gap-6 border border-muted mt-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Dev Mode Controls</h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          title="Close Dev Mode"
-          onClick={onClose}
-        >
-          <X className="h-5 w-5" />
-        </Button>
+  // Helper for rendering a select control
+  function StyleSelect({
+    label,
+    options,
+    value,
+    onChange,
+    disabled = false,
+    groupOptions: _groupOptions,
+  }: {
+    label: string;
+    options: string[];
+    value: string;
+    onChange: (value: string) => void;
+    disabled?: boolean;
+    groupOptions: string[];
+  }) {
+    return (
+      <div className="flex flex-col gap-1 mb-2">
+        <Label className="mb-1">{label}</Label>
+        <Select value={value} onValueChange={onChange} disabled={disabled}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select" />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt: string) => (
+              <SelectItem key={opt} value={opt}>
+                {opt.replace(/-/g, " ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div className="mb-2 text-sm text-muted-foreground">
+    );
+  }
+
+  return (
+    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-8 flex flex-col gap-8 border border-muted mt-6 h-screen overflow-y-auto">
+      <div className="mb-4 text-sm text-muted-foreground">
         {tagName ? `Editing: <${tagName}>` : "No element selected"}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <div className="font-medium mb-1">Text Formatting</div>
-          <div className="flex gap-2">
-            <Button
-              variant={activeFormats.bold ? "default" : "outline"}
-              size="icon"
-              onClick={() => onFormatText("bold")}
-              title="Bold"
-            >
-              <Bold className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={activeFormats.italic ? "default" : "outline"}
-              size="icon"
-              onClick={() => onFormatText("italic")}
-              title="Italic"
-            >
-              <Italic className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={activeFormats.underline ? "default" : "outline"}
-              size="icon"
-              onClick={() => onFormatText("underline")}
-              title="Underline"
-            >
-              <Underline className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <div>
-          <div className="font-medium mb-1">Text Color</div>
-          <div className="flex items-center gap-2">
-            <Input
-              type="color"
-              value={activeTextColor || "#000000"}
-              onChange={(e) => setActiveTextColor(e.target.value)}
-              className="w-10 h-10 p-0 border rounded"
-            />
-            <span className="text-xs font-mono">{activeTextColor}</span>
-          </div>
-        </div>
-        <div>
-          <div className="font-medium mb-1">Background Color</div>
-          <Input
-            type="color"
-            onChange={(e) => onSetBackgroundColor(e.target.value)}
-            className="w-10 h-10 p-0 border rounded"
-          />
-        </div>
-        <div>
-          <div className="font-medium mb-1">Background Image</div>
-          <Input
-            type="text"
-            placeholder="Image URL"
-            onBlur={(e) => onSetBackgroundImage(e.target.value)}
-            className="input input-bordered w-full"
-          />
-        </div>
-        <div>
-          <div className="font-medium mb-1">Link</div>
-          <Input
-            type="text"
-            placeholder="https://example.com"
-            onBlur={(e) => onSetLink(e.target.value)}
-            className="input input-bordered w-full"
-          />
-        </div>
-        <div>
-          <div className="font-medium mb-1">Alt Text (for images)</div>
-          <Input
-            type="text"
-            placeholder="Describe the image"
-            onBlur={(e) => onSetAltTag(e.target.value)}
-            className="input input-bordered w-full"
-          />
-        </div>
-        <div className="col-span-2 flex flex-col gap-2">
-          <Button
-            variant={canRemoveStandalone ? "destructive" : "outline"}
-            size="sm"
-            onClick={onRemoveStandalone}
-            disabled={!canRemoveStandalone}
-            className="w-fit"
-          >
-            <Eraser className="h-4 w-4 mr-2" /> Remove Standalone Span
-          </Button>
-        </div>
-        <div>
-          <div className="font-medium mb-1">Text Size</div>
-          <select
-            className="input input-bordered"
-            value={textSize}
-            onChange={(e) => handleTextSizeChange(e.target.value)}
-            disabled={!selectedElementId}
-          >
-            <option value="">Select size</option>
-            {TAILWIND_TEXT_SIZES.map((size) => (
-              <option key={size} value={size}>
-                {size.replace("text-", "").toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="mb-6">
+        <Label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Content
+        </Label>
+        <Input
+          value={textContent}
+          onChange={(e) => handleTextContentChange(e.target.value)}
+          placeholder="Edit text content..."
+          className="w-full h-10 px-3 text-base rounded-md border border-input bg-background"
+          disabled={!selectedElementId}
+        />
       </div>
+      <Accordion type="multiple" className="w-full space-y-2">
+        <AccordionItem value="text">
+          <AccordionTrigger>Text</AccordionTrigger>
+          <AccordionContent>
+            <StyleSelect
+              label="Font Size"
+              options={TAILWIND_TEXT_SIZES}
+              value={elements[selectedElementId || ""]?.fontSize || ""}
+              onChange={(size) => handleTextSizeChange(size)}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_TEXT_SIZES}
+            />
+            <StyleSelect
+              label="Font Weight"
+              options={TAILWIND_FONT_WEIGHTS}
+              value={elements[selectedElementId || ""]?.fontWeight || ""}
+              onChange={(fw) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  fontWeight: fw,
+                  className: buildClassName({ ...el, fontWeight: fw }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_FONT_WEIGHTS}
+            />
+            <StyleSelect
+              label="Text Align"
+              options={TAILWIND_TEXT_ALIGN}
+              value={elements[selectedElementId || ""]?.textAlign || ""}
+              onChange={(align) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  textAlign: align,
+                  className: buildClassName({ ...el, textAlign: align }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_TEXT_ALIGN}
+            />
+            <StyleSelect
+              label="Line Height"
+              options={TAILWIND_LINE_HEIGHTS}
+              value={elements[selectedElementId || ""]?.lineHeight || ""}
+              onChange={(lh) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  lineHeight: lh,
+                  className: buildClassName({ ...el, lineHeight: lh }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_LINE_HEIGHTS}
+            />
+            <StyleSelect
+              label="Letter Spacing"
+              options={TAILWIND_LETTER_SPACING}
+              value={elements[selectedElementId || ""]?.letterSpacing || ""}
+              onChange={(ls) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  letterSpacing: ls,
+                  className: buildClassName({ ...el, letterSpacing: ls }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_LETTER_SPACING}
+            />
+            <StyleSelect
+              label="Text Decoration"
+              options={TAILWIND_TEXT_DECORATION}
+              value={elements[selectedElementId || ""]?.textDecoration || ""}
+              onChange={(td) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  textDecoration: td,
+                  className: buildClassName({ ...el, textDecoration: td }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_TEXT_DECORATION}
+            />
+            <StyleSelect
+              label="Text Transform"
+              options={TAILWIND_TEXT_TRANSFORM}
+              value={elements[selectedElementId || ""]?.textTransform || ""}
+              onChange={(tt) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  textTransform: tt,
+                  className: buildClassName({ ...el, textTransform: tt }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_TEXT_TRANSFORM}
+            />
+            {selectedElement && (
+              <div className="mt-2">
+                <ColorPicker element={selectedElement} onUpdate={() => {}} />
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="background">
+          <AccordionTrigger>Background</AccordionTrigger>
+          <AccordionContent>
+            <StyleSelect
+              label="Gradient"
+              options={TAILWIND_BG_GRADIENTS}
+              value={elements[selectedElementId || ""]?.bgGradient || ""}
+              onChange={(g) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  bgGradient: g,
+                  className: buildClassName({ ...el, bgGradient: g }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_BG_GRADIENTS}
+            />
+            {selectedElement && (
+              <div className="mt-2">
+                <ColorPicker element={selectedElement} onUpdate={() => {}} />
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="border">
+          <AccordionTrigger>Border</AccordionTrigger>
+          <AccordionContent>
+            <StyleSelect
+              label="Border Width"
+              options={TAILWIND_BORDER_WIDTHS}
+              value={elements[selectedElementId || ""]?.borderWidth || ""}
+              onChange={(bw) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  borderWidth: bw,
+                  className: buildClassName({ ...el, borderWidth: bw }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_BORDER_WIDTHS}
+            />
+            <StyleSelect
+              label="Border Radius"
+              options={TAILWIND_BORDER_RADIUS}
+              value={elements[selectedElementId || ""]?.borderRadius || ""}
+              onChange={(br) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  borderRadius: br,
+                  className: buildClassName({ ...el, borderRadius: br }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_BORDER_RADIUS}
+            />
+            {selectedElement && (
+              <div className="mt-2">
+                <ColorPicker element={selectedElement} onUpdate={() => {}} />
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="shadow">
+          <AccordionTrigger>Shadow</AccordionTrigger>
+          <AccordionContent>
+            <StyleSelect
+              label="Shadow"
+              options={TAILWIND_SHADOWS}
+              value={elements[selectedElementId || ""]?.shadow || ""}
+              onChange={(sh) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  shadow: sh,
+                  className: buildClassName({ ...el, shadow: sh }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_SHADOWS}
+            />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="spacing">
+          <AccordionTrigger>Spacing</AccordionTrigger>
+          <AccordionContent>
+            <StyleSelect
+              label="Spacing"
+              options={TAILWIND_SPACING}
+              value={elements[selectedElementId || ""]?.spacing || ""}
+              onChange={(sp) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  spacing: sp,
+                  className: buildClassName({ ...el, spacing: sp }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_SPACING}
+            />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="layout">
+          <AccordionTrigger>Layout</AccordionTrigger>
+          <AccordionContent>
+            <StyleSelect
+              label="Width"
+              options={TAILWIND_WIDTHS}
+              value={elements[selectedElementId || ""]?.width || ""}
+              onChange={(w) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  width: w,
+                  className: buildClassName({ ...el, width: w }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_WIDTHS}
+            />
+            <StyleSelect
+              label="Height"
+              options={TAILWIND_HEIGHTS}
+              value={elements[selectedElementId || ""]?.height || ""}
+              onChange={(h) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  height: h,
+                  className: buildClassName({ ...el, height: h }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_HEIGHTS}
+            />
+            <StyleSelect
+              label="Display"
+              options={TAILWIND_DISPLAY}
+              value={elements[selectedElementId || ""]?.display || ""}
+              onChange={(d) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  display: d,
+                  className: buildClassName({ ...el, display: d }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_DISPLAY}
+            />
+            <StyleSelect
+              label="Flex/Grid Align"
+              options={TAILWIND_FLEX_ALIGN}
+              value={elements[selectedElementId || ""]?.flexAlign || ""}
+              onChange={(fa) => {
+                if (!selectedElementId) return;
+                updateElement(selectedElementId, (el) => ({
+                  ...el,
+                  flexAlign: fa,
+                  className: buildClassName({ ...el, flexAlign: fa }),
+                }));
+              }}
+              disabled={!selectedElementId}
+              groupOptions={TAILWIND_FLEX_ALIGN}
+            />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
       <div className="mt-4 text-muted-foreground text-sm">
         Dev Mode: All controls are always visible here for development and
         testing.
