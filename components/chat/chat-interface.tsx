@@ -267,10 +267,10 @@ export default function ChatInterface({
           prev.map((msg) =>
             msg.id === "processing"
               ? {
-                  ...msg,
-                  id: Date.now().toString(), // Change ID so it doesn't get updated again
-                  content: "Request processed successfully. Changes applied.",
-                }
+                ...msg,
+                id: Date.now().toString(), // Change ID so it doesn't get updated again
+                content: "Request processed successfully. Changes applied.",
+              }
               : msg
           )
         );
@@ -330,20 +330,18 @@ export default function ChatInterface({
                 return (
                   <div key={index} className="flex items-center gap-2">
                     <div
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        isCurrent
-                          ? "bg-primary animate-pulse"
-                          : isActive
-                            ? "bg-primary"
-                            : "bg-muted"
-                      }`}
+                      className={`h-1.5 w-1.5 rounded-full ${isCurrent
+                        ? "bg-primary animate-pulse"
+                        : isActive
+                          ? "bg-primary"
+                          : "bg-muted"
+                        }`}
                     />
                     <span
-                      className={`text-sm ${
-                        isActive
-                          ? "text-foreground"
-                          : "text-muted-foreground/60"
-                      }`}
+                      className={`text-sm ${isActive
+                        ? "text-foreground"
+                        : "text-muted-foreground/60"
+                        }`}
                     >
                       {step}
                       {isCurrent && "..."}
@@ -444,7 +442,7 @@ export default function ChatInterface({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground text-center py-3">
-              builddrr may make mistakes. Please use with discretion.
+              Builddrr may make mistakes. Please use with discretion.
             </p>
           </form>
         </div>

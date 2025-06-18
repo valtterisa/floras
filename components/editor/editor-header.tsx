@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   Edit,
   Eye,
+  LayoutDashboard,
   Monitor,
   Rocket,
   Smartphone,
@@ -69,11 +70,10 @@ function EditorHeader({
   };
 
   return (
-    <div className="h-14 border-b flex items-center px-4 gap-2">
+    <div className="h-10 border-b flex items-center px-4 gap-2">
       <Link href="/dashboard">
-        <Button variant="outline" size="sm">
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Dashboard
+        <Button variant="outline" size="icon">
+          <LayoutDashboard className="h-3 w-3 mr-1" />
         </Button>
       </Link>
 
@@ -84,7 +84,7 @@ function EditorHeader({
           onClick={() => setViewportSize("mobile")}
           title="Mobile view"
         >
-          <Smartphone className="h-4 w-4" />
+          <Smartphone className="h-3 w-3" />
         </Button>
 
         <Button
@@ -93,11 +93,11 @@ function EditorHeader({
           onClick={() => setViewportSize("desktop")}
           title="Desktop view"
         >
-          <Monitor className="h-4 w-4" />
+          <Monitor className="h-3 w-3" />
         </Button>
 
         <Button size="sm" onClick={handleGoLive}>
-          <Rocket className="h-4 w-4 sm:mr-1" />
+          <Rocket className="h-3 w-3 sm:mr-1" />
           <span className="hidden sm:inline">Go Live</span>
         </Button>
       </div>
