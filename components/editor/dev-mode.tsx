@@ -356,306 +356,323 @@ export default function DevMode({
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-8 flex flex-col gap-8 border border-muted mt-6 h-screen overflow-y-auto">
-      <div className="mb-4 text-sm text-muted-foreground">
-        {tagName ? `Editing: <${tagName}>` : "No element selected"}
-      </div>
-      <div className="mb-6">
-        <Label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Content
-        </Label>
-        <Input
-          value={textContent}
-          onChange={(e) => handleTextContentChange(e.target.value)}
-          placeholder="Edit text content..."
-          className="w-full h-10 px-3 text-base rounded-md border border-input bg-background"
-          disabled={!selectedElementId}
-        />
-      </div>
-      <Accordion type="multiple" className="w-full space-y-2">
-        <AccordionItem value="text">
-          <AccordionTrigger>Text</AccordionTrigger>
-          <AccordionContent>
-            <StyleSelect
-              label="Font Size"
-              options={TAILWIND_TEXT_SIZES}
-              value={elements[selectedElementId || ""]?.fontSize || ""}
-              onChange={(size) => handleTextSizeChange(size)}
+    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-900 p-8 flex flex-col gap-8 border border-muted h-screen overflow-y-auto">
+      {tagName && (
+        <div className="border-alpha-200 flex w-min items-center justify-center gap-1.5 whitespace-nowrap rounded-md border bg-blue-100 px-2 py-0.5 font-mono text-xs font-semibold text-blue-700">
+          {tagName}
+        </div>
+      )}
+      {selectedElementId && tagName ? (
+        <>
+          <Accordion type="multiple" className="w-full space-y-2">
+            <AccordionItem value="text">
+              <AccordionTrigger>Text</AccordionTrigger>
+              <AccordionContent>
+                <StyleSelect
+                  label="Font Size"
+                  options={TAILWIND_TEXT_SIZES}
+                  value={elements[selectedElementId || ""]?.fontSize || ""}
+                  onChange={(size) => handleTextSizeChange(size)}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_TEXT_SIZES}
+                />
+                <StyleSelect
+                  label="Font Weight"
+                  options={TAILWIND_FONT_WEIGHTS}
+                  value={elements[selectedElementId || ""]?.fontWeight || ""}
+                  onChange={(fw) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      fontWeight: fw,
+                      className: buildClassName({ ...el, fontWeight: fw }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_FONT_WEIGHTS}
+                />
+                <StyleSelect
+                  label="Text Align"
+                  options={TAILWIND_TEXT_ALIGN}
+                  value={elements[selectedElementId || ""]?.textAlign || ""}
+                  onChange={(align) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      textAlign: align,
+                      className: buildClassName({ ...el, textAlign: align }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_TEXT_ALIGN}
+                />
+                <StyleSelect
+                  label="Line Height"
+                  options={TAILWIND_LINE_HEIGHTS}
+                  value={elements[selectedElementId || ""]?.lineHeight || ""}
+                  onChange={(lh) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      lineHeight: lh,
+                      className: buildClassName({ ...el, lineHeight: lh }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_LINE_HEIGHTS}
+                />
+                <StyleSelect
+                  label="Letter Spacing"
+                  options={TAILWIND_LETTER_SPACING}
+                  value={elements[selectedElementId || ""]?.letterSpacing || ""}
+                  onChange={(ls) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      letterSpacing: ls,
+                      className: buildClassName({ ...el, letterSpacing: ls }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_LETTER_SPACING}
+                />
+                <StyleSelect
+                  label="Text Decoration"
+                  options={TAILWIND_TEXT_DECORATION}
+                  value={
+                    elements[selectedElementId || ""]?.textDecoration || ""
+                  }
+                  onChange={(td) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      textDecoration: td,
+                      className: buildClassName({ ...el, textDecoration: td }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_TEXT_DECORATION}
+                />
+                <StyleSelect
+                  label="Text Transform"
+                  options={TAILWIND_TEXT_TRANSFORM}
+                  value={elements[selectedElementId || ""]?.textTransform || ""}
+                  onChange={(tt) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      textTransform: tt,
+                      className: buildClassName({ ...el, textTransform: tt }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_TEXT_TRANSFORM}
+                />
+                {selectedElement && (
+                  <div className="mt-2">
+                    <ColorPicker
+                      element={selectedElement}
+                      onUpdate={() => {}}
+                    />
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="background">
+              <AccordionTrigger>Background</AccordionTrigger>
+              <AccordionContent>
+                <StyleSelect
+                  label="Gradient"
+                  options={TAILWIND_BG_GRADIENTS}
+                  value={elements[selectedElementId || ""]?.bgGradient || ""}
+                  onChange={(g) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      bgGradient: g,
+                      className: buildClassName({ ...el, bgGradient: g }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_BG_GRADIENTS}
+                />
+                {selectedElement && (
+                  <div className="mt-2">
+                    <ColorPicker
+                      element={selectedElement}
+                      onUpdate={() => {}}
+                    />
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="border">
+              <AccordionTrigger>Border</AccordionTrigger>
+              <AccordionContent>
+                <StyleSelect
+                  label="Border Width"
+                  options={TAILWIND_BORDER_WIDTHS}
+                  value={elements[selectedElementId || ""]?.borderWidth || ""}
+                  onChange={(bw) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      borderWidth: bw,
+                      className: buildClassName({ ...el, borderWidth: bw }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_BORDER_WIDTHS}
+                />
+                <StyleSelect
+                  label="Border Radius"
+                  options={TAILWIND_BORDER_RADIUS}
+                  value={elements[selectedElementId || ""]?.borderRadius || ""}
+                  onChange={(br) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      borderRadius: br,
+                      className: buildClassName({ ...el, borderRadius: br }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_BORDER_RADIUS}
+                />
+                {selectedElement && (
+                  <div className="mt-2">
+                    <ColorPicker
+                      element={selectedElement}
+                      onUpdate={() => {}}
+                    />
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="shadow">
+              <AccordionTrigger>Shadow</AccordionTrigger>
+              <AccordionContent>
+                <StyleSelect
+                  label="Shadow"
+                  options={TAILWIND_SHADOWS}
+                  value={elements[selectedElementId || ""]?.shadow || ""}
+                  onChange={(sh) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      shadow: sh,
+                      className: buildClassName({ ...el, shadow: sh }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_SHADOWS}
+                />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="spacing">
+              <AccordionTrigger>Spacing</AccordionTrigger>
+              <AccordionContent>
+                <StyleSelect
+                  label="Spacing"
+                  options={TAILWIND_SPACING}
+                  value={elements[selectedElementId || ""]?.spacing || ""}
+                  onChange={(sp) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      spacing: sp,
+                      className: buildClassName({ ...el, spacing: sp }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_SPACING}
+                />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="layout">
+              <AccordionTrigger>Layout</AccordionTrigger>
+              <AccordionContent>
+                <StyleSelect
+                  label="Width"
+                  options={TAILWIND_WIDTHS}
+                  value={elements[selectedElementId || ""]?.width || ""}
+                  onChange={(w) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      width: w,
+                      className: buildClassName({ ...el, width: w }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_WIDTHS}
+                />
+                <StyleSelect
+                  label="Height"
+                  options={TAILWIND_HEIGHTS}
+                  value={elements[selectedElementId || ""]?.height || ""}
+                  onChange={(h) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      height: h,
+                      className: buildClassName({ ...el, height: h }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_HEIGHTS}
+                />
+                <StyleSelect
+                  label="Display"
+                  options={TAILWIND_DISPLAY}
+                  value={elements[selectedElementId || ""]?.display || ""}
+                  onChange={(d) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      display: d,
+                      className: buildClassName({ ...el, display: d }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_DISPLAY}
+                />
+                <StyleSelect
+                  label="Flex/Grid Align"
+                  options={TAILWIND_FLEX_ALIGN}
+                  value={elements[selectedElementId || ""]?.flexAlign || ""}
+                  onChange={(fa) => {
+                    if (!selectedElementId) return;
+                    updateElement(selectedElementId, (el) => ({
+                      ...el,
+                      flexAlign: fa,
+                      className: buildClassName({ ...el, flexAlign: fa }),
+                    }));
+                  }}
+                  disabled={!selectedElementId}
+                  groupOptions={TAILWIND_FLEX_ALIGN}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <div className="mb-6">
+            <Label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Content
+            </Label>
+            <Input
+              value={textContent}
+              onChange={(e) => handleTextContentChange(e.target.value)}
+              placeholder="Edit text content..."
+              className="w-full h-10 px-3 text-base rounded-md border border-input bg-background"
               disabled={!selectedElementId}
-              groupOptions={TAILWIND_TEXT_SIZES}
             />
-            <StyleSelect
-              label="Font Weight"
-              options={TAILWIND_FONT_WEIGHTS}
-              value={elements[selectedElementId || ""]?.fontWeight || ""}
-              onChange={(fw) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  fontWeight: fw,
-                  className: buildClassName({ ...el, fontWeight: fw }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_FONT_WEIGHTS}
-            />
-            <StyleSelect
-              label="Text Align"
-              options={TAILWIND_TEXT_ALIGN}
-              value={elements[selectedElementId || ""]?.textAlign || ""}
-              onChange={(align) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  textAlign: align,
-                  className: buildClassName({ ...el, textAlign: align }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_TEXT_ALIGN}
-            />
-            <StyleSelect
-              label="Line Height"
-              options={TAILWIND_LINE_HEIGHTS}
-              value={elements[selectedElementId || ""]?.lineHeight || ""}
-              onChange={(lh) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  lineHeight: lh,
-                  className: buildClassName({ ...el, lineHeight: lh }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_LINE_HEIGHTS}
-            />
-            <StyleSelect
-              label="Letter Spacing"
-              options={TAILWIND_LETTER_SPACING}
-              value={elements[selectedElementId || ""]?.letterSpacing || ""}
-              onChange={(ls) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  letterSpacing: ls,
-                  className: buildClassName({ ...el, letterSpacing: ls }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_LETTER_SPACING}
-            />
-            <StyleSelect
-              label="Text Decoration"
-              options={TAILWIND_TEXT_DECORATION}
-              value={elements[selectedElementId || ""]?.textDecoration || ""}
-              onChange={(td) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  textDecoration: td,
-                  className: buildClassName({ ...el, textDecoration: td }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_TEXT_DECORATION}
-            />
-            <StyleSelect
-              label="Text Transform"
-              options={TAILWIND_TEXT_TRANSFORM}
-              value={elements[selectedElementId || ""]?.textTransform || ""}
-              onChange={(tt) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  textTransform: tt,
-                  className: buildClassName({ ...el, textTransform: tt }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_TEXT_TRANSFORM}
-            />
-            {selectedElement && (
-              <div className="mt-2">
-                <ColorPicker element={selectedElement} onUpdate={() => {}} />
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="background">
-          <AccordionTrigger>Background</AccordionTrigger>
-          <AccordionContent>
-            <StyleSelect
-              label="Gradient"
-              options={TAILWIND_BG_GRADIENTS}
-              value={elements[selectedElementId || ""]?.bgGradient || ""}
-              onChange={(g) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  bgGradient: g,
-                  className: buildClassName({ ...el, bgGradient: g }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_BG_GRADIENTS}
-            />
-            {selectedElement && (
-              <div className="mt-2">
-                <ColorPicker element={selectedElement} onUpdate={() => {}} />
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="border">
-          <AccordionTrigger>Border</AccordionTrigger>
-          <AccordionContent>
-            <StyleSelect
-              label="Border Width"
-              options={TAILWIND_BORDER_WIDTHS}
-              value={elements[selectedElementId || ""]?.borderWidth || ""}
-              onChange={(bw) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  borderWidth: bw,
-                  className: buildClassName({ ...el, borderWidth: bw }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_BORDER_WIDTHS}
-            />
-            <StyleSelect
-              label="Border Radius"
-              options={TAILWIND_BORDER_RADIUS}
-              value={elements[selectedElementId || ""]?.borderRadius || ""}
-              onChange={(br) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  borderRadius: br,
-                  className: buildClassName({ ...el, borderRadius: br }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_BORDER_RADIUS}
-            />
-            {selectedElement && (
-              <div className="mt-2">
-                <ColorPicker element={selectedElement} onUpdate={() => {}} />
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="shadow">
-          <AccordionTrigger>Shadow</AccordionTrigger>
-          <AccordionContent>
-            <StyleSelect
-              label="Shadow"
-              options={TAILWIND_SHADOWS}
-              value={elements[selectedElementId || ""]?.shadow || ""}
-              onChange={(sh) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  shadow: sh,
-                  className: buildClassName({ ...el, shadow: sh }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_SHADOWS}
-            />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="spacing">
-          <AccordionTrigger>Spacing</AccordionTrigger>
-          <AccordionContent>
-            <StyleSelect
-              label="Spacing"
-              options={TAILWIND_SPACING}
-              value={elements[selectedElementId || ""]?.spacing || ""}
-              onChange={(sp) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  spacing: sp,
-                  className: buildClassName({ ...el, spacing: sp }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_SPACING}
-            />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="layout">
-          <AccordionTrigger>Layout</AccordionTrigger>
-          <AccordionContent>
-            <StyleSelect
-              label="Width"
-              options={TAILWIND_WIDTHS}
-              value={elements[selectedElementId || ""]?.width || ""}
-              onChange={(w) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  width: w,
-                  className: buildClassName({ ...el, width: w }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_WIDTHS}
-            />
-            <StyleSelect
-              label="Height"
-              options={TAILWIND_HEIGHTS}
-              value={elements[selectedElementId || ""]?.height || ""}
-              onChange={(h) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  height: h,
-                  className: buildClassName({ ...el, height: h }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_HEIGHTS}
-            />
-            <StyleSelect
-              label="Display"
-              options={TAILWIND_DISPLAY}
-              value={elements[selectedElementId || ""]?.display || ""}
-              onChange={(d) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  display: d,
-                  className: buildClassName({ ...el, display: d }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_DISPLAY}
-            />
-            <StyleSelect
-              label="Flex/Grid Align"
-              options={TAILWIND_FLEX_ALIGN}
-              value={elements[selectedElementId || ""]?.flexAlign || ""}
-              onChange={(fa) => {
-                if (!selectedElementId) return;
-                updateElement(selectedElementId, (el) => ({
-                  ...el,
-                  flexAlign: fa,
-                  className: buildClassName({ ...el, flexAlign: fa }),
-                }));
-              }}
-              disabled={!selectedElementId}
-              groupOptions={TAILWIND_FLEX_ALIGN}
-            />
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-      <div className="mt-4 text-muted-foreground text-sm">
-        Dev Mode: All controls are always visible here for development and
-        testing.
-      </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-1 items-center justify-center text-muted-foreground text-base font-medium h-full">
+          No element selected. Choose an element to edit.
+        </div>
+      )}
     </div>
   );
 }
