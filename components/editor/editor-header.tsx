@@ -77,20 +77,6 @@ function EditorHeader({
         </Button>
       </Link>
 
-      <Button
-        variant={isEditMode ? "default" : "outline"}
-        size="sm"
-        onClick={() => setIsEditMode(!isEditMode)}
-        title={isEditMode ? "Exit Edit Mode" : "Enter Edit Mode"}
-      >
-        {isEditMode ? (
-          <Eye className="h-4 w-4 mr-1" />
-        ) : (
-          <Edit className="h-4 w-4 mr-1" />
-        )}
-        Edit
-      </Button>
-
       <div className="flex items-center space-x-2 ml-auto">
         <Button
           variant={viewportSize === "mobile" ? "default" : "outline"}
