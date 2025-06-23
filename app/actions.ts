@@ -440,6 +440,7 @@ export async function generateSite(
   let filesObj: Record<string, string> = {};
   try {
     const { files } = await generateAIResponse(prompt);
+    filesObj = files;
     if (!files || Object.keys(files).length === 0) {
       return {
         success: false,
@@ -454,14 +455,8 @@ export async function generateSite(
     };
   }
 
-  // Convert Record<string, string> to FileOperation[]
-  const files = Object.entries(filesObj).map(([path, content]) => ({
-    path,
-    content,
-  }));
-
   try {
-    return await deployPreview(files, appName, machineId);
+    return await deployPreview(filesObj, appName, machineId);
   } catch (deployError) {
     return {
       success: true,
@@ -471,25 +466,22 @@ export async function generateSite(
 }
 
 // Update files in fly.io
-async function deployPreview(files: any[], appName: string, machineId: string) {
+async function deployPreview(files: Record<string, string>, appName: string, machineId: string) {
 
-  const normalizedFiles = Array.isArray(files) ? files : files ? [files] : [];
+  // Convert files object to array of { path, content }
+  const normalizedFiles = Object.entries(files).map(([path, content]) => ({
+    guest_path: `/${path}`,
+    raw_value: Buffer.from(content, "utf-8").toString("base64"),
+  }));
 
+  console.log("[deployPreview] normalizedFiles:", normalizedFiles);
+  console.log("[deployPreview] appName:", appName);
+  console.log("[deployPreview] machineId:", machineId);
   if (!normalizedFiles.length || !appName || !machineId) {
     return { error: "Missing required fields" }
   }
-
   try {
-    const filesPayload = normalizedFiles.map(
-      (file: { path: string; content: string }) => ({
-        guest_path: file.path,
-        raw_value: Buffer.from(file.content, "utf-8").toString("base64"),
-      })
-    );
     const FLY_API_TOKEN = process.env.FLY_API_TOKEN!;
-
-    // Get specific machine, copy config, update config, continue
-    // This should be correct only thing is can this be called from the action? answer is no i think
     const machine = await fetch(
       `https://api.machines.dev/v1/apps/${appName}/machines`,
       {
@@ -498,19 +490,12 @@ async function deployPreview(files: any[], appName: string, machineId: string) {
         },
       }
     );
-
     const machineData = await machine.json();
-    const machineConfig = machineData.find(
-      (m: any) => m.id === machineId
-    )?.config;
-
+    const machineConfig = machineData.find((m: any) => m.id === machineId)?.config;
     if (!machineConfig) {
       return { error: "Machine not found" }
     }
-
-    // Update config
-    machineConfig.files = filesPayload;
-
+    machineConfig.files = normalizedFiles;
     const updateRes = await fetch(
       `https://api.machines.dev/v1/apps/${appName}/machines/${machineId}`,
       {
@@ -519,17 +504,13 @@ async function deployPreview(files: any[], appName: string, machineId: string) {
           Authorization: `Bearer ${FLY_API_TOKEN}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          config: machineConfig,
-        }),
+        body: JSON.stringify({ config: machineConfig }),
       }
     );
-
     if (!updateRes.ok) {
       const errorText = await updateRes.text();
       throw new Error(`Fly API error: ${updateRes.status} ${errorText}`);
     }
-
     const data = await updateRes.json();
     return { machine: data, machineId, appName }
   } catch (err: any) {
@@ -537,87 +518,10 @@ async function deployPreview(files: any[], appName: string, machineId: string) {
   }
 }
 
-export async function* generateStream(prompt: string, appName: string, machineId: string): AsyncGenerator<{ type: 'analysis' | 'done', content?: string, result?: any }, void, unknown> {
-  const result = streamText({
-    system: systemPrompt,
-    prompt,
-    temperature: 0,
-    model: anthropic("claude-sonnet-4-20250514"),
-    maxTokens: 16000,
-    onError: ({ error }) => {
-      console.error("AI Stream Error:", error);
-    },
-    onFinish: ({ finishReason, usage }) => {
-      console.log("AI Stream Finished:", { finishReason, usage });
-    },
-  });
-
-  const reader = result.textStream.getReader();
-  let buffer = "";
-  let inBlock = false;
-  let done = false;
-  let codeBuffer = "";
-  let codeBlockStarted = false;
-
-  while (!done) {
-    const { value, done: streamDone } = await reader.read();
-    done = streamDone;
-    if (value) buffer += value;
-
-    // Stream <code-analysis> block
-    while (true) {
-      if (!inBlock) {
-        const startIdx = buffer.indexOf("<code-analysis>");
-        if (startIdx !== -1) {
-          inBlock = true;
-          buffer = buffer.slice(startIdx + "<code-analysis>".length);
-        } else {
-          // No block start yet, wait for more data
-          break;
-        }
-      }
-      if (inBlock) {
-        const endIdx = buffer.indexOf("</code-analysis>");
-        if (endIdx !== -1) {
-          // End of block found, yield up to end
-          const chunk = buffer.slice(0, endIdx);
-          if (chunk) yield { type: 'analysis', content: chunk };
-          buffer = buffer.slice(endIdx + "</code-analysis>".length);
-          inBlock = false;
-          codeBlockStarted = true;
-          codeBuffer += buffer; // Start buffering the rest for code
-          buffer = "";
-          break;
-        } else {
-          // No end yet, yield all and wait for more
-          if (buffer) {
-            yield { type: 'analysis', content: buffer };
-            buffer = "";
-          }
-          break;
-        }
-      }
-    }
-    // After <code-analysis>, buffer the rest for code processing
-    if (codeBlockStarted && buffer) {
-      codeBuffer += buffer;
-      buffer = "";
-    }
-  }
-
-  // After streaming, process <builddrr-code> blocks
-  let deployResult = null;
-  const codeMatch = codeBuffer.match(/<builddrr-code>([\s\S]*?)<\/builddrr-code>/);
-  if (codeMatch && codeMatch[1]) {
-    // You can parse and deploy here, e.g.:
-    // deployResult = await deployPreview(...)
-    // For now, just return the code block
-    deployResult = codeMatch[1].trim();
-  }
-  yield { type: 'done', result: deployResult };
-}
 
 export async function* generateFileUpdatesStream(message: string, currentFiles: Record<string, string>): AsyncGenerator<{ type: 'analysis' | 'done', content?: string, operations?: Operation[] }, void, unknown> {
+  console.log("[generateFileUpdatesStream] called with message:", message);
+  console.log("[generateFileUpdatesStream] currentFiles keys:", Object.keys(currentFiles));
   const fileUpdatePrompt = `
 You are builddrr, a professional AI frontend engineer. A user is asking to update their website code.
 
@@ -626,7 +530,7 @@ ${Object.keys(currentFiles)
       .map((path) => `- ${path}`)
       .join("\n")}
 
-Based on the user's request, first narrate your reasoning and plan in a <code-analysis>...</code-analysis> block (markdown, conversational, detailed). Then, determine which files need to be updated, created, renamed, or deleted. When responding, use the format:
+Based on the user's request, first narrate your reasoning and plan in a <component-analysis>...</component-analysis> block (markdown, conversational, detailed). Then, determine which files need to be updated, created, renamed, or deleted. When responding, use the format:
 
 <builddrr-code>
 <builddrr-write file="/path/to/file.tsx">
@@ -667,38 +571,42 @@ Respond ONLY with the <builddrr-code> block and file operations.
   let codeBuffer = "";
   let codeBlockStarted = false;
 
+  console.log("[generateFileUpdatesStream] Streaming started");
   while (!done) {
     const { value, done: streamDone } = await reader.read();
     done = streamDone;
     if (value) buffer += value;
+    console.log("[generateFileUpdatesStream] Buffer so far:", buffer);
 
-    // Stream <code-analysis> block
+    // Stream <component-analysis> block
     while (true) {
       if (!inBlock) {
-        const startIdx = buffer.indexOf("<code-analysis>");
+        const startIdx = buffer.indexOf("<component-analysis>");
         if (startIdx !== -1) {
           inBlock = true;
-          buffer = buffer.slice(startIdx + "<code-analysis>".length);
+          buffer = buffer.slice(startIdx + "<component-analysis>".length);
+          console.log("[generateFileUpdatesStream] <component-analysis> block started");
         } else {
-          // No block start yet, wait for more data
           break;
         }
       }
       if (inBlock) {
-        const endIdx = buffer.indexOf("</code-analysis>");
+        const endIdx = buffer.indexOf("</component-analysis>");
         if (endIdx !== -1) {
-          // End of block found, yield up to end
           const chunk = buffer.slice(0, endIdx);
-          if (chunk) yield { type: 'analysis', content: chunk };
-          buffer = buffer.slice(endIdx + "</code-analysis>".length);
+          if (chunk) {
+            console.log("[generateFileUpdatesStream] Yielding analysis chunk:", chunk);
+            yield { type: 'analysis', content: chunk };
+          }
+          buffer = buffer.slice(endIdx + "</component-analysis>".length);
           inBlock = false;
           codeBlockStarted = true;
-          codeBuffer += buffer; // Start buffering the rest for code
+          codeBuffer += buffer;
           buffer = "";
           break;
         } else {
-          // No end yet, yield all and wait for more
           if (buffer) {
+            console.log("[generateFileUpdatesStream] Yielding analysis buffer:", buffer);
             yield { type: 'analysis', content: buffer };
             buffer = "";
           }
@@ -706,14 +614,12 @@ Respond ONLY with the <builddrr-code> block and file operations.
         }
       }
     }
-    // After <code-analysis>, buffer the rest for code processing
     if (codeBlockStarted && buffer) {
       codeBuffer += buffer;
       buffer = "";
     }
   }
-
-  // After streaming, process <builddrr-code> blocks
+  console.log("[generateFileUpdatesStream] Streaming done. codeBuffer:", codeBuffer);
   const operations: Operation[] = [];
   const codeMatch = codeBuffer.match(/<builddrr-code>([\s\S]*?)<\/builddrr-code>/);
   if (codeMatch && codeMatch[1]) {
@@ -742,6 +648,7 @@ Respond ONLY with the <builddrr-code> block and file operations.
       }
     }
   }
+  console.log("[generateFileUpdatesStream] Yielding done with operations:", operations);
   yield { type: 'done', operations };
 }
 

@@ -96,187 +96,63 @@ export default function ChatInterface({
   appName,
   userId,
 }: ChatInterfaceProps) {
+  const { isStreaming, streamedContent } = useChatStreamStore();
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Zustand chat stream state
-  const { messages, setMessages, addMessage, isStreaming, streamedContent, clear } = useChatStreamStore();
-  const prevStreaming = useRef(false);
-
-  // Hydrate Zustand from Redis on mount
-  useEffect(() => {
-    async function hydrate() {
-      if (userId && appName) {
-        const msgs = await getChatMessages(userId, appName);
-        // Ensure all timestamps are strings
-        setMessages(msgs.map(m => ({ ...m, timestamp: typeof m.timestamp === 'string' ? m.timestamp : new Date(m.timestamp).toISOString() })));
-      }
+  // Only show the <component-analysis> block contents as markdown
+  const renderMarkdown = (content: string) => {
+    // Extract <component-analysis>...</component-analysis> block
+    const match = content.match(/<component-analysis>([\s\S]*?)<\/component-analysis>/);
+    if (match) {
+      return (
+        <ReactMarkdown>{match[1]}</ReactMarkdown>
+      );
     }
-    hydrate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, appName]);
-
-  // Only show welcome if no messages and not streaming
-  useEffect(() => {
-    if (messages.length === 0 && !isStreaming) {
-      setMessages([
-        {
-          id: `welcome-${Date.now()}`,
-          content: "What changes would you like to make to your website?",
-          isUser: false,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    }
-  }, [isStreaming, messages.length, setMessages]);
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isStreaming, streamedContent]);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
-    }
-  }, [inputValue]);
-
-  // When streaming finishes, append the streamed message to chat history and persist to Redis
-  useEffect(() => {
-    if (prevStreaming.current && !isStreaming && streamedContent) {
-      const aiMsg: ChatMessage = {
-        id: Date.now().toString(),
-        content: `<code-analysis>${streamedContent}</code-analysis>`,
-        isUser: false,
-        timestamp: new Date().toISOString(),
-      };
-      addMessage(aiMsg);
-      if (userId && appName) {
-        sendChatMessage(userId, appName, aiMsg.content, false);
-      }
-    }
-    prevStreaming.current = isStreaming;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStreaming]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content: inputValue,
-      isUser: true,
-      timestamp: new Date().toISOString(),
-    };
-
-    addMessage(userMessage);
-    setInputValue("");
-    setIsLoading(true);
-    if (userId && appName) {
-      await sendChatMessage(userId, appName, userMessage.content, true);
-    }
-    try {
-      if (onSendMessage) {
-        await onSendMessage(userMessage.content);
-      }
-    } catch (error) {
-      const errorMessage: ChatMessage = {
-        id: Date.now().toString(),
-        content: "Sorry, there was an error processing your request. Please try again.",
-        isUser: false,
-        timestamp: new Date().toISOString(),
-      };
-      addMessage(errorMessage);
-      if (userId && appName) {
-        await sendChatMessage(userId, appName, errorMessage.content, false);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e as any);
-    }
+    return null;
   };
 
   return (
-    <div className={cn("md:w-[500px] flex flex-col h-full", className)}>
-      <div className={cn("flex-1 flex flex-col h-full bg-[#faefff] text-foreground overflow-hidden")}>
-        <div className="flex-1 overflow-y-auto p-4">
-          {messages.length === 0 && !isStreaming ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <p className="text-center max-w-sm">Ask a follow up...</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {messages.map((message) => (
-                <div key={message.id} className="flex items-center gap-4">
-                  {message.isUser ? (
-                    <div className="h-7 w-7 rounded-md bg-purple-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-medium">who</span>
-                    </div>
-                  ) : (
-                    <div className="h-8 w-8 rounded-md border border-primary/20 bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
-                  <div className="text-sm text-foreground leading-relaxed max-w-[90%]">
-                    {renderMessageContent(message.content, message.isUser)}
-                  </div>
-                </div>
-              ))}
-              {/* Show the live streaming message if streaming */}
-              {isStreaming && streamedContent && (
-                <div className="flex items-center gap-4 opacity-80">
-                  <div className="h-8 w-8 rounded-md border border-primary/20 bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                  </div>
-                  <div className="text-sm text-foreground leading-relaxed max-w-[90%]">
-                    {renderMessageContent(`<code-analysis>${streamedContent}</code-analysis>`, false)}
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </div>
-        <div className="border-t border-muted/30 px-4">
-          <form onSubmit={handleSubmit} className="relative h-full">
-            <Textarea
-              ref={textareaRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask a follow up..."
-              className="min-h-24 max-h-32 resize-none bg-background border border-muted rounded-md p-3 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              disabled={isLoading || isStreaming}
-            />
-            <div className="absolute right-2 bottom-12 flex items-center gap-1">
-              <Button
-                type="submit"
-                size="icon"
-                className="rounded-md h-7 w-7 bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none"
-                disabled={!inputValue.trim() || isLoading || isStreaming}
-              >
-                <ArrowUp className="h-4 w-4" />
-                <span className="sr-only">Send message</span>
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground text-center py-3">
-              Builddrr may make mistakes. Please use with discretion.
-            </p>
-          </form>
-        </div>
+    <div className={className}>
+      <div className="flex-1 overflow-y-auto p-4">
+        {isStreaming && streamedContent ? (
+          <div className="bg-muted/30 rounded-lg p-4 border border-muted mb-4">
+            {renderMarkdown(`<component-analysis>${streamedContent}</component-analysis>`)}
+          </div>
+        ) : null}
       </div>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!inputValue.trim() || isLoading) return;
+          setIsLoading(true);
+          try {
+            if (onSendMessage) await onSendMessage(inputValue);
+          } finally {
+            setIsLoading(false);
+            setInputValue("");
+          }
+        }}
+        className="flex items-end gap-2 p-4 border-t bg-background"
+      >
+        <textarea
+          ref={textareaRef}
+          className="flex-1 resize-none rounded border p-2"
+          rows={1}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Type your request..."
+          disabled={isLoading || isStreaming}
+        />
+        <button
+          type="submit"
+          className="bg-primary text-white px-4 py-2 rounded disabled:opacity-50"
+          disabled={isLoading || isStreaming || !inputValue.trim()}
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 }

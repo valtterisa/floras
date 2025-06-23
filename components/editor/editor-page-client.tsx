@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import WebsitePreview from "@/components/editor/website-preview";
 import { useToast } from "@/hooks/use-toast";
 import EditorHeader from "./editor-header";
-import { generateSite, generateStream, getChatMessages, sendChatMessage, getVirtualFileSystem, updateVirtualFileSystem, generateFileUpdatesStream, type Operation } from "@/app/actions";
+import { generateSite, getChatMessages, sendChatMessage, getVirtualFileSystem, updateVirtualFileSystem, generateFileUpdatesStream, type Operation } from "@/app/actions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DevMode from "./dev-mode";
 import { useEditorStore } from "@/lib/editor-store";
@@ -36,7 +36,7 @@ export default function EditorPageClient({
   const [machineData, setMachineData] = useState<any>(machine);
 
   // Zustand chat state
-  const { setMessages, addMessage, startStream, updateStream, finishStream } = useChatStreamStore();
+  const { setMessages, addMessage, startStream, updateStream, finishStream, streamedContent } = useChatStreamStore();
 
   // Hydrate Zustand from Redis on mount
   useEffect(() => {
@@ -105,31 +105,6 @@ export default function EditorPageClient({
       await sendChatMessage(user.id, machine.app_name, userMsg.content, true);
     }
 
-    // If site does not exist, use generateSite/generateStream (initial creation)
-    if (!appExists) {
-      startStream();
-      let aiContent = "";
-      for await (const chunk of generateStream(message, machine.app_name, machine.id)) {
-        if (chunk.type === "analysis") {
-          updateStream(chunk.content || "");
-          aiContent += chunk.content || "";
-        }
-      }
-      finishStream();
-      const aiMsg = {
-        id: Date.now().toString(),
-        content: `<code-analysis>${aiContent}</code-analysis>`,
-        isUser: false,
-        timestamp: new Date().toISOString(),
-      };
-      addMessage(aiMsg);
-      if (user?.id && machine?.app_name) {
-        await sendChatMessage(user.id, machine.app_name, aiMsg.content, false);
-      }
-      return;
-    }
-
-    // If site exists, use generateFileUpdatesStream for post-creation chat
     let currentFiles: Record<string, string> = {};
     if (user?.id && machine?.app_name) {
       currentFiles = (await getVirtualFileSystem(user.id, machine.app_name)) || {};
@@ -137,10 +112,13 @@ export default function EditorPageClient({
     startStream();
     let aiContent = "";
     let fileOps: Operation[] = [];
+    console.log("[handleSendMessage] Streaming file updates...");
     for await (const chunk of generateFileUpdatesStream(message, currentFiles)) {
+      console.log("[handleSendMessage] Received chunk:", chunk);
       if (chunk.type === "analysis") {
         updateStream(chunk.content || "");
         aiContent += chunk.content || "";
+        console.log("[handleSendMessage] Updated streamedContent:", streamedContent);
       } else if (chunk.type === "done" && chunk.operations) {
         fileOps = chunk.operations;
       }
@@ -148,7 +126,6 @@ export default function EditorPageClient({
     finishStream();
     // Auto-apply file operations to VFS
     if (user?.id && machine?.app_name && fileOps.length > 0) {
-      // Apply file operations to currentFiles
       let updatedFiles: Record<string, string> = { ...currentFiles };
       for (const op of fileOps) {
         if (op.operation === "write" && op.path && op.content !== undefined) {
@@ -159,14 +136,13 @@ export default function EditorPageClient({
           updatedFiles[op.newPath] = updatedFiles[op.path];
           delete updatedFiles[op.path];
         }
-        // (Dependency ops can be handled as needed)
       }
       await updateVirtualFileSystem(user.id, machine.app_name, updatedFiles);
     }
     // Show AI reasoning and confirmation in chat
     const aiMsg = {
       id: Date.now().toString(),
-      content: `<code-analysis>${aiContent}</code-analysis>\n\n${fileOps.length} file operations applied to your site.`,
+      content: `<component-analysis>${aiContent}</component-analysis>\n\n${fileOps.length} file operations applied to your site.`,
       isUser: false,
       timestamp: new Date().toISOString(),
     };

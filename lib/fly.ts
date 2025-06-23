@@ -203,6 +203,7 @@ export async function checkAppAvailability(appName: string): Promise<boolean> {
     .eq("app_name", appName)
     .eq("status", "active");
 
+
   // If data is null app does not exist
   if (!data) {
     return false;
