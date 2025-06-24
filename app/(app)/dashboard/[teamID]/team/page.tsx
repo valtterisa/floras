@@ -36,7 +36,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, UserPlus, Trash2, Loader2, Crown } from "lucide-react";
+import { MoreHorizontal, UserPlus, Trash2, Loader2, Crown, BanIcon, CheckCircleIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,7 +68,7 @@ interface TeamMember {
   role: TeamMemberRole;
   avatar: string | null;
   memberSince: string | null;
-  status: string; // 'active' | 'invited'
+  status: 'active' | 'invited' | 'disabled'; // Updated to include 'disabled'
 }
 
 interface UserTeam {
@@ -107,6 +107,7 @@ export default function TeamPage() {
   const [isRemovingTeam, setIsRemovingTeam] = useState(false);
   const [showLeaveTeamAlert, setShowLeaveTeamAlert] = useState(false);
   const [isLeavingTeam, setIsLeavingTeam] = useState(false);
+  const [isDisabling, setIsDisabling] = useState<string | null>(null);
 
   // Helper function to check if the current user can manage team members
   const canManageTeam = () => {
@@ -237,7 +238,7 @@ export default function TeamPage() {
       setIsLoadingMembers(true);
       try {
         const supabase = createClient();
-        // Fetch active members
+        // Fetch active and disabled members
         const { data: membersData, error: membersError } = await supabase
           .from("memberships")
           .select(`
@@ -253,7 +254,7 @@ export default function TeamPage() {
             )
           `)
           .eq("team_id", teamId)
-          .in("status", ["active"]);
+          .in("status", ["active", "disabled"]);
         if (membersError) throw membersError;
         // Fetch pending invitations
         const { data: invitesData, error: invitesError } = await supabase
@@ -268,7 +269,7 @@ export default function TeamPage() {
           .eq("team_id", teamId)
           .in("status", ["pending"]);
         if (invitesError) throw invitesError;
-        // Format active members
+        // Format active and disabled members
         const formattedMembers: TeamMember[] = (membersData || [])
           .filter((item) => item.profile)
           .map((item) => ({
@@ -278,7 +279,7 @@ export default function TeamPage() {
             role: item.role as TeamMemberRole,
             avatar: item.profile.avatar_url || null,
             memberSince: item.joined_at || null,
-            status: "active",
+            status: item.status as 'active' | 'disabled',
           }));
         // Format pending invites
         const formattedInvites: TeamMember[] = (invitesData || []).map((item) => ({
@@ -910,6 +911,74 @@ export default function TeamPage() {
     }
   };
 
+  const handleToggleDisableStatus = async (memberId: string) => {
+    if (!teamId) return;
+
+    // Check if user has permission to manage members
+    if (!canManageTeam()) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to disable team members.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Don't allow disabling yourself
+    if (memberId === userId) {
+      toast({
+        title: "Not Allowed",
+        description: "You cannot disable your own account. Please ask another team admin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Find the member and current status
+    const member = teamMembers.find(m => m.id === memberId);
+    if (!member) return;
+
+    const newStatus = member.status === 'active' ? 'disabled' : 'active';
+    setIsDisabling(memberId);
+
+    try {
+      const supabase = createClient();
+
+      // Update the membership status
+      const { error } = await supabase
+        .from("memberships")
+        .update({ status: newStatus })
+        .eq("team_id", teamId)
+        .eq("user_id", memberId);
+
+      if (error) {
+        console.error(`Failed to ${member.status === 'active' ? 'disable' : 'enable'} member:`, error.message || error);
+        throw error;
+      }
+
+      // Update local state
+      setTeamMembers(
+        teamMembers.map((m) =>
+          m.id === memberId ? { ...m, status: newStatus as 'active' | 'disabled' } : m
+        )
+      );
+
+      toast({
+        title: "Success",
+        description: `Member ${newStatus === 'disabled' ? 'disabled' : 'enabled'} successfully.`,
+      });
+    } catch (error: any) {
+      console.error(`Failed to ${member.status === 'active' ? 'disable' : 'enable'} member:`, error.message || JSON.stringify(error));
+      toast({
+        title: "Error",
+        description: `Failed to ${member.status === 'active' ? 'disable' : 'enable'} member. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDisabling(null);
+    }
+  };
+
   return (
     <div className="px-2 md:px-6 py-8 w-full">
       <SiteHeader title="Team Management" />
@@ -1188,15 +1257,19 @@ export default function TeamPage() {
                               )}
                             </TableCell>
                             <TableCell className="px-6 py-4">
-                              {member.status === "active"
-                                ? (member.memberSince ? new Date(member.memberSince).toLocaleDateString() : "-")
-                                : <span className="italic text-muted-foreground">Pending</span>}
+                              {member.status === "invited" ? (
+                                <span className="italic text-muted-foreground">Pending</span>
+                              ) : (
+                                member.memberSince ? new Date(member.memberSince).toLocaleDateString() : "-"
+                              )}
                             </TableCell>
                             <TableCell className="px-6 py-4">
                               {member.status === "active" ? (
                                 <span className="text-green-600 font-medium">Active</span>
-                              ) : (
+                              ) : member.status === "invited" ? (
                                 <span className="text-yellow-600 font-medium">Invited</span>
+                              ) : (
+                                <span className="text-gray-500 font-medium">Disabled</span>
                               )}
                             </TableCell>
                             <TableCell className="text-right px-6 py-4">
@@ -1218,6 +1291,24 @@ export default function TeamPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
+                                    {/* Active members can be disabled, disabled members can be enabled */}
+                                    {member.id && member.id !== userId && (
+                                      <DropdownMenuItem
+                                        onClick={() => handleToggleDisableStatus(member.id!)}
+                                        className={member.status === "active" ? "text-orange-600" : "text-green-600"}
+                                        disabled={isDisabling === member.id}
+                                      >
+                                        {isDisabling === member.id ? (
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : member.status === "active" ? (
+                                          <BanIcon className="mr-2 h-4 w-4" />
+                                        ) : (
+                                          <CheckCircleIcon className="mr-2 h-4 w-4" />
+                                        )}
+                                        {member.status === "active" ? "Disable Member" : "Enable Member"}
+                                      </DropdownMenuItem>
+                                    )}
+
                                     <DropdownMenuItem
                                       onClick={() => handleRemoveMember(
                                         member.id,
