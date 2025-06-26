@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { redis } from "@/lib/redis";
+import type { builddrrOperation, StreamingChunk } from "@/lib/types";
 
 export type Operation = {
   operation: "write" | "update" | "delete" | "code" | "rename" | "dependency";
@@ -300,12 +301,6 @@ Respond ONLY with the <builddrr-code> block and file operations.
   }
 }
 
-export type builddrrOperation =
-  | { type: "write"; path: string; content: string }
-  | { type: "delete"; path: string }
-  | { type: "rename"; oldPath: string; newPath: string }
-  | { type: "dependency"; dependency: string };
-
 export async function generateAIResponse(
   prompt: string,
   onOperationParsed?: (op: builddrrOperation) => void
@@ -470,7 +465,7 @@ async function deployPreview(files: Record<string, string>, appName: string, mac
 
   // Convert files object to array of { path, content }
   const normalizedFiles = Object.entries(files).map(([path, content]) => ({
-    guest_path: `/${path}`,
+    guest_path: `/app/${path}`,
     raw_value: Buffer.from(content, "utf-8").toString("base64"),
   }));
 
@@ -650,5 +645,123 @@ Respond ONLY with the <builddrr-code> block and file operations.
   }
   console.log("[generateFileUpdatesStream] Yielding done with operations:", operations);
   yield { type: 'done', operations };
+}
+
+export async function* generateAIResponseStream(
+  prompt: string,
+  appName: string,
+  machineId: string
+): AsyncGenerator<
+  | { type: 'analysis'; content: string }
+  | { type: 'progress'; status: string; files?: string[] }
+  | { type: 'error'; error: string },
+  void,
+  unknown
+> {
+  const result = streamText({
+    system: systemPrompt,
+    prompt: prompt,
+    temperature: 0,
+    model: anthropic("claude-sonnet-4-20250514"),
+    maxTokens: 16000,
+    onError: ({ error }) => {
+      console.error("AI Stream Error:", error);
+    },
+    onFinish: ({ finishReason, usage }) => {
+      console.log("AI Stream Finished:", { finishReason, usage });
+    },
+  });
+
+  const reader = result.textStream.getReader();
+  let buffer = "";
+  let inAnalysisBlock = false;
+  let inCodeBlock = false;
+  let codeBuffer = "";
+  let currentFile = null;
+  const collectedFiles: Record<string, string> = {};
+
+  // Regexes
+  const writeStart = /<builddrr-write file="([^"]+)">/g;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += value;
+
+    // Stream <component-analysis> block
+    while (true) {
+      if (!inAnalysisBlock) {
+        const startIdx = buffer.indexOf("<component-analysis>");
+        if (startIdx !== -1) {
+          inAnalysisBlock = true;
+          buffer = buffer.slice(startIdx + "<component-analysis>".length);
+        } else {
+          break;
+        }
+      }
+      if (inAnalysisBlock) {
+        const endIdx = buffer.indexOf("</component-analysis>");
+        if (endIdx !== -1) {
+          const chunk = buffer.slice(0, endIdx);
+          if (chunk) {
+            yield { type: 'analysis', content: chunk };
+          }
+          buffer = buffer.slice(endIdx + "</component-analysis>".length);
+          inAnalysisBlock = false;
+        } else {
+          if (buffer) {
+            yield { type: 'analysis', content: buffer };
+            buffer = "";
+          }
+          break;
+        }
+      }
+    }
+
+    // Collect <builddrr-write> blocks in memory
+    while (true) {
+      if (!inCodeBlock) {
+        const writeMatch = writeStart.exec(buffer);
+        if (writeMatch) {
+          inCodeBlock = true;
+          currentFile = writeMatch[1].startsWith("/") ? writeMatch[1].substring(1) : writeMatch[1];
+          buffer = buffer.slice(writeMatch.index + writeMatch[0].length);
+          codeBuffer = "";
+        } else {
+          break;
+        }
+      }
+      if (inCodeBlock) {
+        const endIdx = buffer.indexOf("</builddrr-write>");
+        if (endIdx !== -1) {
+          codeBuffer += buffer.slice(0, endIdx);
+          // Collect in memory
+          if (typeof currentFile === 'string') {
+            collectedFiles[currentFile] = codeBuffer;
+          }
+          buffer = buffer.slice(endIdx + "</builddrr-write>".length);
+          inCodeBlock = false;
+          currentFile = null;
+          codeBuffer = "";
+        } else {
+          codeBuffer += buffer;
+          buffer = "";
+          break;
+        }
+      }
+    }
+    // TODO: Handle delete, rename, dependency operations if you want to stream those as well
+  }
+
+  // After streaming is done, deploy all collected files
+  if (Object.keys(collectedFiles).length > 0) {
+    yield { type: 'progress', status: 'deploying', files: Object.keys(collectedFiles) };
+    try {
+      await deployPreview(collectedFiles, appName, machineId);
+      yield { type: 'progress', status: 'deployed', files: Object.keys(collectedFiles) };
+    } catch (err: any) {
+      yield { type: 'error', error: err?.message || String(err) };
+    }
+  }
 }
 

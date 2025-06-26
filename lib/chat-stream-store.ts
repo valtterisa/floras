@@ -19,14 +19,34 @@ type Store = {
     clear: () => void;
 };
 
-export const useChatStreamStore = create<Store>((set) => ({
+export const useChatStreamStore = create<Store>((set, get) => ({
     messages: [],
     isStreaming: false,
     streamedContent: "",
-    setMessages: (msgs) => set({ messages: msgs }),
-    addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
-    startStream: () => set({ isStreaming: true, streamedContent: "" }),
-    updateStream: (chunk) => set((s) => ({ streamedContent: s.streamedContent + chunk })),
-    finishStream: () => set({ isStreaming: false }),
-    clear: () => set({ messages: [], streamedContent: "", isStreaming: false }),
+    setMessages: (msgs) => {
+        console.log("📝 [ChatStore] Setting messages:", msgs.length, "messages");
+        set({ messages: msgs });
+    },
+    addMessage: (msg) => {
+        console.log("💬 [ChatStore] Adding message:", msg.content.substring(0, 30) + "...");
+        set((s) => ({ messages: [...s.messages, msg] }));
+    },
+    startStream: () => {
+        console.log("🌊 [ChatStore] Starting stream");
+        set({ isStreaming: true, streamedContent: "" });
+    },
+    updateStream: (chunk) => {
+        const currentState = get();
+        console.log("📝 [ChatStore] Updating stream, current length:", currentState.streamedContent.length, "new chunk length:", chunk.length);
+        set((s) => ({ streamedContent: s.streamedContent + chunk }));
+    },
+    finishStream: () => {
+        const currentState = get();
+        console.log("🏁 [ChatStore] Finishing stream, final content length:", currentState.streamedContent.length);
+        set({ isStreaming: false });
+    },
+    clear: () => {
+        console.log("🗑️ [ChatStore] Clearing all state");
+        set({ messages: [], streamedContent: "", isStreaming: false });
+    },
 })); 

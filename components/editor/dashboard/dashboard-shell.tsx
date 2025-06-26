@@ -30,7 +30,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       try {
         const supabase = createClient();
         const { data: websitesData, error } = await supabase
-          .from("websites")
+          .from("websites_old")
           .select("*")
           .is("deleted_at", null)
           .order("created_at", { ascending: false });

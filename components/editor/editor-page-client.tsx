@@ -2,17 +2,18 @@
 
 import ChatInterface from "@/components/chat/chat-interface";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import WebsitePreview from "@/components/editor/website-preview";
 import { useToast } from "@/hooks/use-toast";
 import EditorHeader from "./editor-header";
-import { generateSite, getChatMessages, sendChatMessage, getVirtualFileSystem, updateVirtualFileSystem, generateFileUpdatesStream, type Operation } from "@/app/actions";
+import { generateSite, getChatMessages, sendChatMessage, getVirtualFileSystem, updateVirtualFileSystem, type Operation } from "@/app/actions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DevMode from "./dev-mode";
 import { useEditorStore } from "@/lib/editor-store";
 import type { EditorState } from "@/lib/editor-store";
 import { useChatStreamStore } from "@/lib/chat-stream-store";
+import { useStreamingChat } from "@/hooks/use-streaming-chat";
 
 export default function EditorPageClient({
   id,
@@ -30,60 +31,146 @@ export default function EditorPageClient({
   const setEditMode = useEditorStore((s: EditorState) => s.setEditMode);
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(id);
   const [activeTab, setActiveTab] = useState<string>("chat");
+  const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
+  const [isAutoProcessing, setIsAutoProcessing] = useState(false);
 
   const { toast } = useToast();
 
   const [machineData, setMachineData] = useState<any>(machine);
 
   // Zustand chat state
-  const { setMessages, addMessage, startStream, updateStream, finishStream, streamedContent } = useChatStreamStore();
+  const { setMessages, addMessage, streamedContent } = useChatStreamStore();
+
+  // Streaming chat hook
+  const { sendMessage: sendStreamingMessage, isLoading: isStreamingLoading } = useStreamingChat();
 
   // Hydrate Zustand from Redis on mount
   useEffect(() => {
-    if (user?.id && machine?.app_name) {
-      getChatMessages(user.id, machine.app_name).then(setMessages);
+    console.log("🔄 [EditorPageClient] Hydrating chat messages...", { userId: user?.id, appName: id });
+    if (user?.id && id) {
+      getChatMessages(user.id, id).then((messages) => {
+        console.log("✅ [EditorPageClient] Chat messages loaded:", messages.length, "messages");
+        setMessages(messages);
+      }).catch((error) => {
+        console.error("❌ [EditorPageClient] Failed to load chat messages:", error);
+      });
     }
-  }, [user?.id, machine?.app_name, setMessages]);
+  }, [user?.id, id, setMessages]);
 
   useEffect(() => {
+    console.log("🔄 [EditorPageClient] Setting machine data:", machine);
     setMachineData(machine);
   }, [machine]);
 
-  useEffect(() => {
-    const prompt = sessionStorage.getItem("builddrr_generation_prompt");
+  const handleSendMessage = useCallback(async (message: string) => {
+    console.log("🚀 [EditorPageClient] handleSendMessage called with:", message.substring(0, 50) + "...");
 
-    if (!prompt) {
-      toast({
-        title: "Error Creating Website",
-        description: "Please try again.",
+    const userMsg = {
+      id: Date.now().toString(),
+      content: message,
+      isUser: true,
+      timestamp: new Date().toISOString(),
+    };
+    console.log("📝 [EditorPageClient] Adding user message to chat");
+    addMessage(userMsg);
+
+    if (user?.id && id) {
+      console.log("💾 [EditorPageClient] Saving user message to Redis");
+      await sendChatMessage(user.id, id, userMsg.content, true);
+    }
+
+    // Step 1: Stream the analysis to chat interface and trigger deployment via backend
+    console.log("🌊 [EditorPageClient] Starting streaming analysis and deployment...");
+    await sendStreamingMessage(message, id, machine.id);
+    console.log("✅ [EditorPageClient] Streaming analysis and deployment completed");
+
+    // Show AI response in chat
+    console.log("💬 [EditorPageClient] Adding AI response to chat");
+    const aiMsg = {
+      id: Date.now().toString(),
+      content: streamedContent || 'Analysis completed and site deployed.',
+      isUser: false,
+      timestamp: new Date().toISOString(),
+    };
+    addMessage(aiMsg);
+    if (user?.id && id) {
+      console.log("💾 [EditorPageClient] Saving AI message to Redis");
+      await sendChatMessage(user.id, id, aiMsg.content, false);
+    }
+
+    // Clear auto-processing state
+    console.log("🏁 [EditorPageClient] Clearing auto-processing state");
+    setIsAutoProcessing(false);
+  }, [user?.id, id, machine?.id, addMessage, sendChatMessage, sendStreamingMessage, streamedContent]);
+
+  useEffect(() => {
+    // Only run when user and machine are loaded
+    if (!user?.id || !machine?.id) {
+      console.log("⏳ [EditorPageClient] Waiting for user and machine to load...", {
+        hasUser: !!user?.id,
+        hasMachine: !!machine?.id
       });
       return;
     }
 
-    console.log("🔄 Calling generateSite...");
-    if (appExists) {
-      generateSite(
-        prompt,
-        user.user.id,
-        appName,
-        machine[0].id
-      )
-        .then((result) => {
-          console.log("✅ generateSite returned:", result);
-          toast({
-            title: "Website Created",
-            description: "Your website has been created and is ready to use.",
-          });
-        })
-        .catch((error) => {
-          console.error("❌ generateSite error:", error);
-          toast({
-            title: "Error Creating Website",
-            description: "Something went wrong during deployment.",
-          });
-        });
+    console.log("🔍 [EditorPageClient] Checking for auto-trigger prompt...", {
+      hasUser: !!user?.id,
+      hasMachine: !!machine?.id,
+      hasAutoTriggered,
+      isAutoProcessing
+    });
+
+    const prompt = sessionStorage.getItem("builddrr_generation_prompt");
+
+    if (prompt && !hasAutoTriggered) {
+      console.log("🔄 [EditorPageClient] Auto-triggering AI creation with prompt:", prompt.substring(0, 50) + "...");
+
+      // Set flags to prevent multiple triggers and show loading
+      setHasAutoTriggered(true);
+      setIsAutoProcessing(true);
+
+      // Clear the prompt from sessionStorage to prevent re-triggering
+      sessionStorage.removeItem("builddrr_generation_prompt");
+      console.log("🗑️ [EditorPageClient] Cleared prompt from sessionStorage");
+
+      // Automatically send the prompt to trigger AI creation
+      console.log("🚀 [EditorPageClient] Calling handleSendMessage for auto-trigger");
+      handleSendMessage(prompt);
+
+      toast({
+        title: "Creating Your Website",
+        description: "AI is analyzing your requirements and building your site...",
+      });
+      console.log("📢 [EditorPageClient] Showed toast notification");
+    } else if (!prompt && !hasAutoTriggered) {
+      // If no prompt exists, show a welcome message and suggest starting
+      console.log("👋 [EditorPageClient] No prompt found, showing welcome message");
+
+      setHasAutoTriggered(true);
+
+      const welcomeMsg = {
+        id: Date.now().toString(),
+        content: "👋 Welcome to Builddrr! I'm your AI website builder. Tell me what kind of website you'd like to create, and I'll build it for you in real-time. For example: 'Create a landing page for a coffee shop' or 'Build a portfolio website for a photographer'.",
+        isUser: false,
+        timestamp: new Date().toISOString(),
+      };
+
+      console.log("💬 [EditorPageClient] Adding welcome message to chat");
+      addMessage(welcomeMsg);
+      if (user?.id && id) {
+        console.log("💾 [EditorPageClient] Saving welcome message to Redis");
+        sendChatMessage(user.id, id, welcomeMsg.content, false);
+      }
+    } else {
+      console.log("⏭️ [EditorPageClient] Skipping auto-trigger:", {
+        hasPrompt: !!prompt,
+        hasUser: !!user?.id,
+        hasMachine: !!machine?.id,
+        hasAutoTriggered,
+        isAutoProcessing
+      });
     }
-  }, [id, user]);
+  }, [user?.id, machine?.id, hasAutoTriggered, handleSendMessage, toast, addMessage, sendChatMessage]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -92,65 +179,6 @@ export default function EditorPageClient({
       setActiveTab("chat");
     }
   }, [isEditMode]);
-
-  const handleSendMessage = async (message: string) => {
-    const userMsg = {
-      id: Date.now().toString(),
-      content: message,
-      isUser: true,
-      timestamp: new Date().toISOString(),
-    };
-    addMessage(userMsg);
-    if (user?.id && machine?.app_name) {
-      await sendChatMessage(user.id, machine.app_name, userMsg.content, true);
-    }
-
-    let currentFiles: Record<string, string> = {};
-    if (user?.id && machine?.app_name) {
-      currentFiles = (await getVirtualFileSystem(user.id, machine.app_name)) || {};
-    }
-    startStream();
-    let aiContent = "";
-    let fileOps: Operation[] = [];
-    console.log("[handleSendMessage] Streaming file updates...");
-    for await (const chunk of generateFileUpdatesStream(message, currentFiles)) {
-      console.log("[handleSendMessage] Received chunk:", chunk);
-      if (chunk.type === "analysis") {
-        updateStream(chunk.content || "");
-        aiContent += chunk.content || "";
-        console.log("[handleSendMessage] Updated streamedContent:", streamedContent);
-      } else if (chunk.type === "done" && chunk.operations) {
-        fileOps = chunk.operations;
-      }
-    }
-    finishStream();
-    // Auto-apply file operations to VFS
-    if (user?.id && machine?.app_name && fileOps.length > 0) {
-      let updatedFiles: Record<string, string> = { ...currentFiles };
-      for (const op of fileOps) {
-        if (op.operation === "write" && op.path && op.content !== undefined) {
-          updatedFiles[op.path] = op.content;
-        } else if (op.operation === "delete" && op.path) {
-          delete updatedFiles[op.path];
-        } else if (op.operation === "rename" && op.path && op.newPath) {
-          updatedFiles[op.newPath] = updatedFiles[op.path];
-          delete updatedFiles[op.path];
-        }
-      }
-      await updateVirtualFileSystem(user.id, machine.app_name, updatedFiles);
-    }
-    // Show AI reasoning and confirmation in chat
-    const aiMsg = {
-      id: Date.now().toString(),
-      content: `<component-analysis>${aiContent}</component-analysis>\n\n${fileOps.length} file operations applied to your site.`,
-      isUser: false,
-      timestamp: new Date().toISOString(),
-    };
-    addMessage(aiMsg);
-    if (user?.id && machine?.app_name) {
-      await sendChatMessage(user.id, machine.app_name, aiMsg.content, false);
-    }
-  };
 
   return (
     <div className="flex flex-col h-full">
@@ -183,6 +211,7 @@ export default function EditorPageClient({
                 onSendMessage={handleSendMessage}
                 appName={appName}
                 userId={user.user.id}
+                isAutoProcessing={isAutoProcessing}
               />
             </TabsContent>
             <TabsContent

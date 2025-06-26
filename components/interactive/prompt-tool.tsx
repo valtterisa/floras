@@ -15,7 +15,6 @@ export default function PromptTool({ user }: { user: any }) {
   const router = useRouter();
 
   const handleSend = async () => {
-    console.log("user:", user.id);
     if (!prompt.trim()) return;
     // Check auth before proceeding
     if (!user) {
@@ -41,13 +40,16 @@ export default function PromptTool({ user }: { user: any }) {
         throw new Error("No available preview environments");
       }
 
-      const app_name = previewData[0].app_name;
-      const preview_id = previewData[0].preview_id;
+      // const app_name = previewData[0].app_name;
+      // const preview_id = previewData[0].preview_id;
+
+      const app_name = "plain-nextjs-app";
+      const preview_id = "83e84c99-e616-48ea-9a49-8284eea24f2e";
 
       // Update both tables in parallel
       const [websiteUpdate, previewUpdate] = await Promise.all([
         supabase
-          .from("websites")
+          .from("websites_old")
           .update({ preview_id: preview_id })
           .eq("user_id", user.id),
         supabase
@@ -64,7 +66,7 @@ export default function PromptTool({ user }: { user: any }) {
       if (previewUpdate.error) throw previewUpdate.error;
 
       console.log("redirecting to editor:", app_name);
-      router.push(`/dashboard/website/editor/${app_name}`);
+      router.push(`/dashboard/website/${app_name}/editor`);
     } catch (error) {
       console.error("Error in handleSend:", error);
       toast({

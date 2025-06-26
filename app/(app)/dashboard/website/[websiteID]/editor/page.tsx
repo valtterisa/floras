@@ -7,7 +7,7 @@ export default async function EditorPage({
 }: {
   params: { teamID: string; websiteID: string };
 }) {
-  const { websiteID } = params;
+  const { websiteID } = await params;
 
   const supabase = await createClient();
   const { data: user } = await supabase.auth.getUser();
@@ -26,7 +26,12 @@ export default async function EditorPage({
     }
   );
 
-  machine = await response.json();
+  const machineArray = await response.json();
+  if (Array.isArray(machineArray) && machineArray.length > 0) {
+    machine = machineArray[0];
+  } else {
+    console.error("[ERROR] No machines found for app:", websiteID, machineArray);
+  }
 
   return (
     <EditorPageClient
