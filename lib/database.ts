@@ -219,7 +219,7 @@ export async function getWebsitesForUser(userId: string): Promise<Website[]> {
 
     // 2. Get all websites with those IDs
     const { data, error } = await supabase
-      .from("websites")
+      .from("websites_old")
       .select("*")
       .in("id", websiteIds)
       .order("created_at", { ascending: false });
