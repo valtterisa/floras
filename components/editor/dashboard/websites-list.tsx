@@ -27,6 +27,7 @@ interface Website {
   status: string;
   lastUpdated?: string;
   visitors?: number;
+  previewDetail: any;
 }
 
 interface WebsitesListProps {
@@ -72,10 +73,9 @@ export function WebsitesList({ websites }: WebsitesListProps) {
           <CardContent className="min-h-[450px]">
             <div className="flex flex-wrap gap-4 max-w-[50rem]">
               {getPaginated(allWebsites, allPage).map((website) => (
-                <Link
-                  href={`/dashboard/website/${website.id}`}
+                <div
                   key={website.id}
-                  className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted"
+                  className="flex items-center justify-between rounded-lg border p-4 gap-4"
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
@@ -85,7 +85,16 @@ export function WebsitesList({ websites }: WebsitesListProps) {
                       <h3 className="font-medium">{website.name}</h3>
                     </div>
                   </div>
-                </Link>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      href={`/dashboard/website/${website?.previewDetail?.app_name}/editor`}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           </CardContent>

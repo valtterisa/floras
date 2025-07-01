@@ -41,6 +41,8 @@ export type Website = {
   deleted_at: string | null;
   subdomain: string | null;
   primary_domain: string | null;
+  preview_id: string | null;
+  previewDetail: any;
 };
 
 export type Domain = {
@@ -195,33 +197,15 @@ export async function upsertProfile(
   }
 }
 
-// Websites
+// Fetch all websites for a user
 export async function getWebsitesForUser(userId: string): Promise<Website[]> {
   try {
     const supabase = await createClient();
 
-    // 1. Get all website_ids for this user from website_users
-    const { data: websiteUserRows, error: websiteUserError } = await supabase
-      .from("website_users")
-      .select("website_id, user_id")
-      .eq("user_id", userId);
-
-    if (websiteUserError) {
-      console.error("Failed to get website_users:", websiteUserError);
-      return [];
-    }
-
-    const websiteIds = (websiteUserRows ?? []).map(
-      (row: { website_id: string }) => row.website_id
-    );
-
-    if (websiteIds.length === 0) return [];
-
-    // 2. Get all websites with those IDs
     const { data, error } = await supabase
       .from("websites_old")
       .select("*")
-      .in("id", websiteIds)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -229,8 +213,33 @@ export async function getWebsitesForUser(userId: string): Promise<Website[]> {
       return [];
     }
 
+    const previewIds = data
+      .map((website) => website.preview_id)
+      .filter(Boolean);
+
+    const { data: previewDetails, error: detailsError } = await supabase
+      .from("preview_environments")
+      .select("*")
+      .in("preview_id", previewIds);
+
+    if (detailsError || !previewDetails) {
+      console.error("Error fetching preview details:", detailsError);
+      return [];
+    }
+
+    // Create a Map for efficient lookup
+    const detailsMap = new Map(
+      previewDetails.map((detail) => [detail.preview_id, detail])
+    );
+
+    // Combine websites with their corresponding preview details
+    const websitesWithDetails = data.map((website) => ({
+      ...website,
+      previewDetail: detailsMap.get(website.preview_id) || null,
+    }));
+
     // Ensure data is serialized into plain objects
-    return JSON.parse(JSON.stringify(data)) as Website[];
+    return JSON.parse(JSON.stringify(websitesWithDetails)) as any;
   } catch (error) {
     console.error(`Failed to get websites for user ${userId}:`, error);
     return [];
