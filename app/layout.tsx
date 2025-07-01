@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Suspense } from "react";
+import { PostHogProvider } from "@/components/PostHogProvider";
 
 export const metadata: Metadata = {
   title: "Builddrr",
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.className}`}>
-        <Suspense fallback={null}>{children}</Suspense>
-        <Toaster />
+        <PostHogProvider>
+          <Suspense fallback={null}>{children}</Suspense>
+          <Toaster />
+        </PostHogProvider>
       </body>
     </html>
   );

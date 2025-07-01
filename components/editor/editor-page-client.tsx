@@ -7,7 +7,14 @@ import { useEffect, useState, useCallback } from "react";
 import WebsitePreview from "@/components/editor/website-preview";
 import { useToast } from "@/hooks/use-toast";
 import EditorHeader from "./editor-header";
-import { generateSite, getChatMessages, sendChatMessage, getVirtualFileSystem, updateVirtualFileSystem, type Operation } from "@/app/actions";
+import {
+  generateSite,
+  getChatMessages,
+  sendChatMessage,
+  getVirtualFileSystem,
+  updateVirtualFileSystem,
+  type Operation,
+} from "@/app/actions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DevMode from "./dev-mode";
 import { useEditorStore } from "@/lib/editor-store";
@@ -42,7 +49,8 @@ export default function EditorPageClient({
   const { setMessages, addMessage, streamedContent } = useChatStreamStore();
 
   // Streaming chat hook
-  const { sendMessage: sendStreamingMessage, isLoading: isStreamingLoading } = useStreamingChat();
+  const { sendMessage: sendStreamingMessage, isLoading: isStreamingLoading } =
+    useStreamingChat();
 
   // Get the actual user ID from the user object structure
   const userId = user?.id;
@@ -54,19 +62,21 @@ export default function EditorPageClient({
       appName,
       userId,
       hasUser: !!user,
-      userData: user?.data
+      userData: user?.data,
     });
   }, [id, appName, userId, user]);
 
   // Hydrate Zustand from Redis on mount
   useEffect(() => {
     if (userId && id) {
-      getChatMessages(userId, id).then((messages) => {
-        console.log("Chat messages loaded:", messages.length, "messages");
-        setMessages(messages);
-      }).catch((error) => {
-        console.error("Failed to load chat messages:", error);
-      });
+      getChatMessages(userId, id)
+        .then((messages) => {
+          console.log("Chat messages loaded:", messages.length, "messages");
+          setMessages(messages);
+        })
+        .catch((error) => {
+          console.error("Failed to load chat messages:", error);
+        });
     }
   }, [userId, id, setMessages]);
 
@@ -75,43 +85,64 @@ export default function EditorPageClient({
     setMachineData(machine);
   }, [machine]);
 
-  const handleSendMessage = useCallback(async (message: string) => {
-    const userMsg = {
-      id: Date.now().toString(),
-      content: message,
-      isUser: true,
-      timestamp: new Date().toISOString(),
-    };
-    addMessage(userMsg);
+  const handleSendMessage = useCallback(
+    async (message: string) => {
+      const userMsg = {
+        id: Date.now().toString(),
+        content: message,
+        isUser: true,
+        timestamp: new Date().toISOString(),
+      };
+      addMessage(userMsg);
 
-    if (userId && id) {
-      const saveResult = await sendChatMessage(userId, id, userMsg.content, true);
-      if (!saveResult.success) {
-        console.error("Failed to save user message:", saveResult.error);
+      if (userId && id) {
+        const saveResult = await sendChatMessage(
+          userId,
+          id,
+          userMsg.content,
+          true
+        );
+        if (!saveResult.success) {
+          console.error("Failed to save user message:", saveResult.error);
+        }
       }
-    }
 
-    // Step 1: Stream the analysis to chat interface and trigger deployment via backend
-    await sendStreamingMessage(message, id, machine.id);
+      // Step 1: Stream the analysis to chat interface and trigger deployment via backend
+      await sendStreamingMessage(message, id, machine.id);
 
-    // Show AI response in chat
-    const aiMsg = {
-      id: Date.now().toString(),
-      content: streamedContent || 'Analysis completed and site deployed.',
-      isUser: false,
-      timestamp: new Date().toISOString(),
-    };
-    addMessage(aiMsg);
-    if (userId && id) {
-      const aiSaveResult = await sendChatMessage(userId, id, aiMsg.content, false);
-      if (!aiSaveResult.success) {
-        console.error("Failed to save AI message:", aiSaveResult.error);
+      // Show AI response in chat
+      const aiMsg = {
+        id: Date.now().toString(),
+        content: streamedContent || "Analysis completed and site deployed.",
+        isUser: false,
+        timestamp: new Date().toISOString(),
+      };
+      addMessage(aiMsg);
+      if (userId && id) {
+        const aiSaveResult = await sendChatMessage(
+          userId,
+          id,
+          aiMsg.content,
+          false
+        );
+        if (!aiSaveResult.success) {
+          console.error("Failed to save AI message:", aiSaveResult.error);
+        }
       }
-    }
 
-    // Clear auto-processing state
-    setIsAutoProcessing(false);
-  }, [userId, id, machine?.id, addMessage, sendChatMessage, sendStreamingMessage, streamedContent]);
+      // Clear auto-processing state
+      setIsAutoProcessing(false);
+    },
+    [
+      userId,
+      id,
+      machine?.id,
+      addMessage,
+      sendChatMessage,
+      sendStreamingMessage,
+      streamedContent,
+    ]
+  );
 
   // Debug logging for ChatInterface props
   useEffect(() => {
@@ -119,17 +150,20 @@ export default function EditorPageClient({
       appName,
       userId,
       hasOnSendMessage: !!handleSendMessage,
-      isAutoProcessing
+      isAutoProcessing,
     });
   }, [appName, userId, handleSendMessage, isAutoProcessing]);
 
   useEffect(() => {
     // Only run when user and machine are loaded
     if (!userId || !machine?.id) {
-      console.log("⏳ [EditorPageClient] Waiting for user and machine to load...", {
-        hasUser: !!userId,
-        hasMachine: !!machine?.id
-      });
+      console.log(
+        "⏳ [EditorPageClient] Waiting for user and machine to load...",
+        {
+          hasUser: !!userId,
+          hasMachine: !!machine?.id,
+        }
+      );
       return;
     }
 
@@ -137,13 +171,16 @@ export default function EditorPageClient({
       hasUser: !!userId,
       hasMachine: !!machine?.id,
       hasAutoTriggered,
-      isAutoProcessing
+      isAutoProcessing,
     });
 
     const prompt = sessionStorage.getItem("builddrr_generation_prompt");
 
     if (prompt && !hasAutoTriggered) {
-      console.log("🔄 [EditorPageClient] Auto-triggering AI creation with prompt:", prompt.substring(0, 50) + "...");
+      console.log(
+        "🔄 [EditorPageClient] Auto-triggering AI creation with prompt:",
+        prompt.substring(0, 50) + "..."
+      );
 
       // Set flags to prevent multiple triggers and show loading
       setHasAutoTriggered(true);
@@ -154,23 +191,29 @@ export default function EditorPageClient({
       console.log("🗑️ [EditorPageClient] Cleared prompt from sessionStorage");
 
       // Automatically send the prompt to trigger AI creation
-      console.log("🚀 [EditorPageClient] Calling handleSendMessage for auto-trigger");
+      console.log(
+        "🚀 [EditorPageClient] Calling handleSendMessage for auto-trigger"
+      );
       handleSendMessage(prompt);
 
       toast({
         title: "Creating Your Website",
-        description: "AI is analyzing your requirements and building your site...",
+        description:
+          "AI is analyzing your requirements and building your site...",
       });
       console.log("📢 [EditorPageClient] Showed toast notification");
     } else if (!prompt && !hasAutoTriggered) {
       // If no prompt exists, show a welcome message and suggest starting
-      console.log("👋 [EditorPageClient] No prompt found, showing welcome message");
+      console.log(
+        "👋 [EditorPageClient] No prompt found, showing welcome message"
+      );
 
       setHasAutoTriggered(true);
 
       const welcomeMsg = {
         id: Date.now().toString(),
-        content: "👋 Welcome to Builddrr! I'm your AI website builder. Tell me what kind of website you'd like to create, and I'll build it for you in real-time. For example: 'Create a landing page for a coffee shop' or 'Build a portfolio website for a photographer'.",
+        content:
+          "👋 Welcome to Builddrr! I'm your AI website builder. Tell me what kind of website you'd like to create, and I'll build it for you in real-time. For example: 'Create a landing page for a coffee shop' or 'Build a portfolio website for a photographer'.",
         isUser: false,
         timestamp: new Date().toISOString(),
       };
@@ -187,10 +230,18 @@ export default function EditorPageClient({
         hasUser: !!userId,
         hasMachine: !!machine?.id,
         hasAutoTriggered,
-        isAutoProcessing
+        isAutoProcessing,
       });
     }
-  }, [userId, machine?.id, hasAutoTriggered, handleSendMessage, toast, addMessage, sendChatMessage]);
+  }, [
+    userId,
+    machine?.id,
+    hasAutoTriggered,
+    handleSendMessage,
+    toast,
+    addMessage,
+    sendChatMessage,
+  ]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -202,9 +253,7 @@ export default function EditorPageClient({
 
   return (
     <div className="flex flex-col h-full">
-      <EditorHeader
-        id={id}
-      />
+      <EditorHeader id={id} />
 
       <div className="flex flex-row gap-4 h-full rounded-3xl">
         <div className="md:w-[500px] flex flex-col h-full">
@@ -245,27 +294,27 @@ export default function EditorPageClient({
                 activeFormats={{ bold: false, italic: false, underline: false }}
                 elementType={"div"}
                 selectedElement={null}
-                onFormatText={() => { }}
-                onSetBackgroundColor={() => { }}
-                onSetBackgroundImage={() => { }}
-                onSetLink={() => { }}
-                onSetAltTag={() => { }}
+                onFormatText={() => {}}
+                onSetBackgroundColor={() => {}}
+                onSetBackgroundImage={() => {}}
+                onSetLink={() => {}}
+                onSetAltTag={() => {}}
                 onClose={() => setEditMode(false)}
                 activeTextColor={null}
-                setActiveTextColor={() => { }}
-                onRemoveStandalone={() => { }}
+                setActiveTextColor={() => {}}
+                onRemoveStandalone={() => {}}
                 canRemoveStandalone={false}
               />
             </TabsContent>
           </Tabs>
         </div>
         <div className="flex flex-col flex-1 min-w-0 h-full bg-background rounded-3xl">
-          <WebsitePreview
+          {/* <WebsitePreview
             isEditMode={isEditMode}
             initialUrl={websiteUrl || undefined}
             id={id}
             machine={machineData}
-          />
+          /> */}
         </div>
       </div>
     </div>
