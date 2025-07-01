@@ -255,8 +255,8 @@ export default function EditorPageClient({
     <div className="flex flex-col h-full">
       <EditorHeader id={id} />
 
-      <div className="flex flex-row gap-4 h-full rounded-3xl">
-        <div className="md:w-[500px] flex flex-col h-full">
+      <div className="flex flex-row gap-4 h-full ">
+        <div className="md:w-[500px] flex flex-col h-full border-r border-gray-200">
           <Tabs
             value={activeTab}
             onValueChange={(tab) => {
@@ -267,9 +267,13 @@ export default function EditorPageClient({
             defaultValue="chat"
             orientation="vertical"
           >
-            <TabsList className="items-start justify-start">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="dev">Design</TabsTrigger>
+            <TabsList className="items-start justify-start gap-1 rounded-none bg-white border-b border-gray-200">
+              <TabsTrigger className="hover:bg-gray-100" value="chat">
+                Chat
+              </TabsTrigger>
+              <TabsTrigger className="hover:bg-gray-100" value="dev">
+                Design
+              </TabsTrigger>
             </TabsList>
             <TabsContent
               value="chat"

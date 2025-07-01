@@ -96,3 +96,34 @@ body {
     @apply text-foreground bg-[#faefff];
   }
 }
+
+/* Native custom scrollbar for chat and other scrollable areas */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #a3a3a3 #e5e7eb;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0.5rem;
+  background: #e5e7eb !important;
+  border-radius: 0.5rem !important;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #a3a3a3 !important;
+  border-radius: 0.5rem !important;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3 !important;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: #a3a3a3 !important;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #e5e7eb !important;
+  border-radius: 0.5rem;
+}
+.custom-scrollbar::-webkit-scrollbar-track:hover {
+  background: #e5e7eb !important;
+}
+.custom-scrollbar::-webkit-scrollbar-track:active {
+  background: #e5e7eb !important;
+}
