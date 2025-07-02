@@ -1337,63 +1337,6 @@ export default function WebsitePreview({
     };
   }, [isEditMode, checkCanMakeStandalone]);
 
-  // Function to wrap selection in a span
-  const wrapSelectionInSpan = useCallback(() => {
-    const iframe = iframeRef.current;
-    if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
-    const win = iframe.contentWindow;
-    const sel = win.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-    const range = sel.getRangeAt(0);
-    if (
-      range.startContainer === range.endContainer &&
-      range.startContainer.nodeType === Node.TEXT_NODE &&
-      range.startOffset !== range.endOffset
-    ) {
-      // Prevent wrapping whitespace-only selections
-      const selectedText = range.toString();
-      if (selectedText.trim().length === 0) {
-        setDebugInfo("Cannot make standalone: selection is only whitespace.");
-        return;
-      }
-      // Check if the selected text is already inside a span[data-editable-text="true"]
-      let parent: Node | null = range.startContainer.parentNode;
-      while (parent && parent !== iframe.contentDocument.body) {
-        if (
-          parent.nodeType === Node.ELEMENT_NODE &&
-          (parent as HTMLElement).tagName === "SPAN" &&
-          (parent as HTMLElement).getAttribute("data-editable-text") === "true"
-        ) {
-          setDebugInfo("Selection is already inside a standalone span.");
-          return;
-        }
-        parent = parent.parentNode;
-      }
-      const span = iframe.contentDocument.createElement("span");
-      span.setAttribute("data-editable", "true");
-      span.setAttribute("data-editable-type", "text");
-      span.setAttribute("data-editable-text", "true");
-      span.setAttribute("data-editor-id", `editor-span-${Date.now()}`);
-      span.style.display = "inline";
-      try {
-        range.surroundContents(span);
-        // Select the new span
-        sel.removeAllRanges();
-        const newRange = iframe.contentDocument.createRange();
-        newRange.selectNodeContents(span);
-        sel.addRange(newRange);
-        // Trigger selection logic
-        handleElementSelection(span);
-        setDebugInfo("Wrapped selection in span");
-      } catch (e) {
-        setDebugInfo(
-          "Could not wrap selection: " +
-            (e instanceof Error ? e.message : String(e))
-        );
-      }
-    }
-  }, [handleElementSelection]);
-
   // Add useEffect to call checkCanMakeStandalone when selectedElement changes
   useEffect(() => {
     checkCanMakeStandalone();
@@ -1462,13 +1405,14 @@ export default function WebsitePreview({
         `[data-editor-id='${id}']`
       );
       if (el) {
-        el.className = className;
+        // Only set className if the store has a non-empty value
+        if (typeof className === "string" && className.trim() !== "") {
+          el.className += " " + className;
+        }
+        // If className is empty, undefined, or null, do nothing (preserve existing classes)
       }
     });
   }, [elements, iframeReady]);
-
-  console.log("machine", machine);
-  console.log("isEditorReady", isEditorReady);
 
   return (
     <div className="flex flex-col h-full w-full gap-4 rounded-3xl">
@@ -1503,7 +1447,6 @@ export default function WebsitePreview({
             ref={iframeRef}
             key={`url-${url}`}
             src={`http://localhost:3000/api/preview/${url}`}
-            // src={"https://plain-nextjs-app.fly.dev/"}
             className="w-full h-full"
             sandbox="allow-same-origin allow-scripts"
           />

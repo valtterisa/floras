@@ -31,7 +31,6 @@ nextApp.prepare().then(() => {
     ) {
       const referer = req.headers.referer;
       const refererPath = parse(referer).pathname;
-      console.log("REFERRER PATH:", refererPath);
       const match =
         refererPath && refererPath.match(/^\/api\/preview\/([^\/]+)/);
       if (match) {
