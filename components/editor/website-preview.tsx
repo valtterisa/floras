@@ -221,6 +221,25 @@ export default function WebsitePreview({
     dispatch({ type: "SET_APPLYING_CHANGES", value: false });
   }, [getStorageKey, editorState.isApplyingChanges]);
 
+  const injectEditorStyles = (doc: Document) => {
+    let style = doc.getElementById(
+      "editor-selection-styles"
+    ) as HTMLStyleElement | null;
+    if (!style) {
+      style = doc.createElement("style");
+      style.id = "editor-selection-styles";
+      doc.head.appendChild(style);
+    }
+    style.textContent = `
+      .editor-selected, .editor-hover {
+        outline: 2px dotted #c078f3 !important;
+        outline-offset: 2px !important;
+        background: rgba(192, 120, 243, 0.08) !important;
+        transition: outline 0.1s, background 0.1s;
+      }
+    `;
+  };
+
   const initializeEditor = () => {
     const iframe = iframeRef.current;
     if (!iframe || !iframe.contentWindow || !iframe.contentDocument) {
@@ -289,6 +308,8 @@ export default function WebsitePreview({
         }
       `;
       iframe.contentDocument.head.appendChild(style);
+
+      injectEditorStyles(iframe.contentDocument);
 
       applyStoredChanges();
       makeElementsEditable();
@@ -499,51 +520,75 @@ export default function WebsitePreview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editorState.iframeReady, isEditMode]);
 
+  // Helper to add/remove tag badge
+  function addTagBadge(element: HTMLElement, tag: string) {
+    removeTagBadge(element);
+    const badge = document.createElement("div");
+    badge.className = "editor-tag-badge";
+    badge.textContent = tag;
+    badge.style.position = "absolute";
+    badge.style.top = "-18px";
+    badge.style.left = "0";
+    badge.style.background = "#c078f3";
+    badge.style.color = "#fff";
+    badge.style.fontSize = "11px";
+    badge.style.fontWeight = "bold";
+    badge.style.padding = "2px 8px";
+    badge.style.borderRadius = "6px";
+    badge.style.zIndex = "1001";
+    badge.style.pointerEvents = "none";
+    badge.style.boxShadow = "0 1px 4px 0 rgba(0,0,0,0.04)";
+    badge.classList.add("editor-tag-badge");
+    element.style.position = "relative";
+    element.appendChild(badge);
+  }
+  function removeTagBadge(element: HTMLElement) {
+    const badge = element.querySelector(".editor-tag-badge");
+    if (badge) badge.remove();
+  }
+
+  // Update handleElementSelection to add the badge
   const handleElementSelection = (element: HTMLElement) => {
     if (!isEditMode || !element) return;
-
-    // Remove focus from all editable elements before setting new selection
     const iframe = iframeRef.current;
     if (iframe && iframe.contentDocument) {
       const allEditable = iframe.contentDocument.querySelectorAll(
         '[data-editable-text="true"]'
       );
-      allEditable.forEach((s) => s.classList.remove("focus-active"));
+      allEditable.forEach((s) => {
+        const el = s as HTMLElement;
+        el.classList.remove("editor-selected");
+        removeTagBadge(el);
+      });
     }
-
     if (
       editorState.selectedElement &&
       editorState.selectedElement !== element
     ) {
       if (editorState.selectedElement.hasAttribute("data-editable-text")) {
         editorState.selectedElement.contentEditable = "false";
+        removeTagBadge(editorState.selectedElement);
       }
     }
-
     dispatch({ type: "SET_SELECTED_ELEMENT", value: element });
-
     if (!iframe) return;
     if (
       iframe &&
       iframe.contentDocument &&
       element.hasAttribute("data-editable-text")
     ) {
-      // Add focus-active to the selected editable element
-      element.classList.add("focus-active");
+      element.classList.add("editor-selected");
+      addTagBadge(element, element.tagName.toLowerCase());
     }
-
     if (element.tagName !== "IMG") {
       if (element.hasAttribute("data-editable-text")) {
         element.contentEditable = "true";
       } else {
         element.contentEditable = "false";
       }
-      // Make all child text spans editable
       setAllTextEditable(element);
-
       iframe?.contentWindow?.focus();
       element.focus();
-
       const selection = iframe?.contentWindow?.getSelection();
       if (selection && selection.rangeCount === 0) {
         const range = iframe.contentDocument!.createRange();
@@ -563,8 +608,8 @@ export default function WebsitePreview({
   const makeElementsEditable = () => {
     const iframe = iframeRef.current;
     if (!iframe || !iframe.contentDocument) return;
-
     const doc = iframe.contentDocument;
+    injectEditorStyles(doc);
     const textEditableTags = new Set([
       "h1",
       "h2",
@@ -618,6 +663,27 @@ export default function WebsitePreview({
       htmlEl.addEventListener("blur", handleElementBlur);
 
       (htmlEl as any).__clickListenerAttached = false;
+    });
+
+    // Update hover listeners in makeElementsEditable for tag badge logic
+    const hoverableElements = doc.querySelectorAll(
+      "h1, h2, h3, h4, h5, h6, p, span, li, button, a, img"
+    );
+    hoverableElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.addEventListener("mouseenter", () => {
+        if (isEditMode && !htmlEl.classList.contains("editor-selected")) {
+          htmlEl.classList.add("editor-hover");
+          addTagBadge(htmlEl, htmlEl.tagName.toLowerCase());
+        }
+      });
+      htmlEl.addEventListener("mouseleave", () => {
+        htmlEl.classList.remove("editor-hover");
+        // Only remove the badge if this is not the selected element
+        if (!htmlEl.classList.contains("editor-selected")) {
+          removeTagBadge(htmlEl);
+        }
+      });
     });
   };
 
@@ -721,12 +787,34 @@ export default function WebsitePreview({
     });
   }, [elements, editorState.iframeReady]);
 
+  // Remove highlight from all elements when edit mode is turned off
+  useEffect(() => {
+    if (!isEditMode) {
+      const iframe = iframeRef.current;
+      if (iframe && iframe.contentDocument) {
+        const allEditable = iframe.contentDocument.querySelectorAll(
+          '[data-editable-text="true"]'
+        );
+        allEditable.forEach((s) => {
+          const el = s as HTMLElement;
+          el.classList.remove("editor-selected");
+          el.classList.remove("editor-hover");
+          removeTagBadge(el);
+        });
+      }
+    }
+  }, [isEditMode]);
+
   if (!editorState.iframeReady) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-gray-50 rounded-3xl p-8">
         <div className="text-center max-w-md">
           <h3 className="text-xl font-medium mb-2">Website Preview</h3>
-          <p className="text-gray-500 mb-4">Loading website preview...</p>
+          <p className="text-gray-500 mb-4">
+            {editorState.iframeError
+              ? `Error loading preview: ${editorState.iframeError}`
+              : "Your website is being generated. The preview will appear here once it's ready."}
+          </p>
           <div className="w-full h-64 bg-gray-200 rounded-lg animate-pulse"></div>
         </div>
       </div>
