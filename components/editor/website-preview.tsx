@@ -235,7 +235,19 @@ export default function WebsitePreview({
         outline: 2px dotted #c078f3 !important;
         outline-offset: 2px !important;
         background: rgba(192, 120, 243, 0.08) !important;
-        transition: outline 0.1s, background 0.1s;
+      }
+      /* Remove old outline when selected/hovered */
+      .editor-selected.hover-active,
+      .editor-hover.hover-active,
+      .editor-selected.focus-active,
+      .editor-hover.focus-active {
+        outline: 2px dotted #c078f3 !important;
+        box-shadow: none !important;
+      }
+      /* Hide old outline for all .editor-selected/.editor-hover */
+      .editor-selected,
+      .editor-hover {
+        box-shadow: none !important;
       }
     `;
   };
@@ -522,7 +534,7 @@ export default function WebsitePreview({
 
   // Helper to add/remove tag badge
   function addTagBadge(element: HTMLElement, tag: string) {
-    removeTagBadge(element);
+    if (element.querySelector(".editor-tag-badge")) return;
     const badge = document.createElement("div");
     badge.className = "editor-tag-badge";
     badge.textContent = tag;
@@ -538,8 +550,9 @@ export default function WebsitePreview({
     badge.style.zIndex = "1001";
     badge.style.pointerEvents = "none";
     badge.style.boxShadow = "0 1px 4px 0 rgba(0,0,0,0.04)";
-    badge.classList.add("editor-tag-badge");
-    element.style.position = "relative";
+    if (getComputedStyle(element).position === "static") {
+      element.style.position = "relative";
+    }
     element.appendChild(badge);
   }
   function removeTagBadge(element: HTMLElement) {
@@ -558,6 +571,8 @@ export default function WebsitePreview({
       allEditable.forEach((s) => {
         const el = s as HTMLElement;
         el.classList.remove("editor-selected");
+        el.classList.remove("hover-active");
+        el.classList.remove("focus-active");
         removeTagBadge(el);
       });
     }
@@ -673,6 +688,8 @@ export default function WebsitePreview({
       const htmlEl = el as HTMLElement;
       htmlEl.addEventListener("mouseenter", () => {
         if (isEditMode && !htmlEl.classList.contains("editor-selected")) {
+          htmlEl.classList.remove("hover-active");
+          htmlEl.classList.remove("focus-active");
           htmlEl.classList.add("editor-hover");
           addTagBadge(htmlEl, htmlEl.tagName.toLowerCase());
         }
