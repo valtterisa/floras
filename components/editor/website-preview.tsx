@@ -520,7 +520,6 @@ export default function WebsitePreview({
     const selectableElementsSelector =
       "h1, h2, h3, h4, h5, h6, p, span, li, button, a, img";
     const selectableElements = doc.querySelectorAll(selectableElementsSelector);
-    let elementCounter = 0;
 
     selectableElements.forEach((el) => {
       if (el.closest("script, style, noscript")) return;
@@ -531,7 +530,7 @@ export default function WebsitePreview({
       // Only assign a new editorId if not already present
       let editorId = htmlEl.getAttribute("data-editor-id");
       if (!editorId) {
-        editorId = `editor-${tagNameLower}-${elementCounter++}`;
+        editorId = crypto.randomUUID();
         htmlEl.setAttribute("data-editor-id", editorId);
         // Store tagName in Zustand elements map
         if (textEditableTags.has(tagNameLower)) {
