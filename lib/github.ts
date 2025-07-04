@@ -30,23 +30,28 @@ export async function createRepoFromTemplate(appName: string): Promise<string> {
   return data.html_url;
 }
 
-export type RepoFile = {
-  path: string;
-  content: string;
-  message?: string;
-};
-
+// Read more: https://octokit.github.io/rest.js/v22/#repos-create-or-update-file-contents
 export async function uploadFilesToRepo(
   repo: string,
-  files: RepoFile[]
+  files: Record<string, string> = {}
 ): Promise<void> {
-  for (const file of files) {
+  for (const [path, content] of Object.entries(files)) {
     await octokit.repos.createOrUpdateFileContents({
       owner: ORG,
-      repo,
-      path: file.path,
-      message: file.message || `Add ${file.path}`,
-      content: Buffer.from(file.content).toString("base64"),
+      repo: repo,
+      path: path,
+      message: `Add ${path}`,
+      content: Buffer.from(content).toString("base64"),
+      committer: {
+        name: "Builddrr Deploy Bot",
+        email: "deploy-bot@builddrr.com",
+        date: new Date().toISOString(),
+      },
+      author: {
+        name: "Builddrr Deploy Bot",
+        email: "deploy-bot@builddrr.com",
+        date: new Date().toISOString(),
+      },
     });
   }
 }

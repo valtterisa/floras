@@ -5,76 +5,52 @@ import { Vercel } from "@vercel/sdk";
 
 export async function POST(req: NextRequest) {
   try {
-    const { websiteId } = await req.json();
-    if (!websiteId) {
-      return NextResponse.json({ error: "Missing websiteId" }, { status: 400 });
+    // Upload files to GitHub
+    const body = await req.json();
+    const { appName } = body as {
+      appName?: string;
+    };
+
+    if (!appName) {
+      return NextResponse.json({ error: "Missing variables" }, { status: 400 });
     }
 
-    // Fetch website data
-    const website = await getWebsite(websiteId);
-    if (!website) {
-      return NextResponse.json({ error: "Website not found" }, { status: 404 });
-    }
-    if (!website.app_name) {
-      return NextResponse.json(
-        { error: "Website app_name missing" },
-        { status: 400 }
-      );
-    }
-    if (!website.content || typeof website.content !== "object") {
-      return NextResponse.json(
-        { error: "Website content missing or invalid" },
-        { status: 400 }
-      );
-    }
-
-    // Prepare files for Vercel deployment
-    const files = Object.entries(website.content).map(([file, data]) => ({
-      file,
-      data: Buffer.from(data as string), // Vercel SDK expects Buffer
-    }));
-    if (files.length === 0) {
-      return NextResponse.json(
-        { error: "No files to deploy" },
-        { status: 400 }
-      );
-    }
-
-    // Deploy to Vercel using the SDK
-    const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
-    if (!VERCEL_TOKEN) {
-      return NextResponse.json(
-        { error: "VERCEL_TOKEN not set" },
-        { status: 500 }
-      );
-    }
-    const vercel = new Vercel({ bearerToken: VERCEL_TOKEN });
-    const deployment = await vercel.deployments.createProject({
-      name: website.app_name,
-      files,
-      projectSettings: { framework: null },
-      target: "production",
+    const vercel = new Vercel({ bearerToken: process.env.VERCEL_TOKEN! });
+    const deployment = await vercel.projects.createProject({
+      teamId: process.env.VERCEL_TEAM_ID!,
+      slug: "valtterisas-projects",
+      requestBody: {
+        name: appName,
+        framework: "nextjs",
+        gitRepository: {
+          repo: `builddrr-user-site-${appName}`,
+          type: "github",
+        },
+        publicSource: false,
+      },
     });
 
+    if (!deployment) {
+      return NextResponse.json({ error: "Failed to deploy" }, { status: 500 });
+    }
+
     // Update website record
-    const vercelUrl = `https://${website.app_name}.vercel.app`;
-    await updateWebsite(websiteId, {
+    const vercelUrl = `https://${appName}.valtterisavonen.fi`;
+    await updateWebsite(appName, {
       status: "deployed",
       last_deployed: new Date().toISOString(),
       primary_url: vercelUrl,
     });
     revalidatePath("/dashboard/website/all");
-    revalidatePath(`/website/editor/${websiteId}`);
+    revalidatePath(`/website/editor/${appName}`);
 
     return NextResponse.json({
       url: vercelUrl,
       status: "deployed",
       message: "Website deployed successfully to Vercel.",
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Unknown error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("Error deploying website:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

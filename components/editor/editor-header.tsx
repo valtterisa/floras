@@ -1,29 +1,18 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-
-  LayoutDashboard,
-  Monitor,
-  Rocket,
-  Smartphone,
-} from "lucide-react";
+import { LayoutDashboard, Monitor, Rocket, Smartphone } from "lucide-react";
 import Link from "next/link";
-import { deployWebsite } from "@/lib/fly";
 import { useToast } from "@/hooks/use-toast";
 
 type ViewportSize = "desktop" | "mobile";
 
-function EditorHeader({
-  id,
-}: {
-  id: string;
-}) {
+function EditorHeader({ id }: { id: string }) {
   const [viewportSize, setViewportSize] = useState<ViewportSize>("desktop");
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(id);
 
   const { toast } = useToast();
 
-  const handleGoLive = async () => {
+  const handlePublish = async () => {
     toast({
       title: "Deploying website...",
       description: "Please wait while we deploy your website.",
@@ -31,27 +20,18 @@ function EditorHeader({
     });
 
     try {
-      const deployResult = await deployWebsite(id);
-
-      if (!deployResult.success) {
-        toast({
-          title: "Error",
-          description: deployResult.error || "Failed to deploy the website.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (deployResult.data?.url) {
-        setWebsiteUrl(deployResult.data.url);
-      }
-
-      toast({
-        title: "Success",
-        description:
-          deployResult.data?.message || "Website deployed successfully.",
-        variant: "default",
+      const deployResult = await fetch("/api/deploy", {
+        method: "POST",
+        body: JSON.stringify({ appName: id }),
       });
+
+      if (deployResult.ok) {
+        toast({
+          title: "Success",
+          description: "Website deployed successfully.",
+          variant: "default",
+        });
+      }
     } catch (error) {
       console.error("Error deploying website:", error);
       toast({
@@ -90,9 +70,9 @@ function EditorHeader({
           <Monitor className="h-3 w-3" />
         </Button>
 
-        <Button size="sm" onClick={handleGoLive}>
+        <Button size="sm" onClick={handlePublish}>
           <Rocket className="h-3 w-3 sm:mr-1" />
-          <span className="hidden sm:inline">Go Live</span>
+          <span className="hidden sm:inline">Publish</span>
         </Button>
       </div>
     </div>

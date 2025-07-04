@@ -1,7 +1,5 @@
 "use server";
 
-import { getWebsite, updateWebsite } from "./database";
-import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase/server";
 
 /**
@@ -16,96 +14,7 @@ export async function deleteProjectById(id: string): Promise<{
   error?: string;
   details?: any;
 }> {
-  try {
-    // Get the website/project from Supabase
-    const website = await getWebsite(id);
-    if (!website) {
-      return { success: false, error: "Project not found" };
-    }
-    if (!website.app_name) {
-      return { success: false, error: "Project app_name not found" };
-    }
-
-    // Prepare parameters for the backend API
-    const gitlabRepo = `bittive-group/${website.app_name}`;
-    const cloudflareProject = website.app_name;
-    const slug = website.app_name;
-
-    // Call the backend API endpoint
-    const response = await fetch("http://localhost:3001/api/delete-project", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ gitlabRepo, cloudflareProject, slug }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      return {
-        success: false,
-        error: "Failed to delete project. Try again later.",
-        details: result.details,
-      };
-    }
-
-    // Mark the website record as deleted in Supabase (set deleted_at to now)
-    await updateWebsite(id, { deleted_at: new Date().toISOString() });
-
-    return {
-      success: true,
-      message: result.message || "Project deleted successfully",
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error?.message || "Unknown error",
-    };
-  }
-}
-
-/**
- * Deploy an existing website by its ID
- *
- * @param websiteId The website's unique identifier
- * @returns Deployment result with status and URL information
- */
-export async function deployWebsite(websiteId: string): Promise<{
-  success: boolean;
-  data?: {
-    url?: string;
-    status?: string;
-    message?: string;
-  };
-  error?: string;
-}> {
-  try {
-    // Call the new deployment API route
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/deploy`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ websiteId }),
-      }
-    );
-    const data = await response.json();
-    if (!response.ok) {
-      return { success: false, error: data.error || "Deployment failed" };
-    }
-    return {
-      success: true,
-      data: {
-        url: data.url,
-        status: data.status,
-        message: data.message,
-      },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
+  return { success: true, message: "Project deleted" };
 }
 
 /**

@@ -6,6 +6,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { redis } from "@/lib/redis";
 import type { builddrrOperation, StreamingChunk } from "@/lib/types";
+import { createRepoFromTemplate, uploadFilesToRepo } from "@/lib/github";
 
 export type Operation = {
   operation: "write" | "update" | "delete" | "code" | "rename" | "dependency";
@@ -444,6 +445,12 @@ export async function generateSite(
       error: aiError instanceof Error ? aiError.message : String(aiError),
     };
   }
+
+  // Upload files to GitHub. Not awaited so it doesn't block the thread.
+  const repoUrl = await createRepoFromTemplate(appName);
+  const repoName = `builddrr-user-site-${appName}`;
+
+  await uploadFilesToRepo(repoName, filesObj);
 
   try {
     return await deployPreview(filesObj, appName, machineId);
