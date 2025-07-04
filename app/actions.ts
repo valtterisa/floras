@@ -447,8 +447,7 @@ export async function generateSite(
   }
 
   // Upload files to GitHub. Not awaited so it doesn't block the thread.
-  const repoUrl = await createRepoFromTemplate(appName);
-  console.log("[generateSite] repoUrl:", repoUrl);
+  createRepoFromTemplate(appName);
   const repoName = `builddrr-user-site-${appName}`;
 
   uploadFilesToRepo(repoName, filesObj);

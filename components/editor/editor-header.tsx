@@ -27,6 +27,19 @@ function EditorHeader({ id }: { id: string }) {
         body: JSON.stringify({ appName: id }),
       });
 
+      console.log("[deployResult]", deployResult);
+
+      const { url, deploymentId } = await deployResult.json();
+
+      console.log("[url]", url);
+      console.log("[deploymentId]", deploymentId);
+
+      const isDeployed = await fetch(`/api/deploy?id=${deploymentId}`, {
+        method: "GET",
+      });
+
+      console.log("[isDeployed]", isDeployed);
+
       if (deployResult.ok) {
         toast({
           title: "Success",
@@ -44,6 +57,7 @@ function EditorHeader({ id }: { id: string }) {
       });
       setIsDeploying(false);
     }
+    setIsDeploying(false);
   };
 
   return (
