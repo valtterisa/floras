@@ -5,7 +5,6 @@ import { Vercel } from "@vercel/sdk";
 
 export async function POST(req: NextRequest) {
   try {
-    // Upload files to GitHub
     const body = await req.json();
     const { appName } = body as {
       appName?: string;
@@ -35,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update website record
-    const vercelUrl = `https://${appName}.valtterisavonen.fi`;
+    const vercelUrl = `https://${appName}.valtterisavonen.fi`; // @TODO: Change to builddrr.com
     await updateWebsite(appName, {
       status: "deployed",
       last_deployed: new Date().toISOString(),
