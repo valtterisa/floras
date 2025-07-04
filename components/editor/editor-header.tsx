@@ -81,24 +81,6 @@ function EditorHeader({ id }: { id: string }) {
       </Link>
 
       <div className="flex items-center space-x-2 ml-auto">
-        <Button
-          variant={viewportSize === "mobile" ? "default" : "outline"}
-          size="icon"
-          onClick={() => setViewportSize("mobile")}
-          title="Mobile view"
-        >
-          <Smartphone className="h-3 w-3" />
-        </Button>
-
-        <Button
-          variant={viewportSize === "desktop" ? "default" : "outline"}
-          size="icon"
-          onClick={() => setViewportSize("desktop")}
-          title="Desktop view"
-        >
-          <Monitor className="h-3 w-3" />
-        </Button>
-
         {deployUrl ? (
           <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
             <DropdownMenuTrigger asChild>
