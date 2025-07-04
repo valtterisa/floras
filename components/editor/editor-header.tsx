@@ -9,10 +9,12 @@ type ViewportSize = "desktop" | "mobile";
 function EditorHeader({ id }: { id: string }) {
   const [viewportSize, setViewportSize] = useState<ViewportSize>("desktop");
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(id);
+  const [isDeploying, setIsDeploying] = useState(false);
 
   const { toast } = useToast();
 
   const handlePublish = async () => {
+    setIsDeploying(true);
     toast({
       title: "Deploying website...",
       description: "Please wait while we deploy your website.",
@@ -31,6 +33,7 @@ function EditorHeader({ id }: { id: string }) {
           description: "Website deployed successfully.",
           variant: "default",
         });
+        setIsDeploying(false);
       }
     } catch (error) {
       console.error("Error deploying website:", error);
@@ -39,7 +42,7 @@ function EditorHeader({ id }: { id: string }) {
         description: "An unexpected error occurred while deploying.",
         variant: "destructive",
       });
-    } finally {
+      setIsDeploying(false);
     }
   };
 
@@ -70,9 +73,36 @@ function EditorHeader({ id }: { id: string }) {
           <Monitor className="h-3 w-3" />
         </Button>
 
-        <Button size="sm" onClick={handlePublish}>
+        <Button size="sm" onClick={handlePublish} disabled={isDeploying}>
           <Rocket className="h-3 w-3 sm:mr-1" />
-          <span className="hidden sm:inline">Publish</span>
+          <span className="hidden sm:inline flex items-center">
+            {isDeploying ? (
+              <>
+                Deploying...
+                <svg
+                  className="animate-spin h-4 w-4 mr-2 text-white"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+              </>
+            ) : (
+              "Publish"
+            )}
+          </span>
         </Button>
       </div>
     </div>
