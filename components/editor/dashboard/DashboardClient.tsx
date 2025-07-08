@@ -20,7 +20,7 @@ export default function DashboardClient({
   return (
     <div className="px-4 md:px-6 flex min-h-screen min-w-0">
       <div className="flex-1 min-w-0">
-        <SiteHeader title="Dashboard" />
+        <SiteHeader title="Overview" />
         <div className="space-y-8 py-4">
           <QuickActions />
           <WebsitesList websites={websites} />

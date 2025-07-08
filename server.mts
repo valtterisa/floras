@@ -44,7 +44,7 @@ nextApp.prepare().then(() => {
     const previewMatch = url.match(/^\/api\/preview\/([^\/]+)(.*)$/);
     if (previewMatch) {
       const appName = previewMatch[1];
-      return getProxy(appName)(req, res, () => {});
+      return getProxy(appName)(req, res, () => { });
     }
     return handle(req, res, parse(url, true));
   });
