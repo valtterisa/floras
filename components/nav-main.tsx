@@ -24,6 +24,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
@@ -31,11 +32,10 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 
-export function NavMain({
-  items,
-  handleMobileClose,
-}: {
-  items: {
+export type NavMainItem =
+  | { type: "label"; label: string }
+  | {
+    type: "item";
     title: string;
     url: string;
     icon?: LucideIcon;
@@ -44,7 +44,13 @@ export function NavMain({
       url: string;
       icon?: LucideIcon;
     }[];
-  }[];
+  };
+
+export function NavMain({
+  items,
+  handleMobileClose,
+}: {
+  items: NavMainItem[];
   handleMobileClose?: () => void;
 }) {
   const pathname = usePathname();
@@ -52,26 +58,16 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2 relative">
-        <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-              aria-label="Quick Create"
-              onClick={handleMobileClose}
-            >
-              <PlusCircleIcon />
-              <span>Quick Create</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
         <SidebarMenu role="menu">
           {items.map((item, idx) => {
+            if (item.type === "label") {
+              return <SidebarGroupLabel key={"label-" + idx}>{item.label}</SidebarGroupLabel>;
+            }
+            // item.type === "item"
             const submenuId = `sidebar-submenu-${idx}`;
             const isParentActive =
               pathname === item.url ||
-              (item.children &&
-                item.children.some((sub) => pathname === sub.url));
+              (item.children && item.children.some((sub) => pathname === sub.url));
             return (
               <SidebarMenuItem key={item.title} role="none">
                 {item.children ? (
@@ -100,9 +96,7 @@ export function NavMain({
                               role="menuitem"
                               tabIndex={0}
                               isActive={pathname === sub.url}
-                              aria-current={
-                                pathname === sub.url ? "page" : undefined
-                              }
+                              aria-current={pathname === sub.url ? "page" : undefined}
                               onClick={handleMobileClose}
                             >
                               {sub.icon && <sub.icon />}

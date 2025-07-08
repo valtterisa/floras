@@ -3,11 +3,16 @@
 import * as React from "react";
 import {
   BarChartIcon,
+  Book,
   Globe,
   HelpCircleIcon,
+  House,
   ImageIcon,
   LayoutDashboardIcon,
+  MessageCircle,
+  PlusCircle,
   SearchIcon,
+  Settings,
   SettingsIcon,
   UsersIcon,
 } from "lucide-react";
@@ -87,30 +92,37 @@ export function AppSidebar({
 
   const navMain = [
     {
-      title: "Dashboard",
+      type: "item" as const,
+      title: "Overview",
       url: withTeam("/dashboard"),
-      icon: LayoutDashboardIcon,
+      icon: House,
     },
+    { type: "label" as const, label: "Product" },
+
     {
+      type: "item" as const,
       title: "All Websites",
       url: withTeam("/dashboard/website/all"),
       icon: Globe,
     },
-    // {
-    //   title: "Analytics",
-    //   url: withTeam("/dashboard/analytics"),
-    //   icon: BarChartIcon,
-    // },
-    // {
-    //   title: "Media Library",
-    //   url: withTeam("/dashboard/media-library"),
-    //   icon: ImageIcon,
-    // },
     {
-      title: "Team",
-      url: withTeam("/dashboard/team"),
-      icon: UsersIcon,
+      type: "item" as const,
+      title: "Create Website",
+      url: withTeam("/dashboard/website/create"),
+      icon: PlusCircle,
     },
+    {
+      type: "item" as const,
+      title: "Settings",
+      url: withTeam("/dashboard/settings"),
+      icon: Settings,
+    },
+    // {
+    //   type: "item" as const,
+    //   title: "Team",
+    //   url: withTeam("/dashboard/team"),
+    //   icon: UsersIcon,
+    // },
   ];
 
   const navSecondary = [
@@ -120,9 +132,14 @@ export function AppSidebar({
     //   icon: SettingsIcon,
     // },
     {
-      title: "Get Help",
-      url: withTeam("/help"),
-      icon: HelpCircleIcon,
+      title: "Documentation",
+      url: withTeam("/docs"),
+      icon: Book,
+    },
+    {
+      title: "Feedback",
+      url: withTeam("/feedback"),
+      icon: MessageCircle,
     },
     // {
     //   title: "Search",
