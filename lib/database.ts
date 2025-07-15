@@ -203,7 +203,7 @@ export async function getWebsitesForUser(userId: string): Promise<Website[]> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
-      .from("websites_old")
+      .from("websites")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });

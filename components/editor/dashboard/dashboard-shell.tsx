@@ -36,7 +36,7 @@ export function DashboardShell({
       try {
         const supabase = createClient();
         const { data: websitesData, error } = await supabase
-          .from("websites_old")
+          .from("websites")
           .select("*")
           .is("deleted_at", null)
           .order("created_at", { ascending: false });

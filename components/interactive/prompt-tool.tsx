@@ -15,6 +15,8 @@ export default function PromptTool({ user }: { user: any }) {
   const router = useRouter();
 
   const handleSend = async () => {
+    const supabase = createClient();
+
     if (!prompt.trim()) return;
     // Check auth before proceeding
     if (!user) {
@@ -26,14 +28,6 @@ export default function PromptTool({ user }: { user: any }) {
     // Store the prompt, appName, and clear steps in localStorage for the editor/chat
     sessionStorage.setItem("builddrr_generation_prompt", prompt);
 
-    // If not already on the editor page, redirect to it so the auto-trigger works
-    if (!window.location.pathname.includes("/dashboard/website/") || !window.location.pathname.includes("/editor")) {
-      const app_name = "plain-nextjs-app";
-      router.push(`/dashboard/website/${app_name}/editor`);
-      return; // Prevent further execution
-    }
-
-    const supabase = createClient();
     try {
       // Get available preview environment
       const { data: previewData, error: previewError } = await supabase
@@ -47,16 +41,13 @@ export default function PromptTool({ user }: { user: any }) {
         throw new Error("No available preview environments");
       }
 
-      // const app_name = previewData[0].app_name;
-      // const preview_id = previewData[0].preview_id;
-
-      const app_name = "plain-nextjs-app";
-      const preview_id = "83e84c99-e616-48ea-9a49-8284eea24f2e";
+      const app_name = previewData[0].app_name;
+      const preview_id = previewData[0].preview_id;
 
       // Update both tables in parallel
       const [websiteUpdate, previewUpdate] = await Promise.all([
         supabase
-          .from("websites_old")
+          .from("websites")
           .update({ preview_id: preview_id })
           .eq("user_id", user.id),
         supabase
