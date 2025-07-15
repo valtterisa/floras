@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       externalId: user.id,
       email: user.email,
       name: user.user_metadata?.full_name || user.email,
-      billingAddress: { country: "US" },
+      billingAddress: { country: "US" }, // @TODO: correct this
     });
 
     const checkout = await polar.checkouts.create({

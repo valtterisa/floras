@@ -16,9 +16,26 @@ export async function getPolarSubscriptionByExternalId(externalId: string) {
   });
   if (!customer || !customer.id) return null;
 
-  const subscription = customer.activeSubscriptions?.[0] || null;
+  const subscriptionId = customer.activeSubscriptions?.[0]?.id;
 
-  return { customer, subscription };
+  const subscription = await polar.subscriptions.get({
+    id: subscriptionId,
+  });
+
+  return { subscription };
+}
+
+export async function getPolarProducts() {
+  const products = await polar.products.list({
+    organizationId:
+      process.env.NODE_ENV === "production"
+        ? process.env.POLAR_ORG_ID!
+        : process.env.POLAR_SANDBOX_ORG_ID!,
+  });
+
+  for await (const page of products) {
+    return page.result.items;
+  }
 }
 
 export async function getAllProductCheckOutUrls() {

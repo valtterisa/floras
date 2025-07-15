@@ -13,24 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
-import { getAllProductCheckOutUrls } from "@/lib/polar";
-
-const plans = getAllProductCheckOutUrls();
-
-console.log("plans", plans);
 
 interface BillingClientProps {
   subscription: any | null;
-  customer: any | null;
+  products: any | null;
 }
 
 const BillingClient: React.FC<BillingClientProps> = ({
   subscription,
-  customer,
+  products,
 }) => {
-  const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
-
-  const currentPlanId = subscription?.product_id;
+  console.log("products", products);
 
   return (
     <div className="px-4 md:px-6">
@@ -48,27 +41,14 @@ const BillingClient: React.FC<BillingClientProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg">
                 <div>
                   <h3 className="text-lg font-semibold capitalize">
-                    {subscription.product?.name || "Unknown"} Plan
+                    {subscription.product?.name || "Unknown"}
                   </h3>
-                  {subscription.renews_at && (
-                    <p className="text-sm text-muted-foreground">
-                      Renews on{" "}
-                      {new Date(subscription.renews_at).toLocaleDateString()}
-                    </p>
-                  )}
-                  {subscription.status && (
-                    <Badge
-                      variant={
-                        subscription.status === "active" ||
-                        subscription.status === "trialing"
-                          ? "default"
-                          : "secondary"
-                      }
-                      className="capitalize mt-1"
-                    >
-                      {subscription.status}
-                    </Badge>
-                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Renews on{" "}
+                    {new Date(
+                      subscription.currentPeriodEnd
+                    ).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -83,7 +63,7 @@ const BillingClient: React.FC<BillingClientProps> = ({
             <CardDescription>Upgrade or change your plan.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {plans.map((plan) => (
                 <Card
                   key={plan.id}
@@ -127,7 +107,7 @@ const BillingClient: React.FC<BillingClientProps> = ({
                   </CardFooter>
                 </Card>
               ))}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>
