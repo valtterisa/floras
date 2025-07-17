@@ -209,258 +209,6 @@ export async function updateVirtualFileSystem(
   }
 }
 
-// Generate file updates based on user message
-export async function generateFileUpdates(
-  message: string,
-  currentFiles: Record<string, string>
-): Promise<Operation[]> {
-  try {
-    const fileUpdatePrompt = `
-You are builddrr, a professional AI frontend engineer. A user is asking to update their website code.
-
-Current project files:
-${Object.keys(currentFiles)
-  .map((path) => `- ${path}`)
-  .join("\n")}
-
-Based on the user's request, determine which files need to be updated, created, renamed, or deleted.
-When responding, use the format:
-
-<builddrr-code>
-<builddrr-write file="/path/to/file.tsx">
-// Complete file content here
-</builddrr-write>
-
-<builddrr-delete file="/path/to/delete.tsx"/>
-
-<builddrr-rename file="/path/to/old.tsx" newPath="/path/to/new.tsx"/>
-
-<builddrr-add-dependency>
-package-name
-</builddrr-add-dependency>
-</builddrr-code>
-
-Always provide complete file content for written or updated files, not just changes.
-Respond ONLY with the <builddrr-code> block and file operations.
-`;
-
-    const result = streamText({
-      system: fileUpdatePrompt,
-      prompt: message,
-      temperature: 0,
-      model: anthropic("claude-sonnet-4-20250514"),
-      maxTokens: 16000,
-      onError: ({ error }) => {
-        console.error("AI Stream Error:", error);
-      },
-      onFinish: ({ finishReason, usage }) => {
-        console.log("AI Stream Finished:", { finishReason, usage });
-      },
-    });
-
-    const reader = result.textStream.getReader();
-    let buffer = "";
-    const operations: Operation[] = [];
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += value;
-    }
-
-    // Extract the <builddrr-code> block
-    const codeMatch = buffer.match(
-      /<builddrr-code>([\s\S]*?)<\/builddrr-code>/
-    );
-    if (codeMatch && codeMatch[1]) {
-      const codeBlock = codeMatch[1].trim();
-
-      // Extract write operations
-      const writeMatches = [
-        ...codeBlock.matchAll(
-          /<builddrr-write file="([^"]+)">([\s\S]*?)<\/builddrr-write>/g
-        ),
-      ];
-      for (const match of writeMatches) {
-        operations.push({
-          operation: "write",
-          path: match[1],
-          content: match[2].trim(),
-        });
-      }
-
-      // Extract delete operations
-      const deleteMatches = [
-        ...codeBlock.matchAll(/<builddrr-delete file="([^"]+)"\/>/g),
-      ];
-      for (const match of deleteMatches) {
-        operations.push({
-          operation: "delete",
-          path: match[1],
-        });
-      }
-
-      // Extract rename operations
-      const renameMatches = [
-        ...codeBlock.matchAll(
-          /<builddrr-rename file="([^"]+)" newPath="([^"]+)"\/>/g
-        ),
-      ];
-      for (const match of renameMatches) {
-        operations.push({
-          operation: "rename",
-          path: match[1],
-          newPath: match[2],
-        });
-      }
-
-      // Extract dependency operations
-      const depMatches = [
-        ...codeBlock.matchAll(
-          /<builddrr-add-dependency>([\s\S]*?)<\/builddrr-add-dependency>/g
-        ),
-      ];
-      for (const match of depMatches) {
-        const deps = match[1]
-          .trim()
-          .split("\n")
-          .filter((dep) => dep.trim() !== "");
-        for (const dep of deps) {
-          operations.push({
-            operation: "dependency",
-            dependency: dep.trim(),
-          });
-        }
-      }
-    }
-
-    return operations;
-  } catch (error) {
-    console.error("Error generating file updates:", error);
-    return [];
-  }
-}
-
-export async function generateAIResponse(
-  prompt: string,
-  onOperationParsed?: (op: builddrrOperation) => void
-): Promise<{
-  files: Record<string, string>;
-  operations: builddrrOperation[];
-}> {
-  const files: Record<string, string> = {};
-  const operations: builddrrOperation[] = [];
-
-  const result = streamText({
-    system: systemPrompt,
-    prompt: prompt,
-    temperature: 0,
-    model: anthropic("claude-sonnet-4-20250514"),
-    maxTokens: 16000,
-    onError: ({ error }) => {
-      console.error("AI Stream Error:", error);
-    },
-    onFinish: ({ finishReason, usage }) => {
-      console.log("AI Stream Finished:", { finishReason, usage });
-    },
-  });
-
-  const reader = result.textStream.getReader();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += value;
-  }
-
-  // Log buffer preview for debugging
-  console.log("[generateAIResponse] Buffer preview:", buffer.substring(0, 500));
-
-  // More robust regex for <builddrr-code> (allows whitespace)
-  const codeMatch = buffer.match(
-    /<builddrr-code\s*>([\s\S]*?)<\/builddrr-code\s*>/i
-  );
-  if (codeMatch && codeMatch[1]) {
-    const codeBlock = codeMatch[1].trim();
-    // Debug log
-    console.log("[generateAIResponse] codeBlock:", codeBlock.substring(0, 500));
-
-    // Extract all <builddrr-write ...>...</builddrr-write> blocks globally
-    const writeMatches = [
-      ...codeBlock.matchAll(
-        /<builddrr-write\s+file="([^"]+)">([\s\S]*?)<\/builddrr-write>/g
-      ),
-    ];
-    for (const match of writeMatches) {
-      const path = match[1].startsWith("/") ? match[1].substring(1) : match[1];
-      const content = match[2].trim();
-      files[path] = content;
-      const op: builddrrOperation = { type: "write", path, content };
-      operations.push(op);
-      if (onOperationParsed) onOperationParsed(op);
-      // Debug log
-      console.log(
-        `[generateAIResponse] Parsed file: ${path}, length: ${content.length}`
-      );
-    }
-  } else {
-    // Fallback: check if <builddrr-code> is present at all
-    if (buffer.indexOf("<builddrr-code") !== -1) {
-      console.warn(
-        "[generateAIResponse] <builddrr-code> tag found by indexOf but not by regex. Check for formatting issues."
-      );
-    } else {
-      console.warn(
-        "[generateAIResponse] <builddrr-code> tag not found at all."
-      );
-    }
-  }
-
-  return { files, operations };
-}
-
-export async function generateSite(
-  prompt: string,
-  userId: string,
-  appName: string,
-  machineId: string
-) {
-  console.log("📥 generateSite started with prompt length:", prompt.length);
-
-  let filesObj: Record<string, string> = {};
-  try {
-    const { files } = await generateAIResponse(prompt);
-    filesObj = files;
-    if (!files || Object.keys(files).length === 0) {
-      return {
-        success: false,
-        error:
-          "AI returned an empty response. Please try again with a clearer prompt.",
-      };
-    }
-  } catch (aiError) {
-    return {
-      success: false,
-      error: aiError instanceof Error ? aiError.message : String(aiError),
-    };
-  }
-
-  // Upload files to GitHub. Not awaited so it doesn't block the thread.
-  createRepoFromTemplate(appName);
-  const repoName = `builddrr-user-site-${appName}`;
-
-  uploadFilesToRepo(repoName, filesObj);
-
-  try {
-    return await deployPreview(filesObj, appName, machineId);
-  } catch (deployError) {
-    return {
-      success: true,
-      machine: { id: "error-machine-id", name: appName },
-    };
-  }
-}
 
 // Update files in fly.io
 async function deployPreview(
@@ -520,6 +268,7 @@ async function deployPreview(
   }
 }
 
+// @TODO: check the logic on this bad boy. Should be same as generateAIResponseStream but with a different prompt.
 export async function* generateFileUpdatesStream(
   message: string,
   currentFiles: Record<string, string>
@@ -538,8 +287,8 @@ You are builddrr, a professional AI frontend engineer. A user is asking to updat
 
 Current project files:
 ${Object.keys(currentFiles)
-  .map((path) => `- ${path}`)
-  .join("\n")}
+      .map((path) => `- ${path}`)
+      .join("\n")}
 
 Based on the user's request, first narrate your reasoning and plan in a <component-analysis>...</component-analysis> block (markdown, conversational, detailed). Then, determine which files need to be updated, created, renamed, or deleted. When responding, use the format:
 
@@ -872,6 +621,11 @@ export async function* generateAIResponseStream(
           files: Object.keys(collectedFiles),
         };
       }
+      // Upload files to GitHub. Not awaited so it doesn't block the thread.
+      createRepoFromTemplate(appName);
+      const repoName = `builddrr-user-site-${appName}`;
+
+      uploadFilesToRepo(repoName, collectedFiles);
     } catch (err: any) {
       yield { type: "error", error: err?.message || String(err) };
     }

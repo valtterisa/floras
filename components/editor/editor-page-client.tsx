@@ -8,12 +8,8 @@ import WebsitePreview from "@/components/editor/website-preview";
 import { useToast } from "@/hooks/use-toast";
 import EditorHeader from "./editor-header";
 import {
-  generateSite,
   getChatMessages,
   sendChatMessage,
-  getVirtualFileSystem,
-  updateVirtualFileSystem,
-  type Operation,
 } from "@/app/actions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DevMode from "./dev-mode";
@@ -26,12 +22,10 @@ export default function EditorPageClient({
   id,
   user,
   machine,
-  appExists,
 }: {
   id: string;
   user: any;
   machine: any;
-  appExists: boolean;
 }) {
   const [appName, setAppName] = useState<string>(id);
   const isEditMode = useEditorStore((s: EditorState) => s.isEditMode);

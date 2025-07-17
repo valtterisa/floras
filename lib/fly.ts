@@ -1,7 +1,5 @@
 "use server";
 
-import { createClient } from "./supabase/server";
-
 /**
  * Delete a project by its ID (UUID).
  * This will call the backend /api/delete-project endpoint with the correct parameters.
@@ -15,29 +13,6 @@ export async function deleteProjectById(id: string): Promise<{
   details?: any;
 }> {
   return { success: true, message: "Project deleted" };
-}
-
-/**
- * Check if an app is available to be allocated to a user
- * @param appName The name of the app to check (slug)
- * @returns True if the app exists, false otherwise
- */
-export async function checkAppAvailability(appName: string): Promise<boolean> {
-  // Check supabase if app is allocated to a user
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("preview_environments")
-    .select("*")
-    .eq("app_name", appName)
-    .eq("status", "active");
-
-  // If data is null app does not exist
-  if (!data) {
-    return false;
-  }
-
-  // If data is not null app exists
-  return true;
 }
 
 /**
