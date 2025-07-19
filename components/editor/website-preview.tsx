@@ -158,6 +158,20 @@ export default function WebsitePreview({
 
   const previewUrl = getPreviewUrl();
 
+  // Function to reload the iframe
+  const reloadIframe = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (iframe && url) {
+      // Simply reload the iframe by setting src to the same URL
+      // This will force a fresh load without query parameters
+      const currentSrc = iframe.src;
+      iframe.src = '';
+      setTimeout(() => {
+        iframe.src = currentSrc;
+      }, 10);
+    }
+  }, [url]);
+
   // Render fallback content when no URL is available
   if (!previewUrl) {
     return (
@@ -884,13 +898,38 @@ export default function WebsitePreview({
           </div>
         )}
         {editorState.iframeReady && (
-          <iframe
-            ref={iframeRef}
-            key={`url-${url}`}
-            src={`http://localhost:3000/api/preview/${url}`}
-            className="w-full h-full"
-            sandbox="allow-same-origin allow-scripts"
-          />
+          <div className="w-full h-full bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+
+
+            {/* Browser Address Bar */}
+            <div className="bg-gray-50 border-b border-gray-200 px-4 py-2">
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 bg-white rounded px-3 py-1 text-sm text-gray-600 border border-gray-200">
+                  {previewUrl || 'Loading...'}
+                </div>
+                <button
+                  onClick={reloadIframe}
+                  className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                  title="Refresh page"
+                >
+                  <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Browser Content Area */}
+            <div className="relative h-full">
+              <iframe
+                ref={iframeRef}
+                key={`url-${url}`}
+                src={`http://localhost:3000/api/preview/${url}`}
+                className="w-full h-full border-0"
+                sandbox="allow-same-origin allow-scripts"
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>
