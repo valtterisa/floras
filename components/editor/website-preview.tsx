@@ -120,8 +120,10 @@ export default function WebsitePreview({
   const [editorState, dispatch] = useReducer(editorReducer, initialEditorState);
 
   const selectElement = useEditorStore((s: EditorState) => s.selectElement);
-
   const elements = useEditorStore((s: EditorState) => s.elements);
+  const reloadTrigger = useEditorStore((s: EditorState) => s.reloadTrigger); // Add reload trigger
+  const isLoading = useEditorStore((s: EditorState) => s.isLoading); // Add loading state
+  const setLoading = useEditorStore((s: EditorState) => s.setLoading); // Add loading setter
 
   // Store handler references for clean removal
   const eventHandlersRef = useRef<{
@@ -171,6 +173,14 @@ export default function WebsitePreview({
       }, 10);
     }
   }, [url]);
+
+  // Handle iframe load
+  const handleIframeLoad = useCallback(() => {
+    // Initialize editor when iframe loads
+    if (editorState.iframeReady) {
+      initializeEditor();
+    }
+  }, [editorState.iframeReady]);
 
   // Render fallback content when no URL is available
   if (!previewUrl) {
@@ -790,19 +800,12 @@ export default function WebsitePreview({
     const iframe = iframeRef.current;
     if (!iframe) return;
 
-    const handleIframeLoad = () => {
-      // Initialize editor when iframe loads
-      if (editorState.iframeReady) {
-        initializeEditor();
-      }
-    };
-
     iframe.addEventListener("load", handleIframeLoad);
 
     return () => {
       iframe.removeEventListener("load", handleIframeLoad);
     };
-  }, [editorState.iframeReady]);
+  }, [handleIframeLoad]);
 
   // Sync className from store to DOM
   useEffect(() => {
@@ -852,6 +855,22 @@ export default function WebsitePreview({
     const className = el.className || "";
     useEditorStore.getState().setElementClass(editorId, className);
   }, [editorState.selectedElement]);
+
+  // Reload iframe when trigger changes
+  useEffect(() => {
+    if (reloadTrigger > 0) {
+      console.log("🔄 [WebsitePreview] Reload trigger detected, reloading iframe");
+      setLoading(true);
+      reloadIframe();
+
+      // Clear loading after a short delay to allow iframe to load
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [reloadTrigger, reloadIframe, setLoading]);
 
   if (!editorState.iframeReady) {
     return (
@@ -921,12 +940,24 @@ export default function WebsitePreview({
 
             {/* Browser Content Area */}
             <div className="relative h-full">
+              {/* Loading overlay */}
+              {isLoading && (
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-sm text-muted-foreground">Reloading website...</p>
+                  </div>
+                </div>
+              )}
+
               <iframe
                 ref={iframeRef}
-                key={`url-${url}`}
-                src={`http://localhost:3000/api/preview/${url}`}
-                className="w-full h-full border-0"
-                sandbox="allow-same-origin allow-scripts"
+                src={previewUrl}
+                className="w-full h-full border-0 rounded-3xl"
+                onLoad={handleIframeLoad}
+                onError={() => {
+                  dispatch({ type: "SET_IFRAME_ERROR", value: "Failed to load preview" });
+                }}
               />
             </div>
           </div>

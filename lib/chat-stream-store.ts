@@ -17,6 +17,7 @@ type Store = {
     updateStream: (chunk: string) => void;
     finishStream: () => void;
     clear: () => void;
+    clearStreamedContent: () => void;
 };
 
 export const useChatStreamStore = create<Store>((set, get) => ({
@@ -38,15 +39,22 @@ export const useChatStreamStore = create<Store>((set, get) => ({
     updateStream: (chunk) => {
         const currentState = get();
         console.log("📝 [ChatStore] Updating stream, current length:", currentState.streamedContent.length, "new chunk length:", chunk.length);
+        console.log("📝 [ChatStore] New chunk preview:", chunk.substring(0, 50) + "...");
         set((s) => ({ streamedContent: s.streamedContent + chunk }));
+        console.log("📝 [ChatStore] Stream updated, new total length:", get().streamedContent.length);
     },
     finishStream: () => {
         const currentState = get();
         console.log("🏁 [ChatStore] Finishing stream, final content length:", currentState.streamedContent.length);
+        // Don't clear streamedContent here - it needs to be preserved for saving
         set({ isStreaming: false });
     },
     clear: () => {
         console.log("🗑️ [ChatStore] Clearing all state");
         set({ messages: [], streamedContent: "", isStreaming: false });
+    },
+    clearStreamedContent: () => {
+        console.log("🗑️ [ChatStore] Clearing streamed content");
+        set({ streamedContent: "" });
     },
 })); 

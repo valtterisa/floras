@@ -17,6 +17,7 @@ import { useChatStreamStore, ChatMessage } from "@/lib/chat-stream-store";
 interface ChatInterfaceProps {
   className?: string;
   onSendMessage?: (message: string) => Promise<any>;
+  onAIFinish?: () => void; // Add callback for when AI finishes
   appName?: string;
   userId?: string;
   isAutoProcessing?: boolean;
@@ -25,6 +26,7 @@ interface ChatInterfaceProps {
 export default function ChatInterface({
   className,
   onSendMessage,
+  onAIFinish,
   appName,
   userId,
   isAutoProcessing = false,
@@ -50,6 +52,17 @@ export default function ChatInterface({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamedContent]);
 
+  // Detect when AI finishes streaming and call callback
+  useEffect(() => {
+    if (!isStreaming && streamedContent && onAIFinish) {
+      // Small delay to ensure content is fully processed
+      const timer = setTimeout(() => {
+        onAIFinish();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isStreaming, streamedContent, onAIFinish]);
+
   // Auto-grow textarea height
   useEffect(() => {
     if (textareaRef.current && shadowRef.current) {
@@ -74,12 +87,15 @@ export default function ChatInterface({
             if (!inputValue.trim() || isStreaming || isAutoProcessing) {
               return;
             }
+
+            // Clear input immediately
+            const messageToSend = inputValue;
+            setInputValue("");
+
             try {
-              if (onSendMessage) await onSendMessage(inputValue);
+              if (onSendMessage) await onSendMessage(messageToSend);
             } catch (error) {
               console.error("Error in onSendMessage:", error);
-            } finally {
-              setInputValue("");
             }
           }}
           className="flex items-end p-4 bg-background border-t"
@@ -129,25 +145,39 @@ export default function ChatInterface({
               className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.isUser
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                }`}
+                className={`max-w-[80%] rounded-lg p-3 ${message.isUser
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
+                  }`}
               >
-                <div className="text-sm">
+                <div className="text-sm prose prose-sm max-w-none">
                   {message.isUser ? (
                     <div className="whitespace-pre-wrap">{message.content}</div>
                   ) : (
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                    <ReactMarkdown
+                      components={{
+                        h1: ({ node, ...props }) => <h1 className="text-lg font-bold mb-2" {...props} />,
+                        h2: ({ node, ...props }) => <h2 className="text-base font-semibold mb-2" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mb-1" {...props} />,
+                        p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-2" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-2" {...props} />,
+                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+                        em: ({ node, ...props }) => <em className="italic" {...props} />,
+                        code: ({ node, ...props }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs" {...props} />,
+                        pre: ({ node, ...props }) => <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mb-2" {...props} />,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
                   )}
                 </div>
                 <div
-                  className={`text-xs mt-1 ${
-                    message.isUser
-                      ? "text-primary-foreground/70"
-                      : "text-muted-foreground"
-                  }`}
+                  className={`text-xs mt-1 ${message.isUser
+                    ? "text-primary-foreground/70"
+                    : "text-muted-foreground"
+                    }`}
                 >
                   {new Date(message.timestamp).toLocaleTimeString()}
                 </div>
@@ -159,7 +189,25 @@ export default function ChatInterface({
           {streamedContent ? (
             <div className="flex justify-start">
               <div className="max-w-[80%] rounded-lg p-3 bg-muted">
-                <ReactMarkdown>{streamedContent}</ReactMarkdown>
+                <div className="text-sm prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      h1: ({ node, ...props }) => <h1 className="text-lg font-bold mb-2" {...props} />,
+                      h2: ({ node, ...props }) => <h2 className="text-base font-semibold mb-2" {...props} />,
+                      h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mb-1" {...props} />,
+                      p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                      ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-2" {...props} />,
+                      ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-2" {...props} />,
+                      li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                      strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+                      em: ({ node, ...props }) => <em className="italic" {...props} />,
+                      code: ({ node, ...props }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs" {...props} />,
+                      pre: ({ node, ...props }) => <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mb-2" {...props} />,
+                    }}
+                  >
+                    {streamedContent}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           ) : null}

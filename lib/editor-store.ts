@@ -34,6 +34,8 @@ export interface EditorState {
   elements: Record<string, EditorElement>;
   history: EditorSnapshot[];
   future: EditorSnapshot[];
+  reloadTrigger: number; // Add reload trigger
+  isLoading: boolean; // Add loading state
   setEditMode: (edit: boolean) => void;
   selectElement: (id: string | null) => void;
   setElementClass: (id: string, className: string) => void;
@@ -46,6 +48,9 @@ export interface EditorState {
   pushHistory: (snapshot: EditorSnapshot) => void;
   undo: () => void;
   redo: () => void;
+  triggerReload: () => void; // Add reload trigger function
+  clearReloadTrigger: () => void; // Add clear reload trigger function
+  setLoading: (loading: boolean) => void; // Add loading setter
   /**
    * Remove all classes from a given group (e.g., all border-*, shadow-*, p-*, m-*, rounded-*, etc.)
    */
@@ -62,6 +67,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   elements: {},
   history: [],
   future: [],
+  reloadTrigger: 0, // Initialize reload trigger
+  isLoading: false, // Initialize loading state
   setEditMode: (edit) => set({ isEditMode: edit }),
   selectElement: (id) =>
     set((state) => {
@@ -180,6 +187,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         },
       };
     }),
+  triggerReload: () => set((state) => ({ reloadTrigger: state.reloadTrigger + 1 })), // Increment reload trigger
+  clearReloadTrigger: () => set((state) => ({ reloadTrigger: 0 })), // Clear reload trigger
+  setLoading: (loading) => set({ isLoading: loading }), // Set loading state
 }));
 
 // Add a helper to add a new element with tagName

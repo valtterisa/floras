@@ -46,8 +46,22 @@ export default function EditorPageClient({
   const { sendMessage: sendStreamingMessage, isLoading: isStreamingLoading } =
     useStreamingChat();
 
+  // Editor store for reload trigger
+  const triggerReload = useEditorStore((s: EditorState) => s.triggerReload);
+
   // Get the actual user ID from the user object structure
   const userId = user?.id;
+
+  // Callback for when AI finishes streaming
+  const handleAIFinish = useCallback(() => {
+    console.log("🎯 [EditorPageClient] AI finished, triggering iframe reload");
+    triggerReload();
+
+    // Clear loading state after a delay to allow iframe to load
+    setTimeout(() => {
+      useEditorStore.getState().setLoading(false);
+    }, 3000);
+  }, [triggerReload]);
 
   // Debug logging for props and state
   useEffect(() => {
@@ -81,6 +95,8 @@ export default function EditorPageClient({
 
   const handleSendMessage = useCallback(
     async (message: string) => {
+      console.log("🚀 [handleSendMessage] Starting message processing:", message.substring(0, 50) + "...");
+
       const userMsg = {
         id: Date.now().toString(),
         content: message,
@@ -98,34 +114,76 @@ export default function EditorPageClient({
         );
         if (!saveResult.success) {
           console.error("Failed to save user message:", saveResult.error);
+        } else {
+          console.log("✅ [handleSendMessage] User message saved to Redis");
         }
       }
 
       // Step 1: Stream the analysis to chat interface and trigger deployment via backend
+      console.log("🌊 [handleSendMessage] Starting streaming process...");
       await sendStreamingMessage(message, id, machine.id);
 
-      // Show AI response in chat
-      const aiMsg = {
-        id: Date.now().toString(),
-        content: streamedContent || "Analysis completed and site deployed.",
-        isUser: false,
-        timestamp: new Date().toISOString(),
-      };
-      addMessage(aiMsg);
-      if (userId && id) {
-        const aiSaveResult = await sendChatMessage(
-          userId,
-          id,
-          aiMsg.content,
-          false
-        );
-        if (!aiSaveResult.success) {
-          console.error("Failed to save AI message:", aiSaveResult.error);
+      // Step 2: Get the final streamed content and save it as an AI message
+      const finalStreamedContent = useChatStreamStore.getState().streamedContent;
+      console.log("📝 [handleSendMessage] Final streamed content length:", finalStreamedContent?.length || 0);
+      console.log("📝 [handleSendMessage] Final streamed content preview:", finalStreamedContent?.substring(0, 100) + "...");
+
+      if (finalStreamedContent && finalStreamedContent.trim()) {
+        console.log("💾 [handleSendMessage] Saving AI response to chat history");
+        const aiMsg = {
+          id: Date.now().toString(),
+          content: finalStreamedContent,
+          isUser: false,
+          timestamp: new Date().toISOString(),
+        };
+        addMessage(aiMsg);
+
+        if (userId && id) {
+          const aiSaveResult = await sendChatMessage(
+            userId,
+            id,
+            aiMsg.content,
+            false
+          );
+          if (!aiSaveResult.success) {
+            console.error("Failed to save AI message:", aiSaveResult.error);
+          } else {
+            console.log("✅ [handleSendMessage] AI message saved to Redis");
+          }
+        }
+
+        // Clear the streamed content after saving it
+        useChatStreamStore.getState().clearStreamedContent();
+        console.log("🗑️ [handleSendMessage] Cleared streamed content");
+      } else {
+        console.warn("⚠️ [handleSendMessage] No streamed content found, using fallback message");
+        // Fallback message if no content was streamed
+        const aiMsg = {
+          id: Date.now().toString(),
+          content: "Analysis completed and site deployed.",
+          isUser: false,
+          timestamp: new Date().toISOString(),
+        };
+        addMessage(aiMsg);
+
+        if (userId && id) {
+          const aiSaveResult = await sendChatMessage(
+            userId,
+            id,
+            aiMsg.content,
+            false
+          );
+          if (!aiSaveResult.success) {
+            console.error("Failed to save AI message:", aiSaveResult.error);
+          } else {
+            console.log("✅ [handleSendMessage] Fallback AI message saved to Redis");
+          }
         }
       }
 
       // Clear auto-processing state
       setIsAutoProcessing(false);
+      console.log("🏁 [handleSendMessage] Message processing completed");
     },
     [
       userId,
@@ -134,7 +192,6 @@ export default function EditorPageClient({
       addMessage,
       sendChatMessage,
       sendStreamingMessage,
-      streamedContent,
     ]
   );
 
@@ -199,25 +256,32 @@ export default function EditorPageClient({
     } else if (!prompt && !hasAutoTriggered) {
       // If no prompt exists, show a welcome message and suggest starting
       console.log(
-        "👋 [EditorPageClient] No prompt found, showing welcome message"
+        "👋 [EditorPageClient] No prompt found, checking if welcome message needed"
       );
 
       setHasAutoTriggered(true);
 
-      // @TODO: This message shows up on every refresh. We should only show it once.
-      const welcomeMsg = {
-        id: Date.now().toString(),
-        content:
-          "👋 Welcome to Builddrr! I'm your AI website builder. Tell me what kind of website you'd like to create, and I'll build it for you in real-time. For example: 'Create a landing page for a coffee shop' or 'Build a portfolio website for a photographer'.",
-        isUser: false,
-        timestamp: new Date().toISOString(),
-      };
+      // Only show welcome message if there are no existing messages
+      const existingMessages = useChatStreamStore.getState().messages;
+      if (existingMessages.length === 0) {
+        console.log("👋 [EditorPageClient] No existing messages, showing welcome message");
 
-      console.log("💬 [EditorPageClient] Adding welcome message to chat");
-      addMessage(welcomeMsg);
-      if (userId && id) {
-        console.log("💾 [EditorPageClient] Saving welcome message to Redis");
-        sendChatMessage(userId, id, welcomeMsg.content, false);
+        const welcomeMsg = {
+          id: Date.now().toString(),
+          content:
+            "👋 Welcome to Builddrr! I'm your AI website builder. Tell me what kind of website you'd like to create, and I'll build it for you in real-time. For example: 'Create a landing page for a coffee shop' or 'Build a portfolio website for a photographer'.",
+          isUser: false,
+          timestamp: new Date().toISOString(),
+        };
+
+        console.log("💬 [EditorPageClient] Adding welcome message to chat");
+        addMessage(welcomeMsg);
+        if (userId && id) {
+          console.log("💾 [EditorPageClient] Saving welcome message to Redis");
+          sendChatMessage(userId, id, welcomeMsg.content, false);
+        }
+      } else {
+        console.log("⏭️ [EditorPageClient] Existing messages found, skipping welcome message");
       }
     } else {
       console.log("⏭️ [EditorPageClient] Skipping auto-trigger:", {
@@ -277,6 +341,7 @@ export default function EditorPageClient({
             >
               <ChatInterface
                 onSendMessage={handleSendMessage}
+                onAIFinish={handleAIFinish}
                 appName={id}
                 userId={userId}
                 isAutoProcessing={isAutoProcessing}

@@ -290,7 +290,39 @@ ${Object.keys(currentFiles)
       .map((path) => `- ${path}`)
       .join("\n")}
 
-Based on the user's request, first narrate your reasoning and plan in a <component-analysis>...</component-analysis> block (markdown, conversational, detailed). Then, determine which files need to be updated, created, renamed, or deleted. When responding, use the format:
+Based on the user's request, provide a clear explanation of what you're going to do in markdown format, then determine which files need to be updated, created, renamed, or deleted.
+
+## Response Format
+
+Start with your markdown explanation for the user, then include file operations:
+
+### Markdown Explanation (for chat)
+Explain your process in markdown format that will be displayed to the user:
+
+**Example:**
+\`\`\`markdown
+## Analyzing Your Request
+
+I understand you want to update your website. Let me analyze what needs to be changed...
+
+### What I'll Update:
+- [Component 1] - [specific changes]
+- [Component 2] - [specific changes]
+- [Component 3] - [specific changes]
+
+### Implementation Plan:
+1. Update the main layout structure
+2. Modify the hero section
+3. Add new features
+4. Ensure responsive design
+
+## Starting Implementation
+
+Now I'll begin updating your website...
+\`\`\`
+
+### File Operations (for file system)
+After your markdown explanation, include file operations in this format:
 
 <builddrr-code>
 <builddrr-write file="/path/to/file.tsx">
@@ -307,7 +339,6 @@ package-name
 </builddrr-code>
 
 Always provide complete file content for written or updated files, not just changes.
-Respond ONLY with the <builddrr-code> block and file operations.
 `;
 
   const result = streamText({
@@ -326,10 +357,11 @@ Respond ONLY with the <builddrr-code> block and file operations.
 
   const reader = result.textStream.getReader();
   let buffer = "";
-  let inBlock = false;
+  let inMarkdownSection = false;
   let done = false;
   let codeBuffer = "";
   let codeBlockStarted = false;
+  let markdownBuffer = "";
 
   console.log("[generateFileUpdatesStream] Streaming started");
   while (!done) {
@@ -338,55 +370,54 @@ Respond ONLY with the <builddrr-code> block and file operations.
     if (value) buffer += value;
     console.log("[generateFileUpdatesStream] Buffer so far:", buffer);
 
-    // Stream <component-analysis> block
-    while (true) {
-      if (!inBlock) {
-        const startIdx = buffer.indexOf("<component-analysis>");
-        if (startIdx !== -1) {
-          inBlock = true;
-          buffer = buffer.slice(startIdx + "<component-analysis>".length);
-          console.log(
-            "[generateFileUpdatesStream] <component-analysis> block started"
-          );
-        } else {
-          break;
-        }
+    // Check if we're entering a markdown section (before <builddrr-code>)
+    if (!inMarkdownSection && !buffer.includes("<builddrr-code")) {
+      inMarkdownSection = true;
+      markdownBuffer = buffer;
+    }
+
+    // If we find a <builddrr-code> block, process the markdown that came before it
+    if (inMarkdownSection && buffer.includes("<builddrr-code")) {
+      const codeStartIndex = buffer.indexOf("<builddrr-code");
+      const markdownContent = buffer.substring(0, codeStartIndex).trim();
+
+      if (markdownContent) {
+        console.log("[generateFileUpdatesStream] Yielding markdown content:", markdownContent.substring(0, 100) + "...");
+        yield { type: "analysis", content: markdownContent };
       }
-      if (inBlock) {
-        const endIdx = buffer.indexOf("</component-analysis>");
-        if (endIdx !== -1) {
-          const chunk = buffer.slice(0, endIdx);
-          if (chunk) {
-            console.log(
-              "[generateFileUpdatesStream] Yielding analysis chunk:",
-              chunk
-            );
-            yield { type: "analysis", content: chunk };
-          }
-          buffer = buffer.slice(endIdx + "</component-analysis>".length);
-          inBlock = false;
-          codeBlockStarted = true;
-          codeBuffer += buffer;
-          buffer = "";
-          break;
-        } else {
-          if (buffer) {
-            console.log(
-              "[generateFileUpdatesStream] Yielding analysis buffer:",
-              buffer
-            );
-            yield { type: "analysis", content: buffer };
-            buffer = "";
-          }
-          break;
-        }
+
+      inMarkdownSection = false;
+      markdownBuffer = "";
+      codeBlockStarted = true;
+      codeBuffer += buffer.substring(codeStartIndex);
+      buffer = "";
+    }
+
+    // If we're still in markdown section and have accumulated content, yield it
+    if (inMarkdownSection && markdownBuffer.length > 0) {
+      const content = markdownBuffer.trim();
+      if (content && content.length > 10) {
+        console.log("[generateFileUpdatesStream] Yielding markdown buffer:", content.substring(0, 100) + "...");
+        yield { type: "analysis", content };
+        markdownBuffer = "";
       }
     }
+
     if (codeBlockStarted && buffer) {
       codeBuffer += buffer;
       buffer = "";
     }
   }
+
+  // After stream ends, check for any remaining markdown content
+  if (inMarkdownSection && markdownBuffer.trim().length > 0) {
+    const content = markdownBuffer.trim();
+    if (content && content.length > 10) {
+      console.log("[generateFileUpdatesStream] Yielding final markdown content:", content.substring(0, 100) + "...");
+      yield { type: "analysis", content };
+    }
+  }
+
   console.log(
     "[generateFileUpdatesStream] Streaming done. codeBuffer:",
     codeBuffer
@@ -485,31 +516,53 @@ export async function* generateAIResponseStream(
   const MAX_BLOCK_SIZE = 1024 * 1024; // 1MB per block
   let unexpectedContentBuffer = "";
   let foundCodeBlock = false;
+  let inMarkdownSection = false;
+  let markdownBuffer = "";
 
   // Regex for <builddrr-code>...</builddrr-code>
   const codeBlockRegex = /<builddrr-code\s*>([\s\S]*?)<\/builddrr-code\s*>/gi;
   // Regex for <builddrr-write file="...">...</builddrr-write>
   const writeBlockRegex =
     /<builddrr-write\s+file="([^"]+)">([\s\S]*?)<\/builddrr-write\s*>/gi;
-  // Regex for <component-analysis>...</component-analysis>
-  const analysisBlockRegex =
-    /<component-analysis>([\s\S]*?)<\/component-analysis>/gi;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += value;
 
-    // Extract all <component-analysis> blocks
-    let match;
-    while ((match = analysisBlockRegex.exec(buffer)) !== null) {
-      const content = match[1];
-      if (content && content.trim()) {
+    console.log("📝 [generateAIResponseStream] Received chunk:", value.substring(0, 50) + "...");
+
+    // Check if we're entering a markdown section (before <builddrr-code>)
+    if (!inMarkdownSection && !buffer.includes("<builddrr-code")) {
+      inMarkdownSection = true;
+      markdownBuffer = buffer;
+      console.log("📝 [generateAIResponseStream] Entered markdown section");
+    }
+
+    // If we find a <builddrr-code> block, process the markdown that came before it
+    if (inMarkdownSection && buffer.includes("<builddrr-code")) {
+      const codeStartIndex = buffer.indexOf("<builddrr-code");
+      const markdownContent = buffer.substring(0, codeStartIndex).trim();
+
+      if (markdownContent) {
+        console.log("📝 [generateAIResponseStream] Yielding markdown before code block:", markdownContent.substring(0, 100) + "...");
+        yield { type: "analysis", content: markdownContent };
+      }
+
+      inMarkdownSection = false;
+      markdownBuffer = "";
+      console.log("📝 [generateAIResponseStream] Exited markdown section, entered code section");
+    }
+
+    // Stream markdown content immediately as it comes in
+    if (inMarkdownSection && markdownBuffer.length > 0) {
+      const content = markdownBuffer.trim();
+      if (content && content.length > 10) { // Only yield if we have substantial content
+        console.log("📝 [generateAIResponseStream] Yielding streaming markdown:", content.substring(0, 100) + "...");
         yield { type: "analysis", content };
+        markdownBuffer = "";
       }
     }
-    buffer = buffer.replace(analysisBlockRegex, "");
-    analysisBlockRegex.lastIndex = 0;
 
     // Extract all <builddrr-code> blocks
     let codeMatch;
@@ -523,6 +576,16 @@ export async function* generateAIResponseStream(
       while ((writeMatch = writeBlockRegex.exec(codeContent)) !== null) {
         const file = writeMatch[1];
         let content = writeMatch[2];
+
+        // Show user-friendly feedback for each file being created
+        const fileName = file.split('/').pop()?.replace('.tsx', '').replace('.ts', '') || 'component';
+        const friendlyName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
+
+        yield {
+          type: "analysis",
+          content: `\n\n**📝 Creating ${friendlyName}...**\n\n`
+        };
+
         if (content.length > MAX_BLOCK_SIZE) {
           content = content.slice(0, MAX_BLOCK_SIZE);
           yield {
@@ -542,21 +605,22 @@ export async function* generateAIResponseStream(
     // Optionally, handle unexpected content outside tags
     if (
       buffer.length > 10000 &&
-      !buffer.match(/<builddrr-code|<component-analysis/)
+      !buffer.match(/<builddrr-code/)
     ) {
       unexpectedContentBuffer += buffer.slice(0, 500);
       buffer = buffer.slice(-500); // keep last 500 chars
     }
   }
 
-  // After stream ends, check for any remaining complete blocks in buffer
-  let match;
-  while ((match = analysisBlockRegex.exec(buffer)) !== null) {
-    const content = match[1];
-    if (content && content.trim()) {
+  // After stream ends, check for any remaining markdown content
+  if (inMarkdownSection && markdownBuffer.trim().length > 0) {
+    const content = markdownBuffer.trim();
+    if (content && content.length > 10) {
       yield { type: "analysis", content };
     }
   }
+
+  // After stream ends, check for any remaining complete blocks in buffer
   let codeMatch;
   while ((codeMatch = codeBlockRegex.exec(buffer)) !== null) {
     foundCodeBlock = true;
@@ -601,6 +665,19 @@ export async function* generateAIResponseStream(
 
   // After streaming, deploy if files were collected
   if (Object.keys(collectedFiles).length > 0) {
+    console.log(`[generateAIResponseStream] Deploying ${Object.keys(collectedFiles).length} files:`, Object.keys(collectedFiles));
+
+    // Create user-friendly component names
+    const friendlyComponents = Object.keys(collectedFiles).map(file => {
+      const fileName = file.split('/').pop()?.replace('.tsx', '').replace('.ts', '') || 'component';
+      return fileName.charAt(0).toUpperCase() + fileName.slice(1);
+    });
+
+    yield {
+      type: "analysis",
+      content: `\n\n**🚀 Deploying your website...**\n\nBuilding: ${friendlyComponents.join(', ')}\n\n`
+    };
+
     yield {
       type: "progress",
       status: "deploying",
@@ -620,6 +697,12 @@ export async function* generateAIResponseStream(
           status: "deployed",
           files: Object.keys(collectedFiles),
         };
+
+        // Add final summary
+        yield {
+          type: "analysis",
+          content: `\n\n**✅ Your website is ready!**\n\nI've created a beautiful website with:\n${friendlyComponents.map(component => `- ${component}`).join('\n')}\n\nYour website is now live and ready to view! 🎉\n\n`
+        };
       }
       // Upload files to GitHub. Not awaited so it doesn't block the thread.
       createRepoFromTemplate(appName);
@@ -633,6 +716,10 @@ export async function* generateAIResponseStream(
     console.log(
       `[generateAIResponseStream] No files collected, skipping deployment`
     );
+    yield {
+      type: "warning",
+      message: "I couldn't create any website components. Please try asking again with more specific details about what you'd like me to build for you."
+    };
   }
 }
 

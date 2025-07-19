@@ -62,17 +62,24 @@ export const useStreamingChat = () => {
 
                                 if (data.type === 'analysis') {
                                     console.log(`📝 [useStreamingChat] Processing analysis chunk #${chunkCount}:`, data.content?.substring(0, 30) + "...");
+                                    // Stream each chunk immediately instead of accumulating
                                     updateStream(data.content || '');
+                                    console.log(`📝 [useStreamingChat] Updated stream with content length:`, (data.content || '').length);
                                 } else if (data.type === 'progress') {
                                     console.log(`🚀 [useStreamingChat] Deployment progress:`, data.status, data.files);
                                     if (data.status === 'deploying') {
-                                        updateStream(`\n\n**🚀 Deploying files:** ${data.files?.join(', ') || 'Unknown files'}`);
+                                        updateStream(`\n\n**🚀 Deploying your website...**\n\n`);
                                     } else if (data.status === 'deployed') {
-                                        updateStream(`\n\n**✅ Deployment completed successfully!** Files deployed: ${data.files?.join(', ') || 'Unknown files'}`);
+                                        updateStream(`\n\n**✅ Deployment completed successfully!**\n\n`);
                                     }
                                 } else if (data.type === 'error') {
                                     console.error('❌ [useStreamingChat] Streaming error:', data.error);
-                                    updateStream(`\n\n**Error:** ${data.error}`);
+                                    updateStream(`\n\n**Error:** ${data.error}\n\n`);
+                                } else if (data.type === 'warning') {
+                                    console.warn('⚠️ [useStreamingChat] Streaming warning:', data.message);
+                                    updateStream(`\n\n**Warning:** ${data.message}\n\n`);
+                                } else {
+                                    console.log(`🔍 [useStreamingChat] Unknown data type:`, data.type, data);
                                 }
                             } catch (parseError) {
                                 console.error('❌ [useStreamingChat] Failed to parse streaming data:', parseError, 'Line:', line);
