@@ -13,15 +13,40 @@ export default function PromptTool({ user }: { user: any }) {
   const [prompt, setPrompt] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Listen for route changes to control loading state
+  useEffect(() => {
+    // Next.js App Router does not expose router.events, so we use window events
+    const handleStart = () => setIsLoading(true);
+    const handleStop = () => setIsLoading(false);
+
+    window.addEventListener('next-route-start', handleStart);
+    window.addEventListener('next-route-complete', handleStop);
+    window.addEventListener('next-route-error', handleStop);
+
+    return () => {
+      window.removeEventListener('next-route-start', handleStart);
+      window.removeEventListener('next-route-complete', handleStop);
+      window.removeEventListener('next-route-error', handleStop);
+    };
+  }, []);
 
   const handleSend = async () => {
+    if (isLoading) return; // Prevent double submit
+    setIsLoading(true);
+
     const supabase = createClient();
 
-    if (!prompt.trim()) return;
+    if (!prompt.trim()) {
+      setIsLoading(false);
+      return;
+    }
     // Check auth before proceeding
     if (!user) {
       localStorage.setItem("builddrr_prompt", prompt);
       setShowAuthModal(true);
+      setIsLoading(false);
       return;
     }
 
@@ -50,8 +75,14 @@ export default function PromptTool({ user }: { user: any }) {
       const [websiteUpdate, previewUpdate] = await Promise.all([
         supabase
           .from("websites")
-          .update({ preview_id: preview_id })
-          .eq("user_id", user.id),
+          .insert({
+            preview_id: preview_id,
+            user_id: user.id,
+            name: app_name,
+            created_at: new Date().toISOString(),
+          })
+          .select()
+          .single(),
         supabase
           .from("preview_environments")
           .update({
@@ -66,6 +97,8 @@ export default function PromptTool({ user }: { user: any }) {
       if (previewUpdate.error) throw previewUpdate.error;
 
       console.log("redirecting to editor:", app_name);
+      // Manually dispatch a route start event
+      window.dispatchEvent(new Event('next-route-start'));
       router.push(`/dashboard/website/${app_name}/editor`);
     } catch (error) {
       console.error("Error in handleSend:", error);
@@ -74,6 +107,7 @@ export default function PromptTool({ user }: { user: any }) {
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
+      setIsLoading(false);
     }
   };
 
@@ -166,6 +200,7 @@ export default function PromptTool({ user }: { user: any }) {
             placeholder={displayedPlaceholder}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
+            disabled={isLoading}
           />
           <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2">
@@ -182,10 +217,16 @@ export default function PromptTool({ user }: { user: any }) {
               <Button
                 size="icon"
                 className="rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow h-7 w-7"
-                disabled={!prompt.trim()}
+                disabled={!prompt.trim() || isLoading}
                 onClick={handleSend}
               >
-                <ArrowUpRight className="h-5 w-5" />
+                {isLoading ? (
+                  <span className="h-5 w-5 flex items-center justify-center">
+                    <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  </span>
+                ) : (
+                  <ArrowUpRight className="h-5 w-5" />
+                )}
               </Button>
             </div>
           </div>
