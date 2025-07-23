@@ -32,7 +32,7 @@ const BillingClient: React.FC<BillingClientProps> = ({
       <div className="space-y-6 pt-4">
         <Card>
           <CardHeader>
-            <CardTitle>Available Plans</CardTitle>
+            <CardTitle>Manage Plans</CardTitle>
             <CardDescription>Upgrade or change your plan.</CardDescription>
           </CardHeader>
           <CardContent>
