@@ -1,11 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import Footer from "@/components/layout/footer";
 import { User } from "@supabase/supabase-js";
 import { SiteHeader } from "@/components/site-header";
 
@@ -32,6 +31,55 @@ export default function CreatePromptClient({ user }: { user: User }) {
     const [prompt, setPrompt] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+
+    const promptPlaceholders = [
+        "Make a landing page for my new product",
+        "I need a website for my cafeteria",
+        "Create a landing page for my software startup",
+        "Make a cool portfolio for my photography business",
+    ];
+    const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+    const [displayedPlaceholder, setDisplayedPlaceholder] = useState("");
+    const [isErasing, setIsErasing] = useState(false);
+
+    // Rotating placeholder effect
+    useEffect(() => {
+        const currentPrompt = promptPlaceholders[currentPromptIndex];
+        let timeout: NodeJS.Timeout;
+
+        if (!isErasing && displayedPlaceholder.length < currentPrompt.length) {
+            // Typing
+            timeout = setTimeout(() => {
+                setDisplayedPlaceholder(
+                    currentPrompt.slice(0, displayedPlaceholder.length + 1)
+                );
+            }, 20);
+        } else if (
+            !isErasing && displayedPlaceholder.length === currentPrompt.length
+        ) {
+            // Wait before erasing
+            timeout = setTimeout(() => {
+                setIsErasing(true);
+            }, 2000);
+        } else if (isErasing && displayedPlaceholder.length > 0) {
+            // Erasing
+            timeout = setTimeout(() => {
+                setDisplayedPlaceholder(
+                    currentPrompt.slice(0, displayedPlaceholder.length - 1)
+                );
+            }, 10);
+        } else if (isErasing && displayedPlaceholder.length === 0) {
+            // Move to next prompt
+            timeout = setTimeout(() => {
+                setIsErasing(false);
+                setCurrentPromptIndex(
+                    (prevIndex) => (prevIndex + 1) % promptPlaceholders.length
+                );
+            }, 100);
+        }
+
+        return () => clearTimeout(timeout);
+    }, [displayedPlaceholder, isErasing, currentPromptIndex, promptPlaceholders]);
 
     const handleSend = async () => {
         if (isLoading) return;
@@ -98,7 +146,7 @@ export default function CreatePromptClient({ user }: { user: User }) {
     return (
         <>
             <SiteHeader title="Create Website" />
-            <div className="h-full w-full flex flex-col items-center justify-center pb-8 pt-12 md:pt-8 px-2 relative">
+            <div className="h-full w-full flex flex-col items-center justify-center relative">
                 <div className="relative z-10 w-full flex flex-col items-center">
 
                     <p className="py-2 text-base md:text-lg text-gray-500 text-center mb-4 max-w-xl">
@@ -107,7 +155,7 @@ export default function CreatePromptClient({ user }: { user: User }) {
                     <div className="w-full max-w-xl bg-gray-100 rounded-xl shadow p-4 flex flex-col gap-2">
                         <textarea
                             className="w-full bg-transparent text-gray-900 text-sm md:text-base resize-none outline-none border-none min-h-[5rem] placeholder:text-gray-400"
-                            placeholder="Describe your website..."
+                            placeholder={displayedPlaceholder}
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
                             disabled={isLoading}
