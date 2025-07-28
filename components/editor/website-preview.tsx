@@ -146,14 +146,23 @@ export default function WebsitePreview({
   const getPreviewUrl = useCallback(() => {
     // If we have a machine with a URL property, use it
     if (machine && machine.ipv4) {
+      console.log("🔍 [WebsitePreview] Machine found with ipv4:", machine.ipv4);
       return `http://${machine.ipv4}`;
     }
 
     // If we have an initial URL that's not "new", use the preview endpoint
     if (initialUrl && initialUrl !== "new") {
+      console.log(
+        "🔍 [WebsitePreview] Using preview endpoint for:",
+        initialUrl
+      );
       return `/api/preview/${initialUrl}`;
     }
 
+    console.log("❌ [WebsitePreview] No valid preview URL found:", {
+      machine,
+      initialUrl,
+    });
     // Return null if no valid URL can be determined
     return null;
   }, [machine, initialUrl]);
@@ -167,7 +176,7 @@ export default function WebsitePreview({
       // Simply reload the iframe by setting src to the same URL
       // This will force a fresh load without query parameters
       const currentSrc = iframe.src;
-      iframe.src = '';
+      iframe.src = "";
       setTimeout(() => {
         iframe.src = currentSrc;
       }, 10);
@@ -759,9 +768,29 @@ export default function WebsitePreview({
     if (!url) return;
     dispatch({ type: "SET_IFRAME_READY", value: false });
     dispatch({ type: "SET_IFRAME_ERROR", value: null });
+
     const checkReady = async () => {
       try {
+        // First check if we have a machine with ipv4 - if so, use direct URL
+        if (machine && machine.ipv4) {
+          console.log(
+            "🔍 [WebsitePreview] Using direct machine URL:",
+            `http://${machine.ipv4}`
+          );
+          dispatch({ type: "SET_IFRAME_READY", value: true });
+          setTimeout(() => {
+            if (!cancelled) initializeEditor();
+          }, 500);
+          return;
+        }
+
+        // Otherwise, poll the preview endpoint
         const res = await fetch(`/api/preview/${url}/`, { method: "GET" });
+        console.log(
+          "🔍 [WebsitePreview] Preview endpoint response:",
+          res.status
+        );
+
         if (res.status === 200) {
           if (!cancelled) {
             dispatch({ type: "SET_IFRAME_READY", value: true });
@@ -772,9 +801,17 @@ export default function WebsitePreview({
           }
         } else if (res.status === 202) {
           // Not ready, poll again
+          console.log(
+            "⏳ [WebsitePreview] Preview not ready, polling again..."
+          );
           setTimeout(checkReady, 1500);
         } else {
           const data = await res.json().catch(() => ({}));
+          console.error(
+            "❌ [WebsitePreview] Preview endpoint error:",
+            res.status,
+            data
+          );
           if (!cancelled)
             dispatch({
               type: "SET_IFRAME_ERROR",
@@ -782,6 +819,7 @@ export default function WebsitePreview({
             });
         }
       } catch (err: any) {
+        console.error("❌ [WebsitePreview] Preview check failed:", err);
         if (!cancelled)
           dispatch({
             type: "SET_IFRAME_ERROR",
@@ -793,7 +831,7 @@ export default function WebsitePreview({
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, machine]);
 
   // Add event listener for iframe load
   useEffect(() => {
@@ -861,23 +899,32 @@ export default function WebsitePreview({
     console.log("🔍 [WebsitePreview] Reload trigger effect:", {
       reloadTrigger,
       hasReloadIframe: !!reloadIframe,
-      hasSetLoading: !!setLoading
+      hasSetLoading: !!setLoading,
+      previewUrl,
+      machineState: machine,
     });
 
     if (reloadTrigger > 0) {
-      console.log("🔄 [WebsitePreview] Reload trigger detected, reloading iframe");
+      console.log(
+        "🔄 [WebsitePreview] Reload trigger detected, reloading iframe"
+      );
       setLoading(true);
+
+      // Reset iframe ready state to force re-initialization
+      dispatch({ type: "SET_IFRAME_READY", value: false });
+      dispatch({ type: "SET_IFRAME_ERROR", value: null });
+
       reloadIframe();
 
       // Clear loading after a short delay to allow iframe to load
       const timer = setTimeout(() => {
         console.log("🔄 [WebsitePreview] Clearing loading state");
         setLoading(false);
-      }, 2000);
+      }, 3000); // Increased timeout for better reliability
 
       return () => clearTimeout(timer);
     }
-  }, [reloadTrigger, reloadIframe, setLoading]);
+  }, [reloadTrigger, reloadIframe, setLoading, previewUrl, machine]);
 
   if (!editorState.iframeReady) {
     return (
@@ -925,8 +972,6 @@ export default function WebsitePreview({
         )}
         {editorState.iframeReady && (
           <div className="w-full h-full bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-
-
             {/* Browser Address Bar */}
             <div className="bg-gray-50 border-b border-gray-200 px-4 py-2">
               <div className="flex items-center space-x-2">
@@ -939,7 +984,11 @@ export default function WebsitePreview({
                   title="Refresh page"
                 >
                   <svg fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               </div>
@@ -952,7 +1001,9 @@ export default function WebsitePreview({
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <p className="text-sm text-muted-foreground">Reloading website...</p>
+                    <p className="text-sm text-muted-foreground">
+                      Reloading website...
+                    </p>
                   </div>
                 </div>
               )}
@@ -963,7 +1014,10 @@ export default function WebsitePreview({
                 className="w-full h-full border-0 rounded-3xl"
                 onLoad={handleIframeLoad}
                 onError={() => {
-                  dispatch({ type: "SET_IFRAME_ERROR", value: "Failed to load preview" });
+                  dispatch({
+                    type: "SET_IFRAME_ERROR",
+                    value: "Failed to load preview",
+                  });
                 }}
               />
             </div>

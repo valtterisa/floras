@@ -7,10 +7,7 @@ import { useEffect, useState, useCallback } from "react";
 import WebsitePreview from "@/components/editor/website-preview";
 import { useToast } from "@/hooks/use-toast";
 import EditorHeader from "./editor-header";
-import {
-  getChatMessages,
-  sendChatMessage,
-} from "@/app/actions";
+import { getChatMessages, sendChatMessage } from "@/app/actions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DevMode from "./dev-mode";
 import { useEditorStore } from "@/lib/editor-store";
@@ -55,16 +52,24 @@ export default function EditorPageClient({
   // Callback for when AI finishes streaming
   const handleAIFinish = useCallback(() => {
     console.log("🎯 [EditorPageClient] AI finished, triggering iframe reload");
-    console.log("🎯 [EditorPageClient] Current reload trigger value:", useEditorStore.getState().reloadTrigger);
+    console.log(
+      "🎯 [EditorPageClient] Current reload trigger value:",
+      useEditorStore.getState().reloadTrigger
+    );
+    console.log("🎯 [EditorPageClient] Machine state:", machine);
+
     triggerReload();
-    console.log("🎯 [EditorPageClient] Reload trigger called, new value:", useEditorStore.getState().reloadTrigger);
+    console.log(
+      "🎯 [EditorPageClient] Reload trigger called, new value:",
+      useEditorStore.getState().reloadTrigger
+    );
 
     // Clear loading state after a delay to allow iframe to load
     setTimeout(() => {
       console.log("🎯 [EditorPageClient] Clearing loading state");
       useEditorStore.getState().setLoading(false);
     }, 3000);
-  }, [triggerReload]);
+  }, [triggerReload, machine]);
 
   // Debug logging for props and state
   useEffect(() => {
@@ -98,7 +103,10 @@ export default function EditorPageClient({
 
   const handleSendMessage = useCallback(
     async (message: string) => {
-      console.log("🚀 [handleSendMessage] Starting message processing:", message.substring(0, 50) + "...");
+      console.log(
+        "🚀 [handleSendMessage] Starting message processing:",
+        message.substring(0, 50) + "..."
+      );
 
       const userMsg = {
         id: Date.now().toString(),
@@ -127,12 +135,21 @@ export default function EditorPageClient({
       await sendStreamingMessage(message, id, machine.id);
 
       // Step 2: Get the final streamed content and save it as an AI message
-      const finalStreamedContent = useChatStreamStore.getState().streamedContent;
-      console.log("📝 [handleSendMessage] Final streamed content length:", finalStreamedContent?.length || 0);
-      console.log("📝 [handleSendMessage] Final streamed content preview:", finalStreamedContent?.substring(0, 100) + "...");
+      const finalStreamedContent =
+        useChatStreamStore.getState().streamedContent;
+      console.log(
+        "📝 [handleSendMessage] Final streamed content length:",
+        finalStreamedContent?.length || 0
+      );
+      console.log(
+        "📝 [handleSendMessage] Final streamed content preview:",
+        finalStreamedContent?.substring(0, 100) + "..."
+      );
 
       if (finalStreamedContent && finalStreamedContent.trim()) {
-        console.log("💾 [handleSendMessage] Saving AI response to chat history");
+        console.log(
+          "💾 [handleSendMessage] Saving AI response to chat history"
+        );
         const aiMsg = {
           id: Date.now().toString(),
           content: finalStreamedContent,
@@ -159,7 +176,9 @@ export default function EditorPageClient({
         useChatStreamStore.getState().clearStreamedContent();
         console.log("🗑️ [handleSendMessage] Cleared streamed content");
       } else {
-        console.warn("⚠️ [handleSendMessage] No streamed content found, using fallback message");
+        console.warn(
+          "⚠️ [handleSendMessage] No streamed content found, using fallback message"
+        );
         // Fallback message if no content was streamed
         const aiMsg = {
           id: Date.now().toString(),
@@ -179,7 +198,9 @@ export default function EditorPageClient({
           if (!aiSaveResult.success) {
             console.error("Failed to save AI message:", aiSaveResult.error);
           } else {
-            console.log("✅ [handleSendMessage] Fallback AI message saved to Redis");
+            console.log(
+              "✅ [handleSendMessage] Fallback AI message saved to Redis"
+            );
           }
         }
       }
@@ -188,14 +209,7 @@ export default function EditorPageClient({
       setIsAutoProcessing(false);
       console.log("🏁 [handleSendMessage] Message processing completed");
     },
-    [
-      userId,
-      id,
-      machine?.id,
-      addMessage,
-      sendChatMessage,
-      sendStreamingMessage,
-    ]
+    [userId, id, machine?.id, addMessage, sendChatMessage, sendStreamingMessage]
   );
 
   // Debug logging for ChatInterface props
