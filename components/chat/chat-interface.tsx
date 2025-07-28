@@ -58,15 +58,6 @@ const ChatMessageComponent = React.memo(
       []
     );
 
-    // Debug logging for rendering logic
-    console.log("🎨 [ChatMessageComponent] Rendering:", {
-      messageId: message.id,
-      isUser: message.isUser,
-      isStreaming,
-      isStreamedContent,
-      contentLength: message.content.length,
-    });
-
     return (
       <div
         className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
@@ -105,13 +96,6 @@ ChatMessageComponent.displayName = "ChatMessageComponent";
 
 // Memoized loading component for AI generation
 const AILoadingComponent = React.memo(() => {
-  // Debug logging for loading component visibility
-  console.log("🤔 [AILoadingComponent] Visibility:", {
-    isStreaming: true, // Always true for this component
-    hasStreamedContent: false, // Always false for this component
-    shouldShowLoading: true, // Always true for this component
-  });
-
   return (
     <div className="flex justify-start">
       <div className="max-w-[80%] rounded-lg p-3 bg-muted">
@@ -158,6 +142,7 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const { isStreaming, streamedContent, messages } = useChatStreamStore();
   const [inputValue, setInputValue] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLTextAreaElement>(null);
@@ -196,31 +181,23 @@ export default function ChatInterface({
     }, 1000); // 1 second delay
   }, [userScrolling]);
 
-  // Auto-scroll effect - only scroll if user isn't manually scrolling AND AI is generating
   useEffect(() => {
-    if (userScrolling) {
-      console.log(
-        "🚫 [ChatInterface] Auto-scroll blocked - user is manually scrolling"
-      );
-      return; // Don't auto-scroll if user is manually scrolling
+    if (!messagesContainerRef.current) return;
+
+    const container = messagesContainerRef.current;
+
+    if (isThinking || isStreaming) {
+      // Force scroll to bottom immediately
+      container.scrollTop = container.scrollHeight;
+
+      // Keep scrolling to bottom during streaming
+      const interval = setInterval(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 100);
+
+      return () => clearInterval(interval);
     }
-
-    // Only auto-scroll when AI is actively streaming
-    if (!isStreaming) {
-      console.log(
-        "🚫 [ChatInterface] Auto-scroll blocked - AI is not generating"
-      );
-      return; // Don't auto-scroll if AI is not generating
-    }
-
-    console.log(
-      "✅ [ChatInterface] Auto-scroll allowed - user not manually scrolling and AI is generating"
-    );
-
-    // Scroll immediately without state management
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    console.log("📜 [ChatInterface] Executed auto-scroll to bottom");
-  }, [messages, streamedContent, userScrolling, isStreaming]);
+  }, [isThinking, isStreaming, streamedContent]);
 
   // Detect when AI finishes streaming and call callback
   useEffect(() => {
@@ -230,6 +207,9 @@ export default function ChatInterface({
         onAIFinish();
       }, 500);
       return () => clearTimeout(timer);
+    }
+    if (isStreaming) {
+      setIsThinking(false);
     }
   }, [isStreaming, streamedContent, onAIFinish]);
 
@@ -242,37 +222,6 @@ export default function ChatInterface({
       textareaRef.current.style.height = Math.min(scrollHeight) + "px";
     }
   }, [inputValue]);
-
-  // Debug logging for props
-  useEffect(() => {
-    console.log("🔍 [ChatInterface] Props received:", {
-      appName,
-      userId,
-      hasOnSendMessage: !!onSendMessage,
-      isAutoProcessing,
-    });
-  }, [appName, userId, onSendMessage, isAutoProcessing]);
-
-  // Debug logging for loading component
-  useEffect(() => {
-    const shouldShowLoading = isStreaming && !streamedContent;
-    console.log("🤔 [ChatInterface] AI Loading component state:", {
-      isStreaming,
-      hasStreamedContent: !!streamedContent,
-      shouldShowLoading,
-      streamedContentLength: streamedContent?.length || 0,
-      messagesLength: messages.length,
-    });
-  }, [isStreaming, streamedContent, messages.length]);
-
-  // Track streaming state changes
-  useEffect(() => {
-    console.log("🔄 [ChatInterface] Streaming state changed:", {
-      isStreaming,
-      streamedContentLength: streamedContent?.length || 0,
-      timestamp: new Date().toISOString(),
-    });
-  }, [isStreaming, streamedContent]);
 
   return (
     <div
@@ -310,13 +259,14 @@ export default function ChatInterface({
             />
           ) : null}
 
-          {/* Show AI loading indicator when generating */}
-          {isStreaming && (
+          {/* Show AI loading indicator when thinking or generating */}
+          {(isThinking || isStreaming) && (
             <>
               {console.log("🤔 [ChatInterface] Loading component conditions:", {
+                isThinking,
                 isStreaming,
                 hasStreamedContent: !!streamedContent,
-                shouldShowLoading: isStreaming,
+                shouldShowLoading: isThinking || isStreaming,
               })}
               <AILoadingComponent />
             </>
@@ -346,14 +296,16 @@ export default function ChatInterface({
               return;
             }
 
-            // Clear input immediately
+            // Clear input immediately and show thinking animation
             const messageToSend = inputValue;
             setInputValue("");
+            setIsThinking(true);
 
             try {
               if (onSendMessage) await onSendMessage(messageToSend);
             } catch (error) {
               console.error("Error in onSendMessage:", error);
+              setIsThinking(false);
             }
           }}
           className="flex items-end p-4 bg-background border-t"

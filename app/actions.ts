@@ -330,11 +330,53 @@ export async function* generateAIResponseStream(
       const markdownContent = buffer.substring(0, codeStartIndex).trim();
 
       if (markdownContent) {
-        console.log(
-          "📝 [generateAIResponseStream] Yielding markdown before code block:",
-          markdownContent.substring(0, 100) + "..."
-        );
-        yield { type: "analysis", content: markdownContent };
+        // AGGRESSIVE code filtering - block ALL code patterns
+        const filteredMarkdown = markdownContent
+          .replace(/```[\s\S]*?```/g, "")
+          .replace(/`[^`]*`/g, "")
+          .replace(/<builddrr-code[\s\S]*?<\/builddrr-code>/gi, "")
+          .replace(/<builddrr-write[\s\S]*?<\/builddrr-write>/gi, "")
+          .replace(/function\s*\(/gi, "")
+          .replace(/const\s+\w+\s*=/gi, "")
+          .replace(/let\s+\w+\s*=/gi, "")
+          .replace(/var\s+\w+\s*=/gi, "")
+          .replace(/import\s+.*?from/gi, "")
+          .replace(/export\s+/gi, "")
+          .replace(/return\s+/gi, "")
+          .replace(/console\.log/gi, "")
+          .replace(/React\./gi, "")
+          .replace(/useState/gi, "")
+          .replace(/useEffect/gi, "")
+          .replace(/className=/gi, "")
+          .replace(/onClick=/gi, "")
+          .replace(/style=/gi, "");
+
+        // Only show content if it doesn't contain ANY code patterns
+        if (
+          filteredMarkdown.trim() &&
+          !filteredMarkdown.match(/[{}()\[\]]/) && // No brackets
+          !filteredMarkdown.match(/[;=]/) && // No semicolons or equals
+          !filteredMarkdown.includes("function") &&
+          !filteredMarkdown.includes("const") &&
+          !filteredMarkdown.includes("let") &&
+          !filteredMarkdown.includes("var") &&
+          !filteredMarkdown.includes("import") &&
+          !filteredMarkdown.includes("export") &&
+          !filteredMarkdown.includes("return") &&
+          !filteredMarkdown.includes("console") &&
+          !filteredMarkdown.includes("React") &&
+          !filteredMarkdown.includes("useState") &&
+          !filteredMarkdown.includes("useEffect") &&
+          !filteredMarkdown.includes("className") &&
+          !filteredMarkdown.includes("onClick") &&
+          !filteredMarkdown.includes("style")
+        ) {
+          console.log(
+            "📝 [generateAIResponseStream] Yielding filtered markdown before code block:",
+            filteredMarkdown.substring(0, 100) + "..."
+          );
+          yield { type: "analysis", content: filteredMarkdown };
+        }
       }
 
       inMarkdownSection = false;
@@ -343,36 +385,121 @@ export async function* generateAIResponseStream(
       );
     }
 
-    // Stream markdown content immediately as it comes in
+    // Stream markdown content immediately as it comes in (filter out code blocks)
     if (inMarkdownSection) {
       // Yield the new content immediately for real-time streaming
       const newContent = value;
       if (newContent.trim()) {
-        console.log(
-          "📝 [generateAIResponseStream] Yielding new content:",
-          newContent.substring(0, 50) + "..."
-        );
-        yield { type: "analysis", content: newContent };
+        // AGGRESSIVE code filtering - block ALL code patterns
+        const filteredContent = newContent
+          .replace(/```[\s\S]*?```/g, "")
+          .replace(/`[^`]*`/g, "")
+          .replace(/<builddrr-code[\s\S]*?<\/builddrr-code>/gi, "")
+          .replace(/<builddrr-write[\s\S]*?<\/builddrr-write>/gi, "")
+          .replace(/function\s*\(/gi, "")
+          .replace(/const\s+\w+\s*=/gi, "")
+          .replace(/let\s+\w+\s*=/gi, "")
+          .replace(/var\s+\w+\s*=/gi, "")
+          .replace(/import\s+.*?from/gi, "")
+          .replace(/export\s+/gi, "")
+          .replace(/return\s+/gi, "")
+          .replace(/console\.log/gi, "")
+          .replace(/React\./gi, "")
+          .replace(/useState/gi, "")
+          .replace(/useEffect/gi, "")
+          .replace(/className=/gi, "")
+          .replace(/onClick=/gi, "")
+          .replace(/style=/gi, "");
+
+        // Only show content if it doesn't contain ANY code patterns
+        if (
+          filteredContent.trim() &&
+          !filteredContent.match(/[{}()\[\]]/) && // No brackets
+          !filteredContent.match(/[;=]/) && // No semicolons or equals
+          !filteredContent.includes("function") &&
+          !filteredContent.includes("const") &&
+          !filteredContent.includes("let") &&
+          !filteredContent.includes("var") &&
+          !filteredContent.includes("import") &&
+          !filteredContent.includes("export") &&
+          !filteredContent.includes("return") &&
+          !filteredContent.includes("console") &&
+          !filteredContent.includes("React") &&
+          !filteredContent.includes("useState") &&
+          !filteredContent.includes("useEffect") &&
+          !filteredContent.includes("className") &&
+          !filteredContent.includes("onClick") &&
+          !filteredContent.includes("style")
+        ) {
+          console.log(
+            "📝 [generateAIResponseStream] Yielding filtered content:",
+            filteredContent.substring(0, 50) + "..."
+          );
+          yield { type: "analysis", content: filteredContent };
+        }
       }
     } else if (!foundCodeBlock) {
       // If we're not in a code block and haven't found one yet, stream the content
       // This handles the initial markdown content before any code blocks
       if (value.trim()) {
-        console.log(
-          "📝 [generateAIResponseStream] Yielding initial content:",
-          value.substring(0, 50) + "..."
-        );
-        yield { type: "analysis", content: value };
+        // AGGRESSIVE code filtering - block ALL code patterns
+        const filteredContent = value
+          .replace(/```[\s\S]*?```/g, "")
+          .replace(/`[^`]*`/g, "")
+          .replace(/<builddrr-code[\s\S]*?<\/builddrr-code>/gi, "")
+          .replace(/<builddrr-write[\s\S]*?<\/builddrr-write>/gi, "")
+          .replace(/function\s*\(/gi, "")
+          .replace(/const\s+\w+\s*=/gi, "")
+          .replace(/let\s+\w+\s*=/gi, "")
+          .replace(/var\s+\w+\s*=/gi, "")
+          .replace(/import\s+.*?from/gi, "")
+          .replace(/export\s+/gi, "")
+          .replace(/return\s+/gi, "")
+          .replace(/console\.log/gi, "")
+          .replace(/React\./gi, "")
+          .replace(/useState/gi, "")
+          .replace(/useEffect/gi, "")
+          .replace(/className=/gi, "")
+          .replace(/onClick=/gi, "")
+          .replace(/style=/gi, "");
+
+        // Only show content if it doesn't contain ANY code patterns
+        if (
+          filteredContent.trim() &&
+          !filteredContent.match(/[{}()\[\]]/) && // No brackets
+          !filteredContent.match(/[;=]/) && // No semicolons or equals
+          !filteredContent.includes("function") &&
+          !filteredContent.includes("const") &&
+          !filteredContent.includes("let") &&
+          !filteredContent.includes("var") &&
+          !filteredContent.includes("import") &&
+          !filteredContent.includes("export") &&
+          !filteredContent.includes("return") &&
+          !filteredContent.includes("console") &&
+          !filteredContent.includes("React") &&
+          !filteredContent.includes("useState") &&
+          !filteredContent.includes("useEffect") &&
+          !filteredContent.includes("className") &&
+          !filteredContent.includes("onClick") &&
+          !filteredContent.includes("style")
+        ) {
+          console.log(
+            "📝 [generateAIResponseStream] Yielding filtered initial content:",
+            filteredContent.substring(0, 50) + "..."
+          );
+          yield { type: "analysis", content: filteredContent };
+        }
       }
     }
 
-    // Extract all <builddrr-code> blocks
+    // Extract all <builddrr-code> blocks (but don't show code to user)
     let codeMatch;
     let foundInThisChunk = false;
     while ((codeMatch = codeBlockRegex.exec(buffer)) !== null) {
       foundCodeBlock = true;
       foundInThisChunk = true;
       const codeContent = codeMatch[1];
+
       // Extract all <builddrr-write> blocks inside this code block
       let writeMatch;
       while ((writeMatch = writeBlockRegex.exec(codeContent)) !== null) {
@@ -386,6 +513,7 @@ export async function* generateAIResponseStream(
         const friendlyName =
           fileName.charAt(0).toUpperCase() + fileName.slice(1);
 
+        // Only yield user-friendly text, not the actual code
         yield {
           type: "analysis",
           content: `\n\n**📝 Creating ${friendlyName}...**\n\n`,
@@ -414,15 +542,56 @@ export async function* generateAIResponseStream(
     }
   }
 
-  // After stream ends, check for any remaining markdown content
+  // After stream ends, check for any remaining markdown content (filter out code blocks)
   if (inMarkdownSection && markdownBuffer.trim().length > 0) {
     const content = markdownBuffer.trim();
-    if (content && content.length > 10) {
-      yield { type: "analysis", content };
+    // AGGRESSIVE code filtering - block ALL code patterns
+    const filteredContent = content
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`[^`]*`/g, "")
+      .replace(/<builddrr-code[\s\S]*?<\/builddrr-code>/gi, "")
+      .replace(/<builddrr-write[\s\S]*?<\/builddrr-write>/gi, "")
+      .replace(/function\s*\(/gi, "")
+      .replace(/const\s+\w+\s*=/gi, "")
+      .replace(/let\s+\w+\s*=/gi, "")
+      .replace(/var\s+\w+\s*=/gi, "")
+      .replace(/import\s+.*?from/gi, "")
+      .replace(/export\s+/gi, "")
+      .replace(/return\s+/gi, "")
+      .replace(/console\.log/gi, "")
+      .replace(/React\./gi, "")
+      .replace(/useState/gi, "")
+      .replace(/useEffect/gi, "")
+      .replace(/className=/gi, "")
+      .replace(/onClick=/gi, "")
+      .replace(/style=/gi, "");
+
+    // Only show content if it doesn't contain ANY code patterns
+    if (
+      filteredContent &&
+      filteredContent.trim().length > 10 &&
+      !filteredContent.match(/[{}()\[\]]/) && // No brackets
+      !filteredContent.match(/[;=]/) && // No semicolons or equals
+      !filteredContent.includes("function") &&
+      !filteredContent.includes("const") &&
+      !filteredContent.includes("let") &&
+      !filteredContent.includes("var") &&
+      !filteredContent.includes("import") &&
+      !filteredContent.includes("export") &&
+      !filteredContent.includes("return") &&
+      !filteredContent.includes("console") &&
+      !filteredContent.includes("React") &&
+      !filteredContent.includes("useState") &&
+      !filteredContent.includes("useEffect") &&
+      !filteredContent.includes("className") &&
+      !filteredContent.includes("onClick") &&
+      !filteredContent.includes("style")
+    ) {
+      yield { type: "analysis", content: filteredContent.trim() };
     }
   }
 
-  // After stream ends, check for any remaining complete blocks in buffer
+  // After stream ends, check for any remaining complete blocks in buffer (silently collect files)
   let codeMatch;
   while ((codeMatch = codeBlockRegex.exec(buffer)) !== null) {
     foundCodeBlock = true;
