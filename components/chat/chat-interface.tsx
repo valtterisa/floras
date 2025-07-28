@@ -3,85 +3,107 @@
 import * as React from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowUp, LoaderCircle, Sparkles, Bug } from "lucide-react";
-import {
-  getChatMessages,
-  sendChatMessage,
-  debugRedisMessages,
-} from "@/app/actions";
+import { ArrowUp } from "lucide-react";
+
 import ReactMarkdown from "react-markdown";
 import { useChatStreamStore, ChatMessage } from "@/lib/chat-stream-store";
 
 // Memoized chat message component to prevent unnecessary re-renders
-const ChatMessageComponent = React.memo(({
-  message,
-  isStreaming = false,
-  isStreamedContent = false
-}: {
-  message: ChatMessage;
-  isStreaming?: boolean;
-  isStreamedContent?: boolean;
-}) => {
-  const markdownComponents = React.useMemo(() => ({
-    h1: ({ node, ...props }: any) => <h1 className="text-lg font-bold mb-2" {...props} />,
-    h2: ({ node, ...props }: any) => <h2 className="text-base font-semibold mb-2" {...props} />,
-    h3: ({ node, ...props }: any) => <h3 className="text-sm font-semibold mb-1" {...props} />,
-    p: ({ node, ...props }: any) => <p className="mb-2" {...props} />,
-    ul: ({ node, ...props }: any) => <ul className="list-disc list-inside mb-2" {...props} />,
-    ol: ({ node, ...props }: any) => <ol className="list-decimal list-inside mb-2" {...props} />,
-    li: ({ node, ...props }: any) => <li className="mb-1" {...props} />,
-    strong: ({ node, ...props }: any) => <strong className="font-semibold" {...props} />,
-    em: ({ node, ...props }: any) => <em className="italic" {...props} />,
-    code: ({ node, ...props }: any) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs" {...props} />,
-    pre: ({ node, ...props }: any) => <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mb-2" {...props} />,
-  }), []);
+const ChatMessageComponent = React.memo(
+  ({
+    message,
+    isStreaming = false,
+    isStreamedContent = false,
+  }: {
+    message: ChatMessage;
+    isStreaming?: boolean;
+    isStreamedContent?: boolean;
+  }) => {
+    const markdownComponents = React.useMemo(
+      () => ({
+        h1: ({ node, ...props }: any) => (
+          <h1 className="text-lg font-bold mb-2" {...props} />
+        ),
+        h2: ({ node, ...props }: any) => (
+          <h2 className="text-base font-semibold mb-2" {...props} />
+        ),
+        h3: ({ node, ...props }: any) => (
+          <h3 className="text-sm font-semibold mb-1" {...props} />
+        ),
+        p: ({ node, ...props }: any) => <p className="mb-2" {...props} />,
+        ul: ({ node, ...props }: any) => (
+          <ul className="list-disc list-inside mb-2" {...props} />
+        ),
+        ol: ({ node, ...props }: any) => (
+          <ol className="list-decimal list-inside mb-2" {...props} />
+        ),
+        li: ({ node, ...props }: any) => <li className="mb-1" {...props} />,
+        strong: ({ node, ...props }: any) => (
+          <strong className="font-semibold" {...props} />
+        ),
+        em: ({ node, ...props }: any) => <em className="italic" {...props} />,
+        code: ({ node, ...props }: any) => (
+          <code
+            className="bg-gray-100 px-1 py-0.5 rounded text-xs"
+            {...props}
+          />
+        ),
+        pre: ({ node, ...props }: any) => (
+          <pre
+            className="bg-gray-100 p-2 rounded text-xs overflow-x-auto mb-2"
+            {...props}
+          />
+        ),
+      }),
+      []
+    );
 
-  // Debug logging for rendering logic
-  console.log("🎨 [ChatMessageComponent] Rendering:", {
-    messageId: message.id,
-    isUser: message.isUser,
-    isStreaming,
-    isStreamedContent,
-    contentLength: message.content.length,
-    willRenderAsMarkdown: !message.isUser && !(isStreaming && isStreamedContent)
-  });
+    // Debug logging for rendering logic
+    console.log("🎨 [ChatMessageComponent] Rendering:", {
+      messageId: message.id,
+      isUser: message.isUser,
+      isStreaming,
+      isStreamedContent,
+      contentLength: message.content.length,
+      willRenderAsMarkdown:
+        !message.isUser && !(isStreaming && isStreamedContent),
+    });
 
-  return (
-    <div
-      className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
-    >
+    return (
       <div
-        className={`max-w-[80%] rounded-lg p-3 ${message.isUser
-          ? "bg-primary text-primary-foreground"
-          : "bg-muted"
-          }`}
+        className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
       >
-        <div className="text-sm prose prose-sm max-w-none">
-          {message.isUser ? (
-            <div className="whitespace-pre-wrap">{message.content}</div>
-          ) : (
-            // Show all AI messages as markdown instantly
-            <ReactMarkdown components={markdownComponents}>
-              {message.content}
-            </ReactMarkdown>
-          )}
-        </div>
         <div
-          className={`text-xs mt-1 ${message.isUser
-            ? "text-primary-foreground/70"
-            : "text-muted-foreground"
-            }`}
+          className={`max-w-[80%] rounded-lg p-3 ${
+            message.isUser ? "bg-primary text-primary-foreground" : "bg-muted"
+          }`}
         >
-          {new Date(message.timestamp).toLocaleTimeString()}
+          <div className="text-sm prose prose-sm max-w-none">
+            {message.isUser ? (
+              <div className="whitespace-pre-wrap">{message.content}</div>
+            ) : (
+              // Show all AI messages as markdown instantly
+              <ReactMarkdown components={markdownComponents}>
+                {message.content}
+              </ReactMarkdown>
+            )}
+          </div>
+          <div
+            className={`text-xs mt-1 ${
+              message.isUser
+                ? "text-primary-foreground/70"
+                : "text-muted-foreground"
+            }`}
+          >
+            {new Date(message.timestamp).toLocaleTimeString()}
+          </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
-ChatMessageComponent.displayName = 'ChatMessageComponent';
+ChatMessageComponent.displayName = "ChatMessageComponent";
 
 // Memoized loading component for AI generation
 const AILoadingComponent = React.memo(() => {
@@ -97,20 +119,27 @@ const AILoadingComponent = React.memo(() => {
       <div className="max-w-[80%] rounded-lg p-3 bg-muted">
         <div className="flex items-center gap-3">
           <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div
+              className="w-2 h-2 bg-primary rounded-full animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            ></div>
+            <div
+              className="w-2 h-2 bg-primary rounded-full animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            ></div>
+            <div
+              className="w-2 h-2 bg-primary rounded-full animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            ></div>
           </div>
-          <span className="text-sm text-muted-foreground">
-            Thinking...
-          </span>
+          <span className="text-sm text-muted-foreground">Thinking...</span>
         </div>
       </div>
     </div>
   );
 });
 
-AILoadingComponent.displayName = 'AILoadingComponent';
+AILoadingComponent.displayName = "AILoadingComponent";
 
 interface ChatInterfaceProps {
   className?: string;
@@ -154,7 +183,7 @@ export default function ChatInterface({
       clientHeight,
       isAtBottom,
       wasUserScrolling: userScrolling,
-      willSetUserScrolling: !isAtBottom
+      willSetUserScrolling: !isAtBottom,
     });
 
     setUserScrolling(!isAtBottom);
@@ -169,19 +198,31 @@ export default function ChatInterface({
     }, 1000); // 1 second delay
   }, [userScrolling]);
 
-  // Auto-scroll effect - only scroll if user isn't manually scrolling
+  // Auto-scroll effect - only scroll if user isn't manually scrolling AND AI is generating
   useEffect(() => {
     if (userScrolling) {
-      console.log("🚫 [ChatInterface] Auto-scroll blocked - user is manually scrolling");
+      console.log(
+        "🚫 [ChatInterface] Auto-scroll blocked - user is manually scrolling"
+      );
       return; // Don't auto-scroll if user is manually scrolling
     }
 
-    console.log("✅ [ChatInterface] Auto-scroll allowed - user not manually scrolling");
+    // Only auto-scroll when AI is actively streaming
+    if (!isStreaming) {
+      console.log(
+        "🚫 [ChatInterface] Auto-scroll blocked - AI is not generating"
+      );
+      return; // Don't auto-scroll if AI is not generating
+    }
+
+    console.log(
+      "✅ [ChatInterface] Auto-scroll allowed - user not manually scrolling and AI is generating"
+    );
 
     // Scroll immediately without state management
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     console.log("📜 [ChatInterface] Executed auto-scroll to bottom");
-  }, [messages, streamedContent, userScrolling]);
+  }, [messages, streamedContent, userScrolling, isStreaming]);
 
   // Detect when AI finishes streaming and call callback
   useEffect(() => {
@@ -222,7 +263,7 @@ export default function ChatInterface({
       hasStreamedContent: !!streamedContent,
       shouldShowLoading,
       streamedContentLength: streamedContent?.length || 0,
-      messagesLength: messages.length
+      messagesLength: messages.length,
     });
   }, [isStreaming, streamedContent, messages.length]);
 
@@ -231,10 +272,9 @@ export default function ChatInterface({
     console.log("🔄 [ChatInterface] Streaming state changed:", {
       isStreaming,
       streamedContentLength: streamedContent?.length || 0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }, [isStreaming, streamedContent]);
-
 
   return (
     <div
@@ -244,7 +284,11 @@ export default function ChatInterface({
       )}
     >
       <div className="flex flex-col flex-1 min-h-0 w-full">
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 custom-scrollbar" ref={messagesContainerRef} onScroll={handleScroll}>
+        <div
+          className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+        >
           {/* Render existing chat messages */}
           {messages.map((message) => (
             <ChatMessageComponent
@@ -274,7 +318,7 @@ export default function ChatInterface({
               {console.log("🤔 [ChatInterface] Loading component conditions:", {
                 isStreaming,
                 hasStreamedContent: !!streamedContent,
-                shouldShowLoading: isStreaming
+                shouldShowLoading: isStreaming,
               })}
               <AILoadingComponent />
             </>

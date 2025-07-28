@@ -164,7 +164,7 @@ export async function signUpWithOAuth(provider: Provider) {
 
   // If for some reason we get here, just redirect to dashboard
   redirect("/dashboard");
-}
+  }
 
 export async function signInWithOAuth(provider: Provider) {
   const supabase = await createClient();
