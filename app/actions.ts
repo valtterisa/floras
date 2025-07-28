@@ -209,7 +209,6 @@ export async function updateVirtualFileSystem(
   }
 }
 
-
 // Update files in fly.io
 async function deployPreview(
   files: Record<string, string>,
@@ -314,7 +313,10 @@ export async function* generateAIResponseStream(
     if (done) break;
     buffer += value;
 
-    console.log("📝 [generateAIResponseStream] Received chunk:", value.substring(0, 50) + "...");
+    console.log(
+      "📝 [generateAIResponseStream] Received chunk:",
+      value.substring(0, 50) + "..."
+    );
 
     // Check if we're entering a markdown section (before <builddrr-code>)
     if (!inMarkdownSection && !buffer.includes("<builddrr-code")) {
@@ -328,12 +330,17 @@ export async function* generateAIResponseStream(
       const markdownContent = buffer.substring(0, codeStartIndex).trim();
 
       if (markdownContent) {
-        console.log("📝 [generateAIResponseStream] Yielding markdown before code block:", markdownContent.substring(0, 100) + "...");
+        console.log(
+          "📝 [generateAIResponseStream] Yielding markdown before code block:",
+          markdownContent.substring(0, 100) + "..."
+        );
         yield { type: "analysis", content: markdownContent };
       }
 
       inMarkdownSection = false;
-      console.log("📝 [generateAIResponseStream] Exited markdown section, entered code section");
+      console.log(
+        "📝 [generateAIResponseStream] Exited markdown section, entered code section"
+      );
     }
 
     // Stream markdown content immediately as it comes in
@@ -341,8 +348,21 @@ export async function* generateAIResponseStream(
       // Yield the new content immediately for real-time streaming
       const newContent = value;
       if (newContent.trim()) {
-        console.log("📝 [generateAIResponseStream] Yielding new content:", newContent.substring(0, 50) + "...");
+        console.log(
+          "📝 [generateAIResponseStream] Yielding new content:",
+          newContent.substring(0, 50) + "..."
+        );
         yield { type: "analysis", content: newContent };
+      }
+    } else if (!foundCodeBlock) {
+      // If we're not in a code block and haven't found one yet, stream the content
+      // This handles the initial markdown content before any code blocks
+      if (value.trim()) {
+        console.log(
+          "📝 [generateAIResponseStream] Yielding initial content:",
+          value.substring(0, 50) + "..."
+        );
+        yield { type: "analysis", content: value };
       }
     }
 
@@ -360,17 +380,22 @@ export async function* generateAIResponseStream(
         let content = writeMatch[2];
 
         // Show user-friendly feedback for each file being created
-        const fileName = file.split('/').pop()?.replace('.tsx', '').replace('.ts', '') || 'component';
-        const friendlyName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
+        const fileName =
+          file.split("/").pop()?.replace(".tsx", "").replace(".ts", "") ||
+          "component";
+        const friendlyName =
+          fileName.charAt(0).toUpperCase() + fileName.slice(1);
 
         yield {
           type: "analysis",
-          content: `\n\n**📝 Creating ${friendlyName}...**\n\n`
+          content: `\n\n**📝 Creating ${friendlyName}...**\n\n`,
         };
 
         if (content.length > MAX_BLOCK_SIZE) {
           content = content.slice(0, MAX_BLOCK_SIZE);
-          console.warn(`[generateAIResponseStream] File block for ${file} exceeded max size and was truncated.`);
+          console.warn(
+            `[generateAIResponseStream] File block for ${file} exceeded max size and was truncated.`
+          );
           // Don't yield warning to chat - just log it
         }
         collectedFiles[file.startsWith("/") ? file.substring(1) : file] =
@@ -383,10 +408,7 @@ export async function* generateAIResponseStream(
     codeBlockRegex.lastIndex = 0;
 
     // Optionally, handle unexpected content outside tags
-    if (
-      buffer.length > 10000 &&
-      !buffer.match(/<builddrr-code/)
-    ) {
+    if (buffer.length > 10000 && !buffer.match(/<builddrr-code/)) {
       unexpectedContentBuffer += buffer.slice(0, 500);
       buffer = buffer.slice(-500); // keep last 500 chars
     }
@@ -411,7 +433,9 @@ export async function* generateAIResponseStream(
       let content = writeMatch[2];
       if (content.length > MAX_BLOCK_SIZE) {
         content = content.slice(0, MAX_BLOCK_SIZE);
-        console.warn(`[generateAIResponseStream] File block for ${file} exceeded max size and was truncated.`);
+        console.warn(
+          `[generateAIResponseStream] File block for ${file} exceeded max size and was truncated.`
+        );
       }
       collectedFiles[file.startsWith("/") ? file.substring(1) : file] = content;
     }
@@ -420,33 +444,44 @@ export async function* generateAIResponseStream(
 
   // Warn if no <builddrr-code> block was found
   if (!foundCodeBlock) {
-    console.warn(`[generateAIResponseStream] No <builddrr-code> block found in the stream.`);
+    console.warn(
+      `[generateAIResponseStream] No <builddrr-code> block found in the stream.`
+    );
     // Don't yield warning to chat - just log it
   }
 
   // Warn if any unprocessed content remains
   if (buffer.trim().length > 0) {
-    console.warn(`[generateAIResponseStream] Unprocessed content at end of stream: ${buffer.slice(0, 200)}${buffer.length > 200 ? "..." : ""}`);
+    console.warn(
+      `[generateAIResponseStream] Unprocessed content at end of stream: ${buffer.slice(0, 200)}${buffer.length > 200 ? "..." : ""}`
+    );
     // Don't yield warning to chat - just log it
   }
   if (unexpectedContentBuffer.trim().length > 0) {
-    console.warn(`[generateAIResponseStream] Unexpected content outside tags: ${unexpectedContentBuffer.slice(0, 200)}${unexpectedContentBuffer.length > 200 ? "..." : ""}`);
+    console.warn(
+      `[generateAIResponseStream] Unexpected content outside tags: ${unexpectedContentBuffer.slice(0, 200)}${unexpectedContentBuffer.length > 200 ? "..." : ""}`
+    );
     // Don't yield warning to chat - just log it
   }
 
   // After streaming, deploy if files were collected
   if (Object.keys(collectedFiles).length > 0) {
-    console.log(`[generateAIResponseStream] Deploying ${Object.keys(collectedFiles).length} files:`, Object.keys(collectedFiles));
+    console.log(
+      `[generateAIResponseStream] Deploying ${Object.keys(collectedFiles).length} files:`,
+      Object.keys(collectedFiles)
+    );
 
     // Create user-friendly component names
-    const friendlyComponents = Object.keys(collectedFiles).map(file => {
-      const fileName = file.split('/').pop()?.replace('.tsx', '').replace('.ts', '') || 'component';
+    const friendlyComponents = Object.keys(collectedFiles).map((file) => {
+      const fileName =
+        file.split("/").pop()?.replace(".tsx", "").replace(".ts", "") ||
+        "component";
       return fileName.charAt(0).toUpperCase() + fileName.slice(1);
     });
 
     yield {
       type: "analysis",
-      content: `\n\n**🚀 Deploying your website...**\n\nBuilding: ${friendlyComponents.join(', ')}\n\n`
+      content: `\n\n**🚀 Deploying your website...**\n\nBuilding: ${friendlyComponents.join(", ")}\n\n`,
     };
 
     yield {
@@ -472,7 +507,7 @@ export async function* generateAIResponseStream(
         // Add final summary
         yield {
           type: "analysis",
-          content: `\n\n**✅ Your website is ready!**\n\nI've created a beautiful website with:\n${friendlyComponents.map(component => `- ${component}`).join('\n')}\n\nYour website is now live and ready to view! 🎉\n\n`
+          content: `\n\n**✅ Your website is ready!**\n\nI've created a beautiful website with:\n${friendlyComponents.map((component) => `- ${component}`).join("\n")}\n\nYour website is now live and ready to view! 🎉\n\n`,
         };
       }
       // Upload files to GitHub. Not awaited so it doesn't block the thread.
@@ -489,7 +524,8 @@ export async function* generateAIResponseStream(
     );
     yield {
       type: "warning",
-      message: "I couldn't create any website components. Please try asking again with more specific details about what you'd like me to build for you."
+      message:
+        "I couldn't create any website components. Please try asking again with more specific details about what you'd like me to build for you.",
     };
   }
 }

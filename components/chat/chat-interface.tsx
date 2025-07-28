@@ -65,8 +65,6 @@ const ChatMessageComponent = React.memo(
       isStreaming,
       isStreamedContent,
       contentLength: message.content.length,
-      willRenderAsMarkdown:
-        !message.isUser && !(isStreaming && isStreamedContent),
     });
 
     return (
@@ -82,7 +80,7 @@ const ChatMessageComponent = React.memo(
             {message.isUser ? (
               <div className="whitespace-pre-wrap">{message.content}</div>
             ) : (
-              // Show all AI messages as markdown instantly
+              // Always render AI messages as markdown for consistent experience
               <ReactMarkdown components={markdownComponents}>
                 {message.content}
               </ReactMarkdown>
