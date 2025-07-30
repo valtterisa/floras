@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Monitor, Rocket, Smartphone } from "lucide-react";
+import {
+  LayoutDashboard,
+  Rocket,
+  Globe,
+  Link as LinkIcon,
+  ArrowLeft,
+} from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -10,21 +16,18 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
-type ViewportSize = "desktop" | "mobile";
-
 function EditorHeader({ id }: { id: string }) {
-  const [viewportSize, setViewportSize] = useState<ViewportSize>("desktop");
-  const [websiteUrl, setWebsiteUrl] = useState<string | null>(id);
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployUrl, setDeployUrl] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showPublishMenu, setShowPublishMenu] = useState(false);
 
   const { toast } = useToast();
 
-  // Query supabase here or page load to see if current website is already deployed -> if so, set deployUrl to the url and show menu
-
-  const handlePublish = async () => {
+  const handlePublish = async (useCustomDomain: boolean = false) => {
     setIsDeploying(true);
+    setShowPublishMenu(false);
+
     toast({
       title: "Deploying website...",
       description: "Please wait while we deploy your website.",
@@ -34,7 +37,10 @@ function EditorHeader({ id }: { id: string }) {
     try {
       const deployResult = await fetch("/api/deploy", {
         method: "POST",
-        body: JSON.stringify({ appName: id }),
+        body: JSON.stringify({
+          appName: id,
+          useCustomDomain,
+        }),
       });
 
       console.log("[deployResult]", deployResult);
@@ -74,10 +80,12 @@ function EditorHeader({ id }: { id: string }) {
 
   return (
     <div className="h-10 border-b flex items-center px-4 gap-2">
-      <Link href="/dashboard">
-        <Button variant="outline" size="icon">
-          <LayoutDashboard className="h-3 w-3 mr-1" />
-        </Button>
+      <Link
+        href="/dashboard"
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+      >
+        <ArrowLeft className="h-3 w-3" />
+        Dashboard
       </Link>
 
       <div className="flex items-center space-x-2 ml-auto">
@@ -103,37 +111,58 @@ function EditorHeader({ id }: { id: string }) {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button size="sm" onClick={handlePublish} disabled={isDeploying}>
-            <Rocket className="h-3 w-3 sm:mr-1" />
-            <span className="hidden sm:inline flex items-center">
-              {isDeploying ? (
-                <>
-                  Deploying...
-                  <svg
-                    className="animate-spin h-4 w-4 mr-2 text-white"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                </>
-              ) : (
-                "Publish"
-              )}
-            </span>
-          </Button>
+          <DropdownMenu
+            open={showPublishMenu}
+            onOpenChange={setShowPublishMenu}
+          >
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                disabled={isDeploying}
+                className="focus:outline-none"
+              >
+                <Rocket className="h-3 w-3 sm:mr-1" />
+                <span className="hidden sm:inline flex items-center">
+                  {isDeploying ? (
+                    <>
+                      Deploying...
+                      <svg
+                        className="animate-spin h-4 w-4 mr-2 text-white"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                    </>
+                  ) : (
+                    "Publish"
+                  )}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handlePublish(false)}>
+                <LinkIcon className="h-3 w-3 mr-2" />
+                Use Subdomain
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePublish(true)}>
+                <Globe className="h-3 w-3 mr-2" />
+                Custom Domain
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </div>

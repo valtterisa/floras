@@ -762,7 +762,6 @@ export default function WebsitePreview({
     }
   }
 
-  // Poll preview endpoint until ready
   useEffect(() => {
     let cancelled = false;
     if (!url) return;
@@ -845,7 +844,6 @@ export default function WebsitePreview({
     };
   }, [handleIframeLoad]);
 
-  // Sync className from store to DOM
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe || !iframe.contentDocument) return;
