@@ -681,7 +681,7 @@ export async function* generateAIResponseStream(
       }
       // Upload files to GitHub. Not awaited so it doesn't block the thread.
       createRepoFromTemplate(appName);
-      const repoName = `builddrr-user-site-${appName}`;
+      const repoName = `${appName}`;
 
       uploadFilesToRepo(repoName, collectedFiles);
     } catch (err: any) {
