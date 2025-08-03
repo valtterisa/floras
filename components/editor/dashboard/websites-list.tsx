@@ -53,7 +53,7 @@ export function WebsitesList({ websites }: WebsitesListProps) {
               <div className="rounded-full bg-primary/10 p-3 mb-2 text-primary">
                 <Globe className="h-7 w-7" />
               </div>
-              <CardTitle className="text-lg font-semibold">
+              <CardTitle className="text-lg font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
                 {website.name}
               </CardTitle>
             </CardHeader>
