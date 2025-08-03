@@ -19,6 +19,7 @@ export default async function LandingPage() {
       </div>
 
       <DemoVideo />
+      <Pricing user={user} />
       <Footer />
     </>
   );
