@@ -15,14 +15,28 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { usePathname } from "next/navigation";
 
 function EditorHeader({ id }: { id: string }) {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployUrl, setDeployUrl] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [showPublishMenu, setShowPublishMenu] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const pathname = usePathname();
 
   const { toast } = useToast();
+
+  // Extract repo name from URL path
+  const getRepoNameFromUrl = () => {
+    // URL pattern: /dashboard/website/{repoName}/editor
+    const pathParts = pathname.split("/");
+    const websiteIndex = pathParts.findIndex((part) => part === "website");
+    if (websiteIndex !== -1 && websiteIndex + 1 < pathParts.length) {
+      return pathParts[websiteIndex + 1];
+    }
+    return id; // fallback to id prop
+  };
 
   // Commented out publish logic
   /*
@@ -83,19 +97,22 @@ function EditorHeader({ id }: { id: string }) {
 
   // Download handler
   const handleDownload = async () => {
+    if (isDownloading) return; // Prevent multiple clicks
+
+    setIsDownloading(true);
     try {
-      const repo = id; // expects 'username/repo' format
+      const repoName = getRepoNameFromUrl();
       const response = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo }),
+        body: JSON.stringify({ repo: repoName }),
       });
       if (!response.ok) throw new Error("Failed to download");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${repo.replace("/", "-")}.zip`;
+      a.download = `builddrr-output.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -107,6 +124,8 @@ function EditorHeader({ id }: { id: string }) {
         description: e.message,
         variant: "destructive",
       });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -121,8 +140,35 @@ function EditorHeader({ id }: { id: string }) {
       </Link>
 
       <div className="flex items-center space-x-2 ml-auto">
-        <Button size="sm" variant="outline" onClick={handleDownload}>
-          Download
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDownload}
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+              Downloading...
+            </>
+          ) : (
+            "Download"
+          )}
         </Button>
         {/*
         {deployUrl ? (
