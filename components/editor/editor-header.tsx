@@ -107,7 +107,6 @@ function EditorHeader({ id }: { id: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ repo: repoName }),
       });
-      if (!response.ok) throw new Error("Failed to download");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -117,11 +116,15 @@ function EditorHeader({ id }: { id: string }) {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast({ title: "Download started", variant: "default" });
+      toast({
+        title: "Download completed",
+        description: "Your website is downloaded.",
+        variant: "default",
+      });
     } catch (e: any) {
       toast({
         title: "Download failed",
-        description: e.message,
+        description: "Try again later.",
         variant: "destructive",
       });
     } finally {
