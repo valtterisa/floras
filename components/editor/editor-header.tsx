@@ -40,7 +40,7 @@ function EditorHeader({ id }: { id: string }) {
   };
 
   // Commented out publish logic
-  /*
+
   const handlePublish = async (useCustomDomain: boolean = false) => {
     setIsDeploying(true);
     setShowPublishMenu(false);
@@ -52,11 +52,10 @@ function EditorHeader({ id }: { id: string }) {
     });
 
     try {
-      const deployResult = await fetch("/api/deploy", {
+      const deployResult = await fetch("/api/deploy-project", {
         method: "POST",
         body: JSON.stringify({
-          appName: id,
-          useCustomDomain,
+          projectName: id,
         }),
       });
 
@@ -67,8 +66,11 @@ function EditorHeader({ id }: { id: string }) {
       console.log("[url]", url);
       console.log("[deploymentId]", deploymentId);
 
-      const isDeployed = await fetch(`/api/deploy?id=${deploymentId}`, {
-        method: "GET",
+      const isDeployed = await fetch(`/api/deploy-project`, {
+        method: "POST",
+        body: JSON.stringify({
+          projectName: id,
+        }),
       });
 
       console.log("[isDeployed]", isDeployed);
@@ -94,7 +96,6 @@ function EditorHeader({ id }: { id: string }) {
     }
     setIsDeploying(false);
   };
-  */
 
   // Download handler
   const handleDownload = async () => {
@@ -175,7 +176,7 @@ function EditorHeader({ id }: { id: string }) {
           )}
         </Button>
 
-        {/*
+
         {deployUrl ? (
           <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
             <DropdownMenuTrigger asChild>
@@ -251,7 +252,7 @@ function EditorHeader({ id }: { id: string }) {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        */}
+
       </div>
     </div>
   );
