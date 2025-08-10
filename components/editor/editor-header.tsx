@@ -170,8 +170,7 @@ function EditorHeader({ id }: { id: string }) {
             </>
           ) : (
             <>
-              <Download className="h-3 w-3 mr-1" />
-              Download
+              <Download className="h-3 w-3" />
             </>
           )}
         </Button>
