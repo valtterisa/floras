@@ -18,7 +18,7 @@ export default async function LandingPage() {
         <PromptTool user={user} />
       </div>
 
-      <DemoVideo />
+      {/* <DemoVideo /> */}
       <Pricing user={user} />
       <Footer />
     </>
