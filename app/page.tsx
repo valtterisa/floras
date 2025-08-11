@@ -3,6 +3,7 @@ import { DemoVideo } from "@/components/landing-page/demo-video";
 import Pricing from "@/components/landing-page/pricing-section";
 import Footer from "@/components/layout/footer";
 import Navbar from "@/components/layout/navbar";
+import { MigrationWarning } from "@/components/migration-warning";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function LandingPage() {
@@ -13,14 +14,17 @@ export default async function LandingPage() {
 
   return (
     <>
-      <div className="relative">
-        <Navbar user={user?.user_metadata} />
-        <PromptTool user={user} />
-      </div>
+      <MigrationWarning />
+      <div className="pt-32">
+        <div className="relative">
+          <Navbar user={user?.user_metadata} />
+          <PromptTool user={user} />
+        </div>
 
-      {/* <DemoVideo /> */}
-      <Pricing user={user} />
-      <Footer />
+        {/* <DemoVideo /> */}
+        <Pricing user={user} />
+        <Footer />
+      </div>
     </>
   );
 }
