@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Upload } from "lucide-react";
 import { AuthModal } from "@/components/auth-modal";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 interface PublishButtonProps {
   websiteData: any;
@@ -18,7 +18,7 @@ export function PublishButton({ websiteData, className }: PublishButtonProps) {
   const { toast } = useToast();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-
+  const supabase = createClient();
   // Check if user is already logged in
   const checkAuthStatus = async () => {
     const { data } = await supabase!.auth.getSession();
@@ -114,7 +114,7 @@ export function PublishButton({ websiteData, className }: PublishButtonProps) {
       </Button>
 
       <AuthModal
-        open={isAuthModalOpen}
+        isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={handleAuthSuccess}
       />

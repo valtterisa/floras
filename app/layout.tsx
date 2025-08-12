@@ -24,10 +24,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.className}`}>
+        <MobileBlockerInstant />
         <PostHogProvider>
           <Suspense fallback={null}>{children}</Suspense>
           <Toaster />
-          <MobileBlockerInstant />
         </PostHogProvider>
       </body>
     </html>
