@@ -135,6 +135,7 @@ export default function LoginPage() {
                 Sign up
               </Link>
             </div>
+            <p>{process.env.NEXT_PUBLIC_URL}</p>
           </CardFooter>
         </Card>
       </div>
