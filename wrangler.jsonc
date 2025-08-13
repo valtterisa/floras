@@ -7,13 +7,22 @@
       "global_fetch_strictly_public"
     ],
     "keep_vars": true,
-    "assets": {
-      "directory": ".open-next/assets"
-    },
-    "r2_buckets": [
+    "workers_dev": true,
+  "env": {
+    "prod": {
+      "vars": {
+        "NEXT_PUBLIC_URL": "https://builddrr.com",
+        "CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV": "false"
+      },
+      "r2_buckets": [
       {
         "binding": "NEXT_INC_CACHE_R2_BUCKET",
         "bucket_name": "cache"
       }
     ]
+    }
+  },
+    "assets": {
+      "directory": ".open-next/assets"
+    }
   }
