@@ -148,10 +148,10 @@ export default function PromptTool({ user }: { user: any }) {
   ];
 
   const promptPlaceholders = [
-    "Make a landing page for my new product",
-    "I need a website for my cafeteria",
-    "Create a landing page for my software startup",
-    "Make a cool portfolio for my photography business",
+    "Make a landing page for my new product...",
+    "I need a website for my cafeteria...",
+    "Create a landing page for my software startup...",
+    "Make a cool portfolio for my photography business...",
   ];
 
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
