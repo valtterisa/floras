@@ -38,7 +38,7 @@ export default function Navbar({ user }: any) {
   return (
     <motion.header
       className={`fixed w-screen top-9 left-0 right-0 z-50 transition-all duration-300 ease-in-out border-b border-gray-200
-        ${scrolled ? "bg-white/80 backdrop-blur-sm shadow-md border-b border-gray-200" : "bg-transparent"}
+        ${scrolled ? "bg-white/90 backdrop-blur-sm shadow-md border-b border-gray-300" : "bg-transparent"}
       `}
     >
       <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -46,7 +46,7 @@ export default function Navbar({ user }: any) {
         <div className="flex items-center gap-1">
           <Logo className="h-4 w-4 md:h-8 md:w-8" />
 
-          <span className="text-2xl font-bold">Builddrr</span>
+          <span className="text-2xl font-bold text-black">Builddrr</span>
         </div>
         <div className="flex items-center gap-4">
           {user ? (

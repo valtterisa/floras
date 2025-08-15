@@ -218,7 +218,7 @@ export default function PromptTool({ user }: { user: any }) {
         <p className="py-2 text-base md:text-lg text-gray-500 text-center mb-4 max-w-xl">
           Chat with AI to create your website.
         </p>
-        <div className="w-full max-w-xl bg-gray-100 rounded-xl shadow p-4 flex flex-col gap-2">
+        <div className="w-full max-w-xl bg-white rounded-xl shadow border border-gray-200 p-4 flex flex-col gap-2">
           <textarea
             className="w-full bg-transparent text-gray-900 text-sm md:text-base resize-none outline-none border-none min-h-[5rem] placeholder:text-gray-400"
             placeholder={displayedPlaceholder}
@@ -240,7 +240,7 @@ export default function PromptTool({ user }: { user: any }) {
             <div className="flex items-center gap-1">
               <Button
                 size="icon"
-                className="rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow h-7 w-7"
+                className="rounded-full bg-black text-white hover:bg-gray-800 shadow h-7 w-7"
                 disabled={!prompt.trim() || isLoading}
                 onClick={handleSend}
               >
