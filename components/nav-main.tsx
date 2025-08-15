@@ -35,16 +35,17 @@ import {
 export type NavMainItem =
   | { type: "label"; label: string }
   | {
-    type: "item";
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-    children?: {
+      type: "item";
       title: string;
       url: string;
       icon?: LucideIcon;
-    }[];
-  };
+      target?: string;
+      children?: {
+        title: string;
+        url: string;
+        icon?: LucideIcon;
+      }[];
+    };
 
 export function NavMain({
   items,
@@ -61,13 +62,18 @@ export function NavMain({
         <SidebarMenu role="menu">
           {items.map((item, idx) => {
             if (item.type === "label") {
-              return <SidebarGroupLabel key={"label-" + idx}>{item.label}</SidebarGroupLabel>;
+              return (
+                <SidebarGroupLabel key={"label-" + idx}>
+                  {item.label}
+                </SidebarGroupLabel>
+              );
             }
             // item.type === "item"
             const submenuId = `sidebar-submenu-${idx}`;
             const isParentActive =
               pathname === item.url ||
-              (item.children && item.children.some((sub) => pathname === sub.url));
+              (item.children &&
+                item.children.some((sub) => pathname === sub.url));
             return (
               <SidebarMenuItem key={item.title} role="none">
                 {item.children ? (
@@ -96,7 +102,9 @@ export function NavMain({
                               role="menuitem"
                               tabIndex={0}
                               isActive={pathname === sub.url}
-                              aria-current={pathname === sub.url ? "page" : undefined}
+                              aria-current={
+                                pathname === sub.url ? "page" : undefined
+                              }
                               onClick={handleMobileClose}
                             >
                               {sub.icon && <sub.icon />}
@@ -107,6 +115,23 @@ export function NavMain({
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   </Collapsible>
+                ) : item.target ? (
+                  <a
+                    href={item.url}
+                    target={item.target}
+                    className={cn(
+                      "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] bg-sidebar hover:bg-sidebar-hover hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-hover active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+                      pathname === item.url && "bg-sidebar-hover"
+                    )}
+                    aria-label={item.title}
+                    role="menuitem"
+                    tabIndex={0}
+                    aria-current={pathname === item.url ? "page" : undefined}
+                    onClick={handleMobileClose}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </a>
                 ) : (
                   <Link
                     href={item.url}

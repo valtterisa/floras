@@ -59,18 +59,6 @@ export function AppSidebar({
       role: "admin",
       team_id: "1",
     },
-    {
-      name: "Team 2",
-      logo: Globe,
-      role: "admin",
-      team_id: "2",
-    },
-    {
-      name: "Team 3",
-      logo: Globe,
-      role: "admin",
-      team_id: "3",
-    },
   ];
 
   const [websiteId, setWebsiteId] = useState<string | null>(null);
@@ -140,7 +128,8 @@ export function AppSidebar({
     // },
     {
       title: "Documentation",
-      url: withTeam("/docs"),
+      url: "https://docs.builddrr.com",
+      target: "_blank",
       icon: Book,
     },
     {

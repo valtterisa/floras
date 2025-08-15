@@ -47,12 +47,14 @@ export function QuickActions() {
           <p className="text-sm text-muted-foreground mb-4">
             Read guides, FAQs, and tips to get the most out of the platform.
           </p>
-          <Link
-            href="/docs"
+          <a
+            href="https://docs.builddrr.com"
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-4 py-2 rounded-md bg-muted text-primary font-medium hover:bg-primary/10 transition border border-primary/30"
           >
             View Docs
-          </Link>
+          </a>
         </CardContent>
       </Card>
 
