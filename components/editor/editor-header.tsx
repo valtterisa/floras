@@ -19,6 +19,7 @@ import {
 import { usePathname } from "next/navigation";
 import { createSiteForUser } from "@/lib/cloudflare/cloudflare";
 import { createClient } from "@/lib/supabase/client";
+import DomainConnectionModal from "@/components/domain-connection-modal";
 
 function EditorHeader({ id }: { id: string }) {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -27,6 +28,7 @@ function EditorHeader({ id }: { id: string }) {
   const [showPublishMenu, setShowPublishMenu] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoadingDeployment, setIsLoadingDeployment] = useState(true);
+  const [showDomainModal, setShowDomainModal] = useState(false);
   const pathname = usePathname();
 
   const { toast } = useToast();
@@ -284,7 +286,13 @@ function EditorHeader({ id }: { id: string }) {
                   </a>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem className="p-3 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                <DropdownMenuItem
+                  className="p-3 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowDomainModal(true);
+                  }}
+                >
                   <div className="flex items-center justify-center h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-md mr-3 flex-shrink-0">
                     <LinkIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
@@ -405,7 +413,10 @@ function EditorHeader({ id }: { id: string }) {
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  onClick={() => handlePublish(true)}
+                  onClick={() => {
+                    setShowPublishMenu(false);
+                    setShowDomainModal(true);
+                  }}
                   className="p-3 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
                 >
                   <div className="flex items-center justify-center h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-md mr-3 flex-shrink-0">
@@ -416,7 +427,7 @@ function EditorHeader({ id }: { id: string }) {
                       Connect Your Domain
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Use your own domain like mysite.com (set up later)
+                      Use your own domain like mysite.com
                     </p>
                   </div>
                 </DropdownMenuItem>
@@ -425,6 +436,13 @@ function EditorHeader({ id }: { id: string }) {
           </DropdownMenu>
         )}
       </div>
+
+      {/* Domain Connection Modal */}
+      <DomainConnectionModal
+        isOpen={showDomainModal}
+        onClose={() => setShowDomainModal(false)}
+        websiteId={id}
+      />
     </div>
   );
 }

@@ -57,6 +57,8 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        // add a vercel apex domain
+
         console.log("deployment created");
         return NextResponse.json({
             project: project.id,
