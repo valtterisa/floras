@@ -11,11 +11,13 @@ type Store = {
   messages: ChatMessage[];
   isStreaming: boolean;
   streamedContent: string;
+  deploymentUrl: string | null;
   setMessages: (msgs: ChatMessage[]) => void;
   addMessage: (msg: ChatMessage) => void;
   startStream: () => void;
   updateStream: (chunk: string) => void;
   finishStream: () => void;
+  setDeploymentUrl: (url: string | null) => void;
   clear: () => void;
   clearStreamedContent: () => void;
 };
@@ -24,6 +26,7 @@ export const useChatStreamStore = create<Store>((set, get) => ({
   messages: [],
   isStreaming: false,
   streamedContent: "",
+  deploymentUrl: null,
   setMessages: (msgs) => {
     console.log("📝 [ChatStore] Setting messages:", msgs.length, "messages");
     set({ messages: msgs });
@@ -65,9 +68,18 @@ export const useChatStreamStore = create<Store>((set, get) => ({
     set({ isStreaming: false });
     console.log("🏁 [ChatStore] Stream finished, isStreaming set to false");
   },
+  setDeploymentUrl: (url) => {
+    console.log("🌐 [ChatStore] Setting deployment URL:", url);
+    set({ deploymentUrl: url });
+  },
   clear: () => {
     console.log("🗑️ [ChatStore] Clearing all state");
-    set({ messages: [], streamedContent: "", isStreaming: false });
+    set({
+      messages: [],
+      streamedContent: "",
+      isStreaming: false,
+      deploymentUrl: null,
+    });
   },
   clearStreamedContent: () => {
     console.log("🗑️ [ChatStore] Clearing streamed content");

@@ -14,15 +14,15 @@ import { useEditorStore } from "@/lib/editor-store";
 import type { EditorState } from "@/lib/editor-store";
 import { useChatStreamStore } from "@/lib/chat-stream-store";
 import { useStreamingChat } from "@/hooks/use-streaming-chat";
+import { Sandbox } from "@vercel/sandbox";
+import { deploySandbox } from "@/app/actions";
 
 export default function EditorPageClient({
   id,
   user,
-  machine,
 }: {
   id: string;
   user: any;
-  machine: any;
 }) {
   const [appName, setAppName] = useState<string>(id);
   const isEditMode = useEditorStore((s: EditorState) => s.isEditMode);
@@ -34,10 +34,9 @@ export default function EditorPageClient({
 
   const { toast } = useToast();
 
-  const [machineData, setMachineData] = useState<any>(machine);
-
   // Zustand chat state
-  const { setMessages, addMessage, streamedContent } = useChatStreamStore();
+  const { setMessages, addMessage, streamedContent, deploymentUrl } =
+    useChatStreamStore();
 
   // Streaming chat hook
   const { sendMessage: sendStreamingMessage, isLoading: isStreamingLoading } =
@@ -56,7 +55,6 @@ export default function EditorPageClient({
       "🎯 [EditorPageClient] Current reload trigger value:",
       useEditorStore.getState().reloadTrigger
     );
-    console.log("🎯 [EditorPageClient] Machine state:", machine);
 
     triggerReload();
     console.log(
@@ -69,7 +67,7 @@ export default function EditorPageClient({
       console.log("🎯 [EditorPageClient] Clearing loading state");
       useEditorStore.getState().setLoading(false);
     }, 3000);
-  }, [triggerReload, machine]);
+  }, [triggerReload]);
 
   // Debug logging for props and state
   useEffect(() => {
@@ -95,11 +93,6 @@ export default function EditorPageClient({
         });
     }
   }, [userId, id, setMessages]);
-
-  useEffect(() => {
-    console.log("🔄 [EditorPageClient] Setting machine data:", machine);
-    setMachineData(machine);
-  }, [machine]);
 
   const handleSendMessage = useCallback(
     async (message: string) => {
@@ -132,7 +125,7 @@ export default function EditorPageClient({
 
       // Step 1: Stream the analysis to chat interface and trigger deployment via backend
       console.log("🌊 [handleSendMessage] Starting streaming process...");
-      await sendStreamingMessage(message, id, machine.id);
+      await sendStreamingMessage(message, id);
 
       // Step 2: Get the final streamed content and save it as an AI message
       const finalStreamedContent =
@@ -209,7 +202,7 @@ export default function EditorPageClient({
       setIsAutoProcessing(false);
       console.log("🏁 [handleSendMessage] Message processing completed");
     },
-    [userId, id, machine?.id, addMessage, sendChatMessage, sendStreamingMessage]
+    [userId, id, addMessage, sendChatMessage, sendStreamingMessage]
   );
 
   // Debug logging for ChatInterface props
@@ -223,21 +216,16 @@ export default function EditorPageClient({
   }, [appName, userId, handleSendMessage, isAutoProcessing]);
 
   useEffect(() => {
-    // Only run when user and machine are loaded
-    if (!userId || !machine?.id) {
-      console.log(
-        "⏳ [EditorPageClient] Waiting for user and machine to load...",
-        {
-          hasUser: !!userId,
-          hasMachine: !!machine?.id,
-        }
-      );
+    // Only run when user is loaded
+    if (!userId) {
+      console.log("⏳ [EditorPageClient] Waiting for user to load...", {
+        hasUser: !!userId,
+      });
       return;
     }
 
     console.log("🔍 [EditorPageClient] Checking for auto-trigger prompt...", {
       hasUser: !!userId,
-      hasMachine: !!machine?.id,
       hasAutoTriggered,
       isAutoProcessing,
     });
@@ -281,14 +269,12 @@ export default function EditorPageClient({
       console.log("⏭️ [EditorPageClient] Skipping auto-trigger:", {
         hasPrompt: !!prompt,
         hasUser: !!userId,
-        hasMachine: !!machine?.id,
         hasAutoTriggered,
         isAutoProcessing,
       });
     }
   }, [
     userId,
-    machine?.id,
     hasAutoTriggered,
     handleSendMessage,
     toast,
@@ -353,9 +339,8 @@ export default function EditorPageClient({
         <div className="flex flex-col flex-1 min-w-0 h-full bg-background rounded-3xl">
           <WebsitePreview
             isEditMode={isEditMode}
-            initialUrl={websiteUrl || undefined}
+            initialUrl={sandboxUrl || undefined}
             id={id}
-            machine={machineData}
           />
         </div>
       </div>

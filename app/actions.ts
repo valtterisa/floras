@@ -5,8 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { redis } from "@/lib/redis";
-import type { builddrrOperation, StreamingChunk } from "@/lib/types";
 import { createRepoFromTemplate, uploadFilesToRepo } from "@/lib/github";
+import { Sandbox } from "@vercel/sandbox";
+import ms from "ms";
+import { createAppAuth } from "@octokit/auth-app";
 
 export type Operation = {
   operation: "write" | "update" | "delete" | "code" | "rename" | "dependency";
@@ -170,110 +172,85 @@ export async function sendChatMessage(
   }
 }
 
-// Read VFS from Redis
-export async function getVirtualFileSystem(
-  userId: string,
-  appName: string
-): Promise<Record<string, string> | null> {
-  if (!userId || !appName) return null;
+export async function deploySandbox(appName: string) {
+  console.log("deploying sandbox for:", appName);
+  const auth = createAppAuth({
+    appId: process.env.GITHUB_APP_ID!,
+    privateKey: process.env.GITHUB_APP_PRIVATE_KEY!,
+    installationId: process.env.GITHUB_APP_INSTALLATION_ID!,
+  });
 
-  try {
-    const vfsKey = `vfs:${userId}:${appName}`;
-    const vfsData = await redis.get(vfsKey);
+  console.log("auth", auth);
 
-    if (!vfsData) return null;
-    return JSON.parse(vfsData.toString());
-  } catch (error) {
-    console.error("Redis error in getVirtualFileSystem:", error);
-    return null;
+  // Get the installation access token (not a JWT)
+  const { token } = await auth({ type: "installation" });
+
+  console.log("token", token);
+
+  const sandbox = await Sandbox.create({
+    teamId: process.env.VERCEL_TEAM_ID!,
+    projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
+    token: process.env.VERCEL_TOKEN!,
+    source: {
+      url: `https://github.com/builddrr-user-sites/${appName}.git`,
+      type: "git",
+      username: "x-access-token",
+      password: token, // Github App installation token
+    },
+    resources: { vcpus: 2 },
+    timeout: ms("5m"),
+    ports: [3000],
+    runtime: "node22",
+  });
+
+  console.log("sandbox created:", sandbox);
+
+  const install = await sandbox.runCommand({
+    cmd: "npm",
+    args: ["install", "--loglevel", "info"],
+    stderr: process.stderr,
+    stdout: process.stdout,
+  });
+
+  if (install.exitCode != 0) {
+    console.log("installing packages failed");
+    process.exit(1);
   }
-}
 
-// Update VFS in Redis
-export async function updateVirtualFileSystem(
-  userId: string,
-  appName: string,
-  files: Record<string, string>
-): Promise<{ success: boolean; error?: string }> {
-  if (!userId || !appName || !files) {
-    return { success: false, error: "Missing required parameters" };
-  }
+  console.log(`Starting the development server...`);
+  await sandbox.runCommand({
+    cmd: "npm",
+    args: ["run", "dev"],
+    stderr: process.stderr,
+    stdout: process.stdout,
+    detached: true,
+  });
 
-  try {
-    const vfsKey = `vfs:${userId}:${appName}`;
-    await redis.set(vfsKey, JSON.stringify(files));
-    return { success: true };
-  } catch (error) {
-    console.error("Redis error in updateVirtualFileSystem:", error);
-    return { success: false, error: "Failed to update virtual file system" };
-  }
-}
+  // Save sandboxId to supabase so we can retrieve based on appName
+  const sandboxId = sandbox.sandboxId;
 
-// Update files in fly.io
-async function deployPreview(
-  files: Record<string, string>,
-  appName: string,
-  machineId: string
-) {
-  // Convert files object to array of { path, content }
-  const normalizedFiles = Object.entries(files).map(([path, content]) => ({
-    guest_path: `/app/${path}`,
-    raw_value: Buffer.from(content, "utf-8").toString("base64"),
-  }));
+  console.log("sandboxId", sandboxId);
 
-  console.log("[deployPreview] normalizedFiles:", normalizedFiles);
-  console.log("[deployPreview] appName:", appName);
-  console.log("[deployPreview] machineId:", machineId);
-  if (!normalizedFiles.length || !appName || !machineId) {
-    return { error: "Missing required fields" };
-  }
-  try {
-    const FLY_API_TOKEN = process.env.FLY_API_TOKEN!;
-    const machine = await fetch(
-      `https://api.machines.dev/v1/apps/${appName}/machines`,
-      {
-        headers: {
-          Authorization: `Bearer ${FLY_API_TOKEN}`,
-        },
-      }
-    );
-    const machineData = await machine.json();
-    const machineConfig = machineData.find(
-      (m: any) => m.id === machineId
-    )?.config;
-    if (!machineConfig) {
-      return { error: "Machine not found" };
-    }
-    machineConfig.files = normalizedFiles;
-    const updateRes = await fetch(
-      `https://api.machines.dev/v1/apps/${appName}/machines/${machineId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${FLY_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ config: machineConfig }),
-      }
-    );
-    if (!updateRes.ok) {
-      const errorText = await updateRes.text();
-      throw new Error(`Fly API error: ${updateRes.status} ${errorText}`);
-    }
-    const data = await updateRes.json();
-    return { machine: data, machineId, appName };
-  } catch (err: any) {
-    return { error: err?.message || err };
-  }
+  const supabase = await createClient();
+  await supabase
+    .from("preview_environments")
+    .update({
+      sandbox_id: sandboxId,
+    })
+    .eq("app_name", appName);
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const url = sandbox.domain(3000);
+
+  return url;
 }
 
 export async function* generateAIResponseStream(
   prompt: string,
-  appName: string,
-  machineId: string
+  appName: string
 ): AsyncGenerator<
   | { type: "analysis"; content: string }
-  | { type: "progress"; status: string; files?: string[] }
+  | { type: "progress"; status: string; files?: string[]; url?: string }
   | { type: "error"; error: string }
   | { type: "warning"; message: string },
   void,
@@ -659,30 +636,25 @@ export async function* generateAIResponseStream(
       files: Object.keys(collectedFiles),
     };
     try {
-      const deployResult = await deployPreview(
-        collectedFiles,
-        appName,
-        machineId
-      );
-      if (deployResult.error) {
-        yield { type: "error", error: deployResult.error };
-      } else {
+      await createRepoFromTemplate(appName);
+
+      await uploadFilesToRepo(appName, collectedFiles);
+
+      const url = await deploySandbox(appName);
+      console.log("url", url);
+      if (url) {
         yield {
           type: "progress",
           status: "deployed",
-          files: Object.keys(collectedFiles),
+          url: url,
         };
-
+      } else {
         // Add final summary
         yield {
           type: "analysis",
           content: `\n\n**✅ Your website is ready!**\n\nI've created a beautiful website with:\n${friendlyComponents.map((component) => `- ${component}`).join("\n")}\n\nYour website is now live and ready to view! 🎉\n\n`,
         };
       }
-      const repoUrl = await createRepoFromTemplate(appName);
-      const repoName = `${appName}`;
-
-      await uploadFilesToRepo(repoName, collectedFiles);
     } catch (err: any) {
       yield { type: "error", error: err?.message || String(err) };
     }

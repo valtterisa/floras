@@ -3,7 +3,8 @@ import { useChatStreamStore } from "@/lib/chat-stream-store";
 
 export const useStreamingChat = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { startStream, updateStream, finishStream } = useChatStreamStore();
+  const { startStream, updateStream, finishStream, setDeploymentUrl } =
+    useChatStreamStore();
 
   const updateStreamOptimized = useCallback(
     (chunk: string) => {
@@ -14,7 +15,7 @@ export const useStreamingChat = () => {
   );
 
   const sendMessage = useCallback(
-    async (message: string, appName: string, machineId: string) => {
+    async (message: string, appName: string, machineId?: string) => {
       console.log(
         "🚀 [useStreamingChat] sendMessage called with:",
         message.substring(0, 50) + "..."
@@ -38,7 +39,7 @@ export const useStreamingChat = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ message, appName, machineId }),
+          body: JSON.stringify({ message, appName }),
         });
         console.log(
           "🔄 [useStreamingChat] Stream response received:",
@@ -92,6 +93,14 @@ export const useStreamingChat = () => {
                       `\n\n**🚀 Deploying your website...**\n\n`
                     );
                   } else if (data.status === "deployed") {
+                    // Capture the deployment URL if provided
+                    if (data.url) {
+                      console.log(
+                        "🌐 [useStreamingChat] Capturing deployment URL:",
+                        data.url
+                      );
+                      setDeploymentUrl(data.url);
+                    }
                     updateStreamOptimized(
                       `\n\n**✅ Deployment completed successfully!**\n\n`
                     );
@@ -143,7 +152,7 @@ export const useStreamingChat = () => {
         finishStream();
       }
     },
-    [startStream, updateStream, finishStream]
+    [startStream, updateStream, finishStream, setDeploymentUrl]
   );
 
   return {

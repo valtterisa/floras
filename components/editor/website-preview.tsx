@@ -25,7 +25,6 @@ interface IframeEditorProps {
   initialUrl?: string;
   isEditMode: boolean;
   id: string;
-  machine: any;
 }
 
 interface EditorReducerState {
@@ -114,10 +113,23 @@ export default function WebsitePreview({
   initialUrl,
   isEditMode,
   id,
-  machine,
 }: IframeEditorProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [url] = useState(initialUrl);
+  const [url, setUrl] = useState(initialUrl);
+  const [deploymentAttempted, setDeploymentAttempted] = useState(false);
+
+  // Update URL when initialUrl changes (e.g., when deployment URL becomes available)
+  useEffect(() => {
+    if (initialUrl && initialUrl !== url) {
+      console.log(
+        "🔄 [WebsitePreview] Updating URL from:",
+        url,
+        "to:",
+        initialUrl
+      );
+      setUrl(initialUrl);
+    }
+  }, [initialUrl, url]);
   const [editorState, dispatch] = useReducer(editorReducer, initialEditorState);
 
   const selectElement = useEditorStore((s: EditorState) => s.selectElement);
@@ -128,6 +140,7 @@ export default function WebsitePreview({
 
   // Chat streaming state
   const isStreaming = useChatStreamStore((s) => s.isStreaming);
+  const deploymentUrl = useChatStreamStore((s) => s.deploymentUrl);
 
   // Store handler references for clean removal
   const eventHandlersRef = useRef<{
@@ -146,32 +159,7 @@ export default function WebsitePreview({
     setHasMounted(true);
   }, []);
 
-  // Get a preview URL - use real machine URL, mock URL, or API preview endpoint
-  const getPreviewUrl = useCallback(() => {
-    // If we have a machine with a URL property, use it
-    if (machine && machine.ipv4) {
-      console.log("🔍 [WebsitePreview] Machine found with ipv4:", machine.ipv4);
-      return `http://${machine.ipv4}`;
-    }
-
-    // If we have an initial URL that's not "new", use the preview endpoint
-    if (initialUrl && initialUrl !== "new") {
-      console.log(
-        "🔍 [WebsitePreview] Using preview endpoint for:",
-        initialUrl
-      );
-      return `/api/preview/${initialUrl}`;
-    }
-
-    console.log("❌ [WebsitePreview] No valid preview URL found:", {
-      machine,
-      initialUrl,
-    });
-    // Return null if no valid URL can be determined
-    return null;
-  }, [machine, initialUrl]);
-
-  const previewUrl = getPreviewUrl();
+  const previewUrl = deploymentUrl;
 
   // Function to reload the iframe
   const reloadIframe = useCallback(() => {
@@ -766,51 +754,6 @@ export default function WebsitePreview({
     }
   }
 
-  // Simplified preview polling function
-  const checkPreviewReady = useCallback(async () => {
-    if (!url) return;
-
-    try {
-      // If we have a machine with ipv4, use direct URL
-      if (machine && machine.ipv4) {
-        console.log("🔍 [WebsitePreview] Using direct machine URL:", `http://${machine.ipv4}`);
-        dispatch({ type: "SET_IFRAME_READY", value: true });
-        setTimeout(() => {
-          initializeEditor();
-        }, 500);
-        return;
-      }
-
-      // Otherwise, poll the preview endpoint
-      const res = await fetch(`/api/preview/${url}/`, { method: "GET" });
-      console.log("🔍 [WebsitePreview] Preview endpoint response:", res.status);
-
-      if (res.status === 200) {
-        dispatch({ type: "SET_IFRAME_READY", value: true });
-        setTimeout(() => {
-          initializeEditor();
-        }, 500);
-      } else if (res.status === 202) {
-        // Not ready, poll again
-        console.log("⏳ [WebsitePreview] Preview not ready, polling again...");
-        setTimeout(checkPreviewReady, 1500);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        console.error("❌ [WebsitePreview] Preview endpoint error:", res.status, data);
-        dispatch({
-          type: "SET_IFRAME_ERROR",
-          value: data.error || `Error: ${res.status}`,
-        });
-      }
-    } catch (err: any) {
-      console.error("❌ [WebsitePreview] Preview check failed:", err);
-      dispatch({
-        type: "SET_IFRAME_ERROR",
-        value: err.message || "Unknown error",
-      });
-    }
-  }, [url, machine]);
-
   // Poll for preview when AI stops streaming or on page load/refresh
   useEffect(() => {
     if (!hasMounted) return;
@@ -820,8 +763,7 @@ export default function WebsitePreview({
     dispatch({ type: "SET_IFRAME_ERROR", value: null });
 
     // Start polling
-    checkPreviewReady();
-  }, [hasMounted, isStreaming, reloadTrigger, checkPreviewReady]);
+  }, [hasMounted, isStreaming, reloadTrigger]);
 
   // Add event listener for iframe load
   useEffect(() => {
@@ -890,11 +832,12 @@ export default function WebsitePreview({
       hasReloadIframe: !!reloadIframe,
       hasSetLoading: !!setLoading,
       previewUrl,
-      machineState: machine,
     });
 
     if (reloadTrigger > 0) {
-      console.log("🔄 [WebsitePreview] Reload trigger detected, reloading iframe");
+      console.log(
+        "🔄 [WebsitePreview] Reload trigger detected, reloading iframe"
+      );
       setLoading(true);
 
       // Reset iframe ready state to force re-initialization
@@ -911,7 +854,7 @@ export default function WebsitePreview({
 
       return () => clearTimeout(timer);
     }
-  }, [reloadTrigger, reloadIframe, setLoading, previewUrl, machine]);
+  }, [reloadTrigger, reloadIframe, setLoading, previewUrl]);
 
   if (!editorState.iframeReady) {
     return (
@@ -978,7 +921,6 @@ export default function WebsitePreview({
                 <div className="flex-1 bg-white rounded px-3 py-1 text-sm text-gray-600 border border-gray-200">
                   /
                 </div>
-
               </div>
             </div>
 

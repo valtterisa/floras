@@ -4,11 +4,11 @@ import { rateLimit } from "@/lib/ratelimit";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest, context: NextFetchEvent) {
-  const { message, appName, machineId } = await req.json();
+  const { message, appName } = await req.json();
 
-  if (!message || !appName || !machineId) {
+  if (!message || !appName) {
     return NextResponse.json(
-      { error: "Missing required parameters: message, appName, machineId" },
+      { error: "Missing required parameters: message, appName" },
       { status: 400 }
     );
   }
@@ -31,11 +31,7 @@ export async function POST(req: NextRequest, context: NextFetchEvent) {
     async start(controller) {
       const encoder = new TextEncoder();
       try {
-        for await (const chunk of generateAIResponseStream(
-          message,
-          appName,
-          machineId
-        )) {
+        for await (const chunk of generateAIResponseStream(message, appName)) {
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
           );
