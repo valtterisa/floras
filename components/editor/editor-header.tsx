@@ -20,6 +20,13 @@ import { usePathname } from "next/navigation";
 import { createSiteForUser } from "@/lib/cloudflare/cloudflare";
 import { createClient } from "@/lib/supabase/client";
 import DomainConnectionModal from "@/components/domain-connection-modal";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader as SheetHdr,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 function EditorHeader({ id }: { id: string }) {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -167,7 +174,8 @@ function EditorHeader({ id }: { id: string }) {
         Dashboard
       </Link>
 
-      <div className="flex items-center space-x-2 ml-auto">
+      {/* Desktop actions */}
+      <div className="hidden md:flex items-center space-x-2 ml-auto">
         <Button
           size="sm"
           variant="outline"
@@ -435,6 +443,88 @@ function EditorHeader({ id }: { id: string }) {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+      </div>
+
+      {/* Mobile menu */}
+      <div className="md:hidden ml-auto">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button size="sm" variant="outline">
+              Menu
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" title="Editor menu" className="p-4">
+            <SheetHdr className="pb-2">
+              <SheetTitle>Editor actions</SheetTitle>
+            </SheetHdr>
+            <div className="flex flex-col gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleDownload}
+                disabled={isDownloading}
+              >
+                {isDownloading ? "Downloading..." : "Download"}
+              </Button>
+              {isLoadingDeployment ? (
+                <Button size="sm" disabled>
+                  Loading...
+                </Button>
+              ) : deployUrl ? (
+                <>
+                  <a
+                    href={deployUrl || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full"
+                  >
+                    <Button size="sm" className="w-full">
+                      View Live Website
+                    </Button>
+                  </a>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(deployUrl || "");
+                      toast({
+                        title: "Link copied!",
+                        description: "Website link copied to clipboard",
+                        variant: "default",
+                      });
+                    }}
+                  >
+                    Copy Website Link
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDomainModal(true)}
+                  >
+                    Connect Your Domain
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => handlePublish(false)}
+                    disabled={isDeploying}
+                  >
+                    {isDeploying ? "Publishing..." : "Publish (Free Domain)"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDomainModal(true)}
+                  >
+                    Connect Your Domain
+                  </Button>
+                </>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Domain Connection Modal */}
