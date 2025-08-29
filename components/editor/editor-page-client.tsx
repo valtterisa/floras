@@ -213,9 +213,9 @@ export default function EditorPageClient({
               <TabsTrigger className="hover:bg-gray-100" value="chat">
                 Chat
               </TabsTrigger>
-              <TabsTrigger className="hover:bg-gray-100" value="dev">
+              {/* <TabsTrigger className="hover:bg-gray-100" value="dev">
                 Design
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
             <TabsContent
               value="chat"
