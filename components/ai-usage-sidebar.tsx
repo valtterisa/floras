@@ -111,7 +111,7 @@ export function AIUsageSidebar() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-blue-600" />
+          <Zap className="h-4 w-4 " />
           <span className="text-sm font-medium">AI Usage</span>
         </div>
         <Badge
@@ -140,19 +140,6 @@ export function AIUsageSidebar() {
           />
         </div>
       </div>
-
-      {/* Warning Badge */}
-      {hasExceededLimits && (
-        <div className="mb-3">
-          <Badge
-            variant="destructive"
-            className="w-full justify-center text-xs"
-          >
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            Limit Exceeded
-          </Badge>
-        </div>
-      )}
 
       {/* Action Buttons */}
       <div className="space-y-2 pt-2 border-t border-border">
