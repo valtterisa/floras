@@ -1,11 +1,19 @@
 "use server";
 
 import { systemPrompt } from "@/lib/prompts/system";
+import {
+  getProjectContext,
+  invalidateProjectContext,
+} from "@/lib/project-context";
 import { createClient } from "@/lib/supabase/server";
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { redis } from "@/lib/redis";
-import { createRepoFromTemplate, uploadFilesToRepo } from "@/lib/github";
+import {
+  checkRepoExists,
+  createRepoFromTemplate,
+  uploadFilesToRepo,
+} from "@/lib/github";
 import { deploySandboxAndStopExisting } from "@/lib/vercel/vercel";
 
 export type Operation = {
@@ -182,8 +190,22 @@ export async function* generateAIResponseStream(
   void,
   unknown
 > {
+  // Build dynamic system prompt with optional project context
+  let system = systemPrompt;
+  try {
+    const existsOnServerForContext = await checkRepoExists(appName);
+    if (existsOnServerForContext) {
+      const ctx = await getProjectContext(appName);
+      if (ctx) {
+        system = `${systemPrompt}\n\n---\n\nProject Context (trimmed):\n${ctx}`;
+      }
+    }
+  } catch (_) {
+    // If context assembly fails, fall back silently
+  }
+
   const result = streamText({
-    system: systemPrompt,
+    system,
     prompt: prompt,
     temperature: 0,
     model: anthropic("claude-sonnet-4-20250514"),
@@ -564,7 +586,14 @@ export async function* generateAIResponseStream(
     try {
       // Only create repo if it doesn't already exist
       if (!repoExists) {
-        await createRepoFromTemplate(appName);
+        const existsOnServer = await checkRepoExists(appName);
+        if (!existsOnServer) {
+          await createRepoFromTemplate(appName);
+        } else {
+          console.log(
+            `[generateAIResponseStream] (server) Repo already exists for ${appName}, skipping creation`
+          );
+        }
       } else {
         console.log(
           `[generateAIResponseStream] Repo already exists for ${appName}, skipping creation`
@@ -574,6 +603,10 @@ export async function* generateAIResponseStream(
       await uploadFilesToRepo(appName, collectedFiles);
       console.log("🔍 [DEBUG] Deploying sandbox and stopping existing");
       const { url } = await deploySandboxAndStopExisting(appName);
+      // Invalidate context after deploy; next run rebuilds with fresh files
+      try {
+        await invalidateProjectContext(appName);
+      } catch (_) {}
       if (url) {
         yield {
           type: "progress",

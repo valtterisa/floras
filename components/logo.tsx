@@ -11,7 +11,7 @@ function Logo({ className }: { className?: string }) {
       y="0px"
       width="100%"
       viewBox="0 0 496 496"
-      enable-background="new 0 0 496 496"
+      enableBackground="new 0 0 496 496"
     >
       <path
         fill="#000000"

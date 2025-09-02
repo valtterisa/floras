@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/client";
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
 
 export interface PolarUsageEvent {
   customer_id: string;
@@ -28,7 +30,7 @@ export async function trackUsageDual(
   polarCustomerId?: string,
   userId?: string
 ): Promise<UsageTrackingResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     // 1. First track in Supabase for service limiting (ALL plans)
@@ -190,7 +192,7 @@ export async function syncUsageData(
     const polarUsage = await getPolarUsage(customerId, startDate, endDate);
 
     // Get usage from Supabase
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: supabaseUsage } = await supabase
       .from("ai_usage")
       .select("*")
@@ -231,7 +233,7 @@ function calculateCost(tokens: number, usageType: string): number {
 export async function getCustomerIdFromUser(
   userId: string
 ): Promise<string | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // First check if user has a paid plan
   const { data: profile } = await supabase
@@ -274,10 +276,12 @@ export async function trackUsageAuto(
   tokensUsed: number,
   websiteId?: string
 ): Promise<UsageTrackingResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  console.log("user", user);
+  console.log("supabase", supabase);
 
   if (!user) {
     throw new Error("User not authenticated");

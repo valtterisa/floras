@@ -64,6 +64,23 @@ export async function createRepoFromTemplate(appName: string): Promise<string> {
   const octokit = await getOctokitAsInstallation();
 
   try {
+    // Defensive: short-circuit if repo already exists
+    try {
+      await octokit.request(`GET /repos/${ORG}/${appName}`, {
+        owner: ORG,
+        repo: appName,
+      });
+      console.log(
+        `Repository ${appName} already exists (pre-check), skipping creation`
+      );
+      return `https://github.com/${ORG}/${appName}`;
+    } catch (preErr: any) {
+      if (preErr?.status !== 404) {
+        console.error(`Pre-check failed for ${appName}:`, preErr);
+        throw preErr;
+      }
+    }
+
     const { data } = await octokit.request(
       `POST /repos/${TEMPLATE_OWNER}/${TEMPLATE_REPO}/generate`,
       {
@@ -80,7 +97,14 @@ export async function createRepoFromTemplate(appName: string): Promise<string> {
     console.log(`Repository ${appName} is now ready for file uploads`);
 
     return data.html_url;
-  } catch (error) {
+  } catch (error: any) {
+    // Gracefully handle 422 (already exists) from GitHub template generate API
+    if (error?.status === 422) {
+      console.log(
+        `Repository ${appName} likely already exists (422). Skipping create and continuing.`
+      );
+      return `https://github.com/${ORG}/${appName}`;
+    }
     console.error(`Failed to create repository ${appName}:`, error);
     throw error;
   }
@@ -149,5 +173,57 @@ export async function uploadFilesToRepo(
     } catch (error) {
       console.error(`Failed to upload ${path} to ${repo}:`, error);
     }
+  }
+}
+
+export async function getRepoFileContent(
+  repo: string,
+  filePath: string
+): Promise<string | null> {
+  const octokit = await getOctokitAsInstallation();
+  try {
+    const res = await octokit.request(
+      `GET /repos/${ORG}/${repo}/contents/${filePath}`,
+      {
+        owner: ORG,
+        repo,
+        path: filePath,
+      }
+    );
+    const data: any = res.data as any;
+    if (data && typeof data.content === "string") {
+      return Buffer.from(data.content, "base64").toString("utf8");
+    }
+    return null;
+  } catch (error: any) {
+    if (error?.status === 404) return null;
+    console.error(`Failed to fetch ${filePath} from ${repo}:`, error);
+    return null;
+  }
+}
+
+export async function listRepoDirectory(
+  repo: string,
+  dirPath: string
+): Promise<string[]> {
+  const octokit = await getOctokitAsInstallation();
+  try {
+    const res = await octokit.request(
+      `GET /repos/${ORG}/${repo}/contents/${dirPath}`,
+      {
+        owner: ORG,
+        repo,
+        path: dirPath,
+      }
+    );
+    const data: any = res.data as any;
+    if (Array.isArray(data)) {
+      return data.map((entry: any) => String(entry.name));
+    }
+    return [];
+  } catch (error: any) {
+    if (error?.status === 404) return [];
+    console.error(`Failed to list ${dirPath} in ${repo}:`, error);
+    return [];
   }
 }
