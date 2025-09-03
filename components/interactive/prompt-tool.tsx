@@ -18,13 +18,43 @@ import Logo from "../logo";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { generateProjectName } from "@/lib/actions/save-project-name";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import {
+  checkRemainingChatUsage,
+  createWebsiteWithLimitCheck,
+} from "@/lib/actions/ai-usage";
 import { generateAppName } from "@/lib/utils";
 
 export default function PromptTool({ user }: { user: any }) {
   const [prompt, setPrompt] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<{
+    hasRemainingUsage: boolean;
+    currentUsage: number;
+    limit: number;
+  }>({
+    hasRemainingUsage: true,
+    currentUsage: 0,
+    limit: 0,
+  });
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check usage limits on component mount
+  useEffect(() => {
+    const checkLimits = async () => {
+      if (user) {
+        const result = await checkRemainingChatUsage();
+        setUsageInfo({
+          hasRemainingUsage: result.hasRemainingUsage,
+          currentUsage: result.currentUsage,
+          limit: result.limit,
+        });
+      }
+    };
+    checkLimits();
+  }, [user]);
 
   // Listen for route changes to control loading state
   useEffect(() => {
@@ -61,7 +91,7 @@ export default function PromptTool({ user }: { user: any }) {
       return;
     }
 
-    // Store the prompt, appName, and clear steps in localStorage for the editor/chat
+    // Store the prompt for the editor/chat
     sessionStorage.setItem("builddrr_generation_prompt", prompt);
 
     try {
@@ -78,40 +108,22 @@ export default function PromptTool({ user }: { user: any }) {
         display_name = app_name;
       }
 
-      // Create both preview environment and website records
-      const [previewInsert, websiteInsert] = await Promise.all([
-        supabase
-          .from("preview_environments")
-          .insert({
-            app_name,
-            id: user.id,
-            assigned_at: new Date().toISOString(),
-          })
-          .select()
-          .single(),
-        supabase
-          .from("websites")
-          .insert({
-            user_id: user.id,
-            name: app_name,
-            app_name: app_name,
-            display_name: display_name,
-            created_at: new Date().toISOString(),
-          })
-          .select()
-          .single(),
-      ]);
+      // Use server action to create website with usage limit check
+      const result = await createWebsiteWithLimitCheck(app_name, display_name);
 
-      if (previewInsert.error) throw previewInsert.error;
-      if (websiteInsert.error) throw websiteInsert.error;
-
-      // Link the website to the preview environment
-      const { error: linkError } = await supabase
-        .from("websites")
-        .update({ preview_id: previewInsert.data.preview_id })
-        .eq("id", websiteInsert.data.id);
-
-      if (linkError) throw linkError;
+      if (!result.success) {
+        if (result.error?.includes("usage limit exceeded")) {
+          setShowUpgradeModal(true);
+        } else {
+          toast({
+            title: "Error",
+            description:
+              result.error || "Something went wrong. Please try again.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
 
       console.log("redirecting to editor:", app_name);
       // Manually dispatch a route start event
@@ -124,6 +136,7 @@ export default function PromptTool({ user }: { user: any }) {
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -294,6 +307,23 @@ export default function PromptTool({ user }: { user: any }) {
       >
         <ArrowDown className="w-10 h-10" />
       </motion.div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          // Reload the page to get the updated user state
+          window.location.reload();
+        }}
+      />
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentUsage={usageInfo.currentUsage}
+        limit={usageInfo.limit}
+      />
     </div>
   );
 }

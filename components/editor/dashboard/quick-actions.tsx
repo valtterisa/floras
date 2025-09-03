@@ -8,9 +8,12 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function QuickActions() {
+  const router = useRouter();
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Generate Website */}
@@ -27,9 +30,12 @@ export function QuickActions() {
           <p className="text-sm text-muted-foreground mb-4">
             Start building a new website project in seconds.
           </p>
-          <button className="px-4 py-2 rounded-md bg-primary text-white font-medium hover:bg-primary/90 transition">
+          <Button
+            className="px-4 py-2 rounded-md bg-primary text-white font-medium hover:bg-primary/90 transition"
+            onClick={() => router.push("/dashboard/website/create")}
+          >
             Generate
-          </button>
+          </Button>
         </CardContent>
       </Card>
 

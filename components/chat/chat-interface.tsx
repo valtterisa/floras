@@ -7,7 +7,7 @@ import { ArrowUp } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useChatStreamStore, ChatMessage } from "@/lib/chat-stream-store";
 import { useAIUsage } from "@/hooks/use-ai-usage";
-import { trackAIUsage } from "@/lib/ai-usage-tracker";
+import { trackAICall } from "@/lib/ai-usage-tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
@@ -341,8 +341,7 @@ export default function ChatInterface({
       }
 
       // Track AI usage in the background; do not block sending/rendering
-      const estimatedTokens = Math.round(messageToSend.length * 1.3);
-      void trackAIUsage("chat", estimatedTokens)
+      void trackAICall()
         .then((res) => setTrackingResult(res))
         .catch(() => {
           // ignore tracking errors for UX; keep chat flowing

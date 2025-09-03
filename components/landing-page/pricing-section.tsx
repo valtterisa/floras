@@ -14,7 +14,12 @@ const plans = [
       monthly: "Free",
       yearly: "Free",
     },
-    features: ["1 website", "3 AI Questions", "Email support", "Chat to edit"],
+    features: [
+      "2 website",
+      "5 AI Chat Messages",
+      "Email support",
+      "Chat to edit",
+    ],
     polarProductId: "20800f87-e007-4cea-a836-93f87f00ea40", // Free Plan
   },
   {
@@ -25,10 +30,11 @@ const plans = [
       yearly: "$15",
     },
     features: [
-      "3 websites",
-      "10 AI Questions ",
+      "unlimited websites",
+      "20 AI Chat Messages",
       "Priority support",
-      "Design mode",
+      "Custom domains",
+      "Priority support",
     ],
     popular: true,
     polarProductId: "bcde8f52-3a0a-444e-b7fa-65f2b7b97801", // Pro Plan
@@ -42,9 +48,10 @@ const plans = [
     },
     features: [
       "Unlimited websites",
-      "Unlimited AI Questions",
-      "Priority support",
+      "Unlimited AI Chat Messages",
       "Design mode",
+      "Custom domains",
+      "Priority support",
     ],
     polarProductId: "custom-plan-id", // Custom Plan
   },

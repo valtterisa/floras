@@ -3,78 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { trackUsageDual } from "@/lib/polar-usage-tracker";
 
-export async function trackAICall(websiteId?: string): Promise<{
-  success: boolean;
-  error?: string;
-  limits?: any[];
-}> {
-  try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return { success: false, error: "User not authenticated" };
-    }
-
-    const result = await trackUsageDual(
-      "chat",
-      0,
-      websiteId,
-      undefined,
-      user.id
-    );
-    if (!result.success) {
-      return { success: false, error: result.error || "Usage tracking failed" };
-    }
-
-    const { data: limits } = await supabase.rpc("check_ai_usage_limits", {
-      user_uuid: user.id,
-    });
-
-    return { success: true, limits: limits || [] };
-  } catch (error) {
-    console.error("Error tracking AI call:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-}
-
-export async function checkUsageLimits(): Promise<{
-  hasExceeded: boolean;
-  limits: any[];
-  error?: string;
-}> {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { hasExceeded: false, limits: [] };
-
-    const { data, error } = await supabase.rpc("check_ai_usage_limits", {
-      user_uuid: user.id,
-    });
-    if (error) throw error;
-
-    // Determine if any limit is exceeded
-    const limits = data || [];
-    const hasExceeded = limits.some((l: any) => l.is_exceeded === true);
-    return { hasExceeded, limits };
-  } catch (error) {
-    return {
-      hasExceeded: false,
-      limits: [],
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-}
-
+/**
+ * Server action to check if user has remaining AI usage for chat
+ * This is the secure server-side way to check limits
+ */
 export async function checkRemainingChatUsage(): Promise<{
   hasRemainingUsage: boolean;
   currentUsage: number;
@@ -84,10 +16,12 @@ export async function checkRemainingChatUsage(): Promise<{
   try {
     const supabase = await createClient();
 
+    // Get authenticated user
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
+
     if (authError || !user) {
       return {
         hasRemainingUsage: false,
@@ -137,6 +71,74 @@ export async function checkRemainingChatUsage(): Promise<{
   }
 }
 
+/**
+ * Server action to track AI usage (just count calls, no token tracking)
+ * This is the secure server-side way to track usage
+ */
+export async function trackAICall(websiteId?: string): Promise<{
+  success: boolean;
+  error?: string;
+  limits?: any[];
+}> {
+  try {
+    const supabase = await createClient();
+
+    // Get authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "User not authenticated",
+      };
+    }
+
+    // Track usage in both Polar and Supabase (just count the call, no tokens)
+    const result = await trackUsageDual(
+      "chat",
+      0, // No token tracking, just count the call
+      websiteId,
+      undefined, // No polar customer ID needed for basic tracking
+      user.id
+    );
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error || "Usage tracking failed",
+      };
+    }
+
+    // Get updated limits after tracking
+    const { data: limits, error: limitsError } = await supabase.rpc(
+      "check_ai_usage_limits",
+      { user_uuid: user.id }
+    );
+
+    if (limitsError) {
+      console.warn("Failed to check limits after tracking:", limitsError);
+    }
+
+    return {
+      success: true,
+      limits: limits || [],
+    };
+  } catch (error) {
+    console.error("Error tracking AI call:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * Server action to create a website with usage limit check
+ * This ensures users can't bypass limits by calling APIs directly
+ */
 export async function createWebsiteWithLimitCheck(
   appName: string,
   displayName: string
@@ -148,21 +150,30 @@ export async function createWebsiteWithLimitCheck(
 }> {
   try {
     const supabase = await createClient();
+
+    // Get authenticated user
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
-    if (authError || !user)
-      return { success: false, error: "User not authenticated" };
 
-    const usage = await checkRemainingChatUsage();
-    if (!usage.hasRemainingUsage) {
+    if (authError || !user) {
+      return {
+        success: false,
+        error: "User not authenticated",
+      };
+    }
+
+    // Check usage limits before creating website
+    const usageCheck = await checkRemainingChatUsage();
+    if (!usageCheck.hasRemainingUsage) {
       return {
         success: false,
         error: "AI usage limit exceeded. Please upgrade your plan.",
       };
     }
 
+    // Create both preview environment and website records
     const [previewInsert, websiteInsert] = await Promise.all([
       supabase
         .from("preview_environments")
@@ -186,26 +197,32 @@ export async function createWebsiteWithLimitCheck(
         .single(),
     ]);
 
-    if (previewInsert.error)
+    if (previewInsert.error) {
       return {
         success: false,
         error: `Failed to create preview environment: ${previewInsert.error.message}`,
       };
-    if (websiteInsert.error)
+    }
+
+    if (websiteInsert.error) {
       return {
         success: false,
         error: `Failed to create website: ${websiteInsert.error.message}`,
       };
+    }
 
+    // Link the website to the preview environment
     const { error: linkError } = await supabase
       .from("websites")
       .update({ preview_id: previewInsert.data.preview_id })
       .eq("id", websiteInsert.data.id);
-    if (linkError)
+
+    if (linkError) {
       return {
         success: false,
         error: `Failed to link website to preview: ${linkError.message}`,
       };
+    }
 
     return {
       success: true,

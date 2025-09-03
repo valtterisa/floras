@@ -9,6 +9,11 @@ import { User } from "@supabase/supabase-js";
 import { SiteHeader } from "@/components/site-header";
 import { generateProjectName } from "@/lib/actions/save-project-name";
 import { generateAppName } from "@/lib/utils";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import {
+  checkRemainingChatUsage,
+  createWebsiteWithLimitCheck,
+} from "@/lib/actions/ai-usage";
 
 const examples = [
   {
@@ -29,10 +34,37 @@ const examples = [
   },
 ];
 
-export default function CreatePromptClient({ user }: { user: User }) {
+type CreatePromptClientProps = {
+  user: User;
+};
+
+export default function CreatePromptClient({ user }: CreatePromptClientProps) {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<{
+    hasRemainingUsage: boolean;
+    currentUsage: number;
+    limit: number;
+  }>({
+    hasRemainingUsage: true,
+    currentUsage: 0,
+    limit: 0,
+  });
   const router = useRouter();
+
+  // Check usage limits on component mount
+  useEffect(() => {
+    const checkLimits = async () => {
+      const result = await checkRemainingChatUsage();
+      setUsageInfo({
+        hasRemainingUsage: result.hasRemainingUsage,
+        currentUsage: result.currentUsage,
+        limit: result.limit,
+      });
+    };
+    checkLimits();
+  }, []);
 
   const promptPlaceholders = [
     "Make a landing page for my new product",
@@ -86,18 +118,18 @@ export default function CreatePromptClient({ user }: { user: User }) {
 
   const handleSend = async () => {
     if (isLoading) return;
-    setIsLoading(true);
-    const supabase = createClient();
+
     if (!prompt.trim()) {
-      setIsLoading(false);
       return;
     }
     if (!user) {
       localStorage.setItem("builddrr_prompt", prompt);
-      setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
     sessionStorage.setItem("builddrr_generation_prompt", prompt);
+
     try {
       // Generate unique app_name (slug) and friendly display_name
       const app_name = generateAppName(user.id);
@@ -112,40 +144,22 @@ export default function CreatePromptClient({ user }: { user: User }) {
         display_name = app_name;
       }
 
-      // Create both preview environment and website records
-      const [previewInsert, websiteInsert] = await Promise.all([
-        supabase
-          .from("preview_environments")
-          .insert({
-            app_name,
-            id: user.id,
-            assigned_at: new Date().toISOString(),
-          })
-          .select()
-          .single(),
-        supabase
-          .from("websites")
-          .insert({
-            user_id: user.id,
-            name: app_name,
-            app_name: app_name,
-            display_name: display_name,
-            created_at: new Date().toISOString(),
-          })
-          .select()
-          .single(),
-      ]);
+      // Use server action to create website with usage limit check
+      const result = await createWebsiteWithLimitCheck(app_name, display_name);
 
-      if (previewInsert.error) throw previewInsert.error;
-      if (websiteInsert.error) throw websiteInsert.error;
-
-      // Link the website to the preview environment
-      const { error: linkError } = await supabase
-        .from("websites")
-        .update({ preview_id: previewInsert.data.preview_id })
-        .eq("id", websiteInsert.data.id);
-
-      if (linkError) throw linkError;
+      if (!result.success) {
+        if (result.error?.includes("usage limit exceeded")) {
+          setShowUpgradeModal(true);
+        } else {
+          toast({
+            title: "Error",
+            description:
+              result.error || "Something went wrong. Please try again.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
 
       router.push(`/dashboard/website/${app_name}/editor`);
     } catch (error) {
@@ -209,6 +223,13 @@ export default function CreatePromptClient({ user }: { user: User }) {
           </div>
         </div>
       </div>
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentUsage={usageInfo.currentUsage}
+        limit={usageInfo.limit}
+      />
     </>
   );
 }

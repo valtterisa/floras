@@ -51,16 +51,16 @@ export async function trackUsageDual(
 
     const userPlan = profile.plan;
 
-    // Insert into Supabase ai_usage table
+    // Insert into Supabase ai_usage table (just count calls, no token tracking)
     const { data: usageData, error: supabaseError } = await supabase
       .from("ai_usage")
       .insert({
         user_id: userId,
         website_id: websiteId,
         usage_type: usageType,
-        tokens_used: tokensUsed,
+        tokens_used: 0, // No token tracking
         requests_count: 1,
-        cost_usd: calculateCost(tokensUsed, usageType),
+        cost_usd: 0, // No cost tracking for basic usage
         polar_customer_id: polarCustomerId, // Store for reference if available
       })
       .select()
@@ -74,7 +74,7 @@ export async function trackUsageDual(
     let polarTracked = false;
     if (polarCustomerId && (userPlan === "pro" || userPlan === "enterprise")) {
       try {
-        await trackPolarUsage(polarCustomerId, usageType, tokensUsed);
+        await trackPolarUsage(polarCustomerId, usageType, 0); // No token tracking
         polarTracked = true;
       } catch (polarError) {
         console.warn(

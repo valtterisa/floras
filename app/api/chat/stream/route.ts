@@ -2,6 +2,7 @@ import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { generateAIResponseStream } from "@/app/actions";
 import { rateLimit } from "@/lib/ratelimit";
 import { createClient } from "@/lib/supabase/server";
+import { trackAICall } from "@/lib/actions/ai-usage";
 
 export async function POST(req: NextRequest, context: NextFetchEvent) {
   const { message, appName, repoExists = false } = await req.json();
@@ -31,6 +32,9 @@ export async function POST(req: NextRequest, context: NextFetchEvent) {
     async start(controller) {
       const encoder = new TextEncoder();
       try {
+        // Track AI call usage
+        await trackAICall();
+
         for await (const chunk of generateAIResponseStream(
           message,
           appName,
