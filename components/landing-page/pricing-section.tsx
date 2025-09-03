@@ -15,7 +15,7 @@ const plans = [
       yearly: "Free",
     },
     features: [
-      "2 website",
+      "2 websites",
       "5 AI Chat Messages",
       "Email support",
       "Chat to edit",
@@ -197,31 +197,28 @@ export default function Pricing({ user }: { user: User | null }) {
           <div className="relative inline-flex items-center bg-white rounded-xl p-1.5 border border-gray-300 shadow-sm">
             <button
               onClick={() => setBillingCycle("monthly")}
-              className={`relative z-10 px-8 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-center min-w-[100px] ${
-                billingCycle === "monthly"
-                  ? "text-white shadow-sm"
-                  : "text-gray-600 hover:text-black"
-              }`}
+              className={`relative z-10 px-8 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-center min-w-[100px] ${billingCycle === "monthly"
+                ? "text-white shadow-sm"
+                : "text-gray-600 hover:text-black"
+                }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingCycle("yearly")}
-              className={`relative z-10 px-8 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-center min-w-[100px] ${
-                billingCycle === "yearly"
-                  ? "text-white shadow-sm"
-                  : "text-gray-600 hover:text-black"
-              }`}
+              className={`relative z-10 px-8 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-center min-w-[100px] ${billingCycle === "yearly"
+                ? "text-white shadow-sm"
+                : "text-gray-600 hover:text-black"
+                }`}
             >
               Yearly
             </button>
             {/* Animated background slider */}
             <div
-              className={`absolute top-1.5 bottom-1.5 bg-black rounded-lg transition-all duration-300 ease-out shadow-lg ${
-                billingCycle === "monthly"
-                  ? "left-1.5 right-[50.5%]"
-                  : "left-[49.5%] right-1.5"
-              }`}
+              className={`absolute top-1.5 bottom-1.5 bg-black rounded-lg transition-all duration-300 ease-out shadow-lg ${billingCycle === "monthly"
+                ? "left-1.5 right-[50.5%]"
+                : "left-[49.5%] right-1.5"
+                }`}
             />
           </div>
         </motion.div>
@@ -234,9 +231,8 @@ export default function Pricing({ user }: { user: User | null }) {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className={`relative flex flex-col h-full bg-white rounded-xl shadow-sm border p-8 ${
-                plan.popular ? "border-black border-2" : "border-gray-300"
-              }`}
+              className={`relative flex flex-col h-full bg-white rounded-xl shadow-sm border p-8 ${plan.popular ? "border-black border-2" : "border-gray-300"
+                }`}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black text-white text-sm font-medium px-4 py-1 rounded-full">
@@ -259,8 +255,8 @@ export default function Pricing({ user }: { user: User | null }) {
                     )}
                 </div>
                 <ul className="space-y-4">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
+                  {plan.features.map((feature, index) => ( // @TODO: hotfix for now
+                    <li key={feature + "-" + index} className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
                       <span className="text-gray-700">{feature}</span>
                     </li>
