@@ -7,10 +7,22 @@ import { Suspense } from "react";
 import { PostHogProvider } from "@/components/PostHogProvider";
 
 export const metadata: Metadata = {
-  title: "Builddrr",
+  title: "Builddrr - Make websites with AI",
   description:
-    "Generate a professional one-page website with AI or customize a template. No coding required.",
-  generator: "builddrr",
+    "Generate a professional website with AI. No coding required.",
+  openGraph: {
+    title: "Builddrr - Make websites with AI",
+    description: "Generate a professional website with AI. No coding required.",
+    url: "https://builddrr.com",
+    siteName: "Builddrr",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Builddrr - Make websites with AI",
+    description: "Generate a professional one-page website with AI. No coding required.",
+    images: ["/og-image.png"],
+  },
 };
 
 const geist = Geist({ subsets: ["latin"] });
