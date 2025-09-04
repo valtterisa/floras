@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { PostHogProvider } from "@/components/PostHogProvider";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://builddrr.com"),
   title: "Builddrr - Make websites with AI",
   description:
     "Generate a professional website with AI. No coding required.",
@@ -15,13 +16,13 @@ export const metadata: Metadata = {
     description: "Generate a professional website with AI. No coding required.",
     url: "https://builddrr.com",
     siteName: "Builddrr",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    images: "/og-image.png",
   },
   twitter: {
     card: "summary_large_image",
     title: "Builddrr - Make websites with AI",
     description: "Generate a professional one-page website with AI. No coding required.",
-    images: ["/og-image.png"],
+    images: "/og-image.png",
   },
 };
 
