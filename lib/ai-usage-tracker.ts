@@ -155,11 +155,23 @@ export async function createWebsiteWithLimitCheck(
     if (authError || !user)
       return { success: false, error: "User not authenticated" };
 
-    const usage = await checkRemainingChatUsage();
-    if (!usage.hasRemainingUsage) {
+    const { data: websiteLimitData, error: websiteLimitError } =
+      await supabase.rpc("check_website_limit", { user_uuid: user.id });
+    if (websiteLimitError) {
       return {
         success: false,
-        error: "AI usage limit exceeded. Please upgrade your plan.",
+        error: `Failed to check website limits: ${websiteLimitError.message}`,
+      };
+    }
+
+    const limitRow = Array.isArray(websiteLimitData)
+      ? websiteLimitData[0]
+      : websiteLimitData;
+    if (limitRow && limitRow.is_exceeded === true) {
+      return {
+        success: false,
+        error:
+          "Website limit reached for your plan. Please upgrade to add more websites.",
       };
     }
 
