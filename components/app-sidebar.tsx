@@ -35,6 +35,7 @@ import { useRouter, useParams, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { TeamSwitcher } from "./team-switcher";
+import Logo from "./logo";
 
 export function AppSidebar({
   className = "",
@@ -152,7 +153,12 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="offcanvas" className={className} {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={teams} />
+        <div className="h-12 flex items-center text-xl font-bold text-gray-900 text-center ">
+          <span className="flex items-center">
+            <Logo className="mx-2 size-7" />
+            Builddrr
+          </span>
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="flex-1 min-h-0 overflow-auto bg-sidebar">
