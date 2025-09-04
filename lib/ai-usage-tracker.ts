@@ -163,7 +163,7 @@ export async function createWebsiteWithLimitCheck(
       };
     }
 
-    const [previewInsert, websiteInsert] = await Promise.all([
+    const [previewInsert, websiteUpsert] = await Promise.all([
       supabase
         .from("preview_environments")
         .insert({
@@ -175,12 +175,15 @@ export async function createWebsiteWithLimitCheck(
         .single(),
       supabase
         .from("websites")
-        .insert({
-          user_id: user.id,
-          name: displayName,
-          app_name: appName,
-          created_at: new Date().toISOString(),
-        })
+        .upsert(
+          {
+            user_id: user.id,
+            name: displayName,
+            app_name: appName,
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: "app_name" }
+        )
         .select()
         .single(),
     ]);
@@ -190,16 +193,16 @@ export async function createWebsiteWithLimitCheck(
         success: false,
         error: `Failed to create preview environment: ${previewInsert.error.message}`,
       };
-    if (websiteInsert.error)
+    if (websiteUpsert.error)
       return {
         success: false,
-        error: `Failed to create website: ${websiteInsert.error.message}`,
+        error: `Failed to create website: ${websiteUpsert.error.message}`,
       };
 
     const { error: linkError } = await supabase
       .from("websites")
       .update({ preview_id: previewInsert.data.preview_id })
-      .eq("id", websiteInsert.data.id);
+      .eq("id", websiteUpsert.data.id);
     if (linkError)
       return {
         success: false,
@@ -208,7 +211,7 @@ export async function createWebsiteWithLimitCheck(
 
     return {
       success: true,
-      websiteId: websiteInsert.data.id,
+      websiteId: websiteUpsert.data.id,
       previewId: previewInsert.data.preview_id,
     };
   } catch (error) {

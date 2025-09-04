@@ -47,7 +47,7 @@ export function WebsitesList({ websites }: WebsitesListProps) {
     );
   }, [websites, filter]);
 
-  const visibleWebsites = showAll ? filtered : filtered.slice(0, 3);
+  const visibleWebsites = showAll ? filtered : filtered.slice(0, 6);
   const counts = React.useMemo(
     () => ({
       all: websites.length,
@@ -99,7 +99,7 @@ export function WebsitesList({ websites }: WebsitesListProps) {
         {visibleWebsites.map((website) => (
           <Card
             key={website.id}
-            className="group relative flex flex-col p-5 shadow-sm hover:shadow-md transition-all border border-transparent hover:border-primary/30 rounded-xl bg-white/60 dark:bg-zinc-900/60"
+            className="group relative flex flex-col p-5 shadow-md hover:shadow-lg transition-all border border-black/5 dark:border-white/10 hover:border-primary/40 rounded-xl bg-white dark:bg-zinc-900 ring-1 ring-black/5 dark:ring-white/10"
           >
             <CardHeader className="flex flex-row items-start gap-4 p-0">
               <div className="shrink-0 rounded-full bg-primary/10 p-3 text-primary ring-1 ring-primary/20">

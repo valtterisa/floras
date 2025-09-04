@@ -173,7 +173,7 @@ export async function createWebsiteWithLimitCheck(
       };
     }
 
-    // Create both preview environment and website records
+    // Create both preview environment and website records (always new for websites)
     const [previewInsert, websiteInsert] = await Promise.all([
       supabase
         .from("preview_environments")
