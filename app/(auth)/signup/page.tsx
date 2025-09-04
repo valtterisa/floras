@@ -16,11 +16,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { signup } from "../actions";
 import { useToast } from "@/hooks/use-toast";
 import { OAuthButton } from "@/components/auth/oauth-button";
+import Logo from "@/components/logo";
 
 export default function SignupPage() {
   const searchParams = useSearchParams();
@@ -85,6 +85,14 @@ export default function SignupPage() {
   return (
     <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-gradient-to-b from-purple-50 to-white">
       <div className="w-full max-w-md">
+        <div className="flex justify-center mb-8">
+          <div className="h-12 flex items-center text-xl md:text-3xl font-bold text-gray-900 text-center ">
+            <span className="flex items-center">
+              <Logo className="mx-2 size-7 md:size-12" />
+              Builddrr
+            </span>
+          </div>
+        </div>
         <Card className="border-purple-100 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">

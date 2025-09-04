@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/card";
 import { login } from "../actions";
 import { OAuthButton } from "@/components/auth/oauth-button";
-import { Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/components/logo";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -52,11 +53,11 @@ export default function LoginPage() {
     <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-gradient-to-b from-purple-50 to-white">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 p-1 rounded-md">
-              <Sparkles className="h-6 w-6 text-primary" />
-            </div>
-            <span className="font-bold text-2xl tracking-tight">builddrr</span>
+          <div className="h-12 flex items-center text-xl md:text-3xl font-bold text-gray-900 text-center ">
+            <span className="flex items-center">
+              <Logo className="mx-2 size-7 md:size-12" />
+              Builddrr
+            </span>
           </div>
         </div>
         <Card className="border-purple-100 shadow-lg">
