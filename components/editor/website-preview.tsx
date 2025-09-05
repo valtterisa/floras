@@ -150,7 +150,6 @@ export default function WebsitePreview({
   const [iframeNonce, setIframeNonce] = useState(0);
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
-  const [deploymentAttempted, setDeploymentAttempted] = useState(false);
 
   // Update URL when initialUrl changes (e.g., when deployment URL becomes available)
   useEffect(() => {
@@ -492,7 +491,7 @@ export default function WebsitePreview({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, sandboxId: editorState.sandboxId }),
         });
-      } catch (_) {}
+      } catch (_) { }
     };
     const interval = setInterval(() => {
       if (isActive) ping();
@@ -1197,17 +1196,17 @@ export default function WebsitePreview({
   // }
 
   return (
-    <div className="flex flex-col h-full w-full gap-4 rounded-3xl">
+    <div className="flex flex-col h-full w-full gap-4">
       <div className="relative w-full h-full overflow-hidden flex flex-col">
-        <div className="w-full h-full bg-white rounded-t-lg shadow-lg overflow-hidden border border-gray-200 flex flex-col min-h-0">
+        <div className="w-full h-full bg-white shadow-lg overflow-hidden border border-gray-200 border-t-0 flex flex-col min-h-0">
           <div className="bg-gray-50 border-b border-gray-200 px-4 py-2">
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-white rounded px-3 py-1 text-sm text-gray-600 border border-gray-200 truncate">
                 {pendingUrl
-                  ? `${previewUrl || "/"} → (updating...)`
+                  ? `${previewUrl || "/"}`
                   : previewUrl || "/"}
               </div>
-              <div className="hidden sm:flex items-center gap-1">
+              <div className="hidden md:flex items-center gap-1">
                 <Button
                   size="sm"
                   variant={viewport === "desktop" ? "default" : "secondary"}
@@ -1222,13 +1221,13 @@ export default function WebsitePreview({
                 >
                   <Smartphone />
                 </Button>
-                <Button
+                {/* <Button
                   size="sm"
                   variant="secondary"
                   onClick={handleManualRefresh}
                 >
                   <RefreshCw />
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
@@ -1244,9 +1243,8 @@ export default function WebsitePreview({
             ) : (
               <div className="w-full h-full flex items-start justify-center overflow-auto custom-scrollbar">
                 <div
-                  className={`${
-                    viewport === "mobile" ? "h-full w-[390px]" : "h-full w-full"
-                  } transition-[width] duration-300 ease-in-out`}
+                  className={`${viewport === "mobile" ? "h-full w-[390px]" : "h-full w-full"
+                    } transition-[width] duration-300 ease-in-out`}
                 >
                   <iframe
                     ref={iframeRef}

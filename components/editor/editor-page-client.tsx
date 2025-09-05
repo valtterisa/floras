@@ -218,9 +218,9 @@ export default function EditorPageClient({
     <div className="flex flex-col h-full">
       <EditorHeader id={id} />
 
-      <div className="flex flex-row gap-4 h-full ">
+      <div className="flex flex-row h-full ">
         {/* Desktop/Tablet chat sidebar */}
-        <div className="hidden md:flex md:w-[500px] flex-col h-full border-r border-gray-200">
+        <div className="hidden md:flex md:w-[500px] flex-col h-full">
           <Tabs
             value={activeTab}
             onValueChange={(tab) => {
@@ -261,7 +261,7 @@ export default function EditorPageClient({
             </TabsContent>
           </Tabs>
         </div>
-        <div className="flex flex-col flex-1 min-w-0 h-full bg-background rounded-3xl">
+        <div className="flex flex-col flex-1 min-w-0 h-full bg-background">
           <WebsitePreview
             isEditMode={isEditMode}
             initialUrl={undefined}
