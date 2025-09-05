@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
+import Link from "next/link"
 
 export function FinalCTA() {
   return (
@@ -13,12 +14,14 @@ export function FinalCTA() {
         </p>
 
         <div className="space-y-4">
-          <Button
+          <Button asChild
             size="lg"
             className="bg-white text-black hover:bg-gray-100 px-8 py-4 text-lg font-bold"
             style={{ fontFamily: 'Geist, sans-serif' }}
           >
-            Start Now For Free
+            <Link href="/signup">
+              Start Now For Free
+            </Link>
           </Button>
           <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
             <div className="flex items-center gap-2">
