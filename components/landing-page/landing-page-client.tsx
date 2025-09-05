@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import PromptTool from "@/components/interactive/prompt-tool";
 import Pricing from "@/components/landing-page/pricing-section";
+import { BenefitsGrid } from "@/components/landing-page/benefits-section";
+import { FeaturesShowcase } from "@/components/landing-page/features-section";
+import { ProcessDiagram } from "@/components/landing-page/process-diagram";
+import { ComparisonTable } from "@/components/landing-page/comparison-section";
+import { FinalCTA } from "@/components/landing-page/final-cta";
 import Footer from "@/components/layout/footer";
 import Navbar from "@/components/layout/navbar";
 
@@ -44,7 +49,12 @@ export default function LandingPageClient({ initialUser }: LandingPageClientProp
                 <Navbar user={currentUser?.user_metadata} />
                 <PromptTool user={currentUser} />
             </div>
+            <BenefitsGrid />
+            {/* <FeaturesShowcase /> */}
+            <ProcessDiagram />
+            <ComparisonTable />
             <Pricing user={currentUser} />
+            <FinalCTA />
             <Footer />
         </>
     );
