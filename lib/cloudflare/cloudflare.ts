@@ -91,8 +91,22 @@ export async function deleteProject(name: string) {
   return project;
 }
 
-export async function createSiteForUser(name: string) {
+export async function createSiteForUser(websiteId: string) {
   try {
+    // First, get the website name from the database using the website ID
+    const supabase = await createServiceClient();
+    const { data: website, error: websiteError } = await supabase
+      .from("websites")
+      .select("name")
+      .eq("id", websiteId)
+      .single();
+
+    if (websiteError || !website) {
+      console.error("Failed to fetch website:", websiteError);
+      return { ok: false, error: "Website not found" };
+    }
+
+    const name = website.name;
     const project = await createProject(name);
     const deployment = await createDeployment(name);
     const subdomain = await addSubdomain(name);
@@ -101,11 +115,8 @@ export async function createSiteForUser(name: string) {
     if (subdomain && typeof subdomain === "object" && "name" in subdomain) {
       const deploymentUrl = `https://${subdomain.name}`;
 
-      // Save deployment status to Supabase
+      // Save deployment status to Supabase using the website ID
       try {
-        const supabase = await createServiceClient();
-
-        // Use service role to update website directly without auth check
         await supabase
           .from("websites")
           .update({
@@ -114,7 +125,7 @@ export async function createSiteForUser(name: string) {
             last_deployed: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
-          .eq("name", name);
+          .eq("app_name", websiteId);
       } catch (dbError) {
         console.error("Failed to save deployment status to database:", dbError);
         // Don't fail the deployment if saving status fails
