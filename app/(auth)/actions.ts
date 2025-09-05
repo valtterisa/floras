@@ -109,23 +109,11 @@ export async function signup(formData: FormData) {
     redirect("/error");
   }
 
-  // Create user in Polar.sh
-  const result = await polar.customers.create({
-    externalId: data.user?.id,
-    email: validatedData.email,
-    name: `${validatedData.firstName} ${validatedData.lastName}`,
-    billingAddress: { country: "US" },
-  });
-
-  // Assing user to Free plan
-  const checkout = await polar.checkouts.create({
-    products: ["20800f87-e007-4cea-a836-93f87f00ea40"],
-    customerEmail: validatedData.email,
-    successUrl: `${getPublicUrl()}/dashboard`,
-  });
+  // User is automatically assigned to free plan via Supabase trigger
+  // No Polar customer creation needed for free plan
 
   revalidatePath("/", "layout");
-  redirect(checkout.url);
+  redirect("/dashboard");
 }
 
 export async function logout() {
@@ -144,7 +132,7 @@ export async function logout() {
 export async function signUpWithOAuth(provider: Provider) {
   const supabase = await createClient();
 
-  const nextUrl = "/post-oauth"; // or any other post-auth page you want
+  const nextUrl = "/dashboard";
   const callbackUrl = `${getPublicUrl()}/api/auth/callback?next=${encodeURIComponent(nextUrl)}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
