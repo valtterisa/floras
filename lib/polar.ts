@@ -12,12 +12,10 @@ if (!accessToken) {
   );
 }
 
-export const polar = accessToken
-  ? new Polar({
-      accessToken,
-      server: process.env.NODE_ENV === "production" ? "production" : "sandbox",
-    })
-  : null;
+export const polar = new Polar({
+  accessToken,
+  server: process.env.NODE_ENV === "production" ? "production" : "sandbox",
+});
 
 // Create a Polar customer without assigning any plan
 export async function createPolarCustomer(
