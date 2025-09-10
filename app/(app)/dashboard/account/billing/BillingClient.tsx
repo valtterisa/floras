@@ -1,119 +1,277 @@
 "use client";
 
-import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, Star, Crown, Sparkles } from "lucide-react";
+import {
+  Check,
+  Crown,
+  CreditCard,
+  Calendar,
+  ArrowRight,
+  Mail,
+  X,
+  AlertTriangle,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { AuthModal, User } from "@/components/auth-modal";
 import { SiteHeader } from "@/components/site-header";
-import { managePolarSubscription } from "@/lib/polar";
-import { motion } from "framer-motion";
-import { useSearchParams } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
-interface BillingClientProps {
-  subscription: any | null;
-  products: any | null;
-  customerPortalUrl: string | null;
-}
+const plans = [
+  {
+    name: "Hobby",
+    description: "Perfect for personal projects and small websites",
+    price: {
+      monthly: "$2",
+      yearly: "$1.5",
+    },
+    features: [
+      "2 Websites",
+      "5 AI Chat Messages Per Month",
+      "Email Support",
+      "Chat to Edit",
+    ],
+    planId: {
+      monthly:
+        process.env.NODE_ENV === "production"
+          ? "051eac59-7a81-4286-bf83-62f101fcc4d7"
+          : "92d0fb9d-49ca-413a-91ff-8ec3c3fc5933",
+      yearly:
+        process.env.NODE_ENV === "production"
+          ? "fe016688-50e8-4413-a11c-5c688220754f"
+          : "8b11d941-56de-465c-a9a2-f2845ed895f2",
+    },
+  },
+  {
+    name: "Pro",
+    description: "Ideal for growing businesses and professionals",
+    price: {
+      monthly: "$15",
+      yearly: "$12",
+    },
+    features: [
+      "Unlimited Websites",
+      "20 AI Chat Messages Per Month",
+      "Custom Domains",
+      "Priority Support",
+    ],
+    popular: true,
+    planId: {
+      monthly:
+        process.env.NODE_ENV === "production"
+          ? "bcde8f52-3a0a-444e-b7fa-65f2b7b97801"
+          : "0e982699-8b71-4a70-a298-f6e863ea9bae",
+      yearly:
+        process.env.NODE_ENV === "production"
+          ? "c2d7b5b2-dff7-4fce-bf9b-e0c1fe50855e"
+          : "0fe22ae3-d81d-4701-a29b-4735b3f92daa",
+    },
+  },
+  {
+    name: "Enterprise",
+    description: "For large businesses and teams",
+    price: {
+      monthly: "Custom",
+      yearly: "Custom",
+    },
+    features: [
+      "Unlimited websites",
+      "Unlimited AI Chat Messages",
+      "Custom domains",
+      "Priority support",
+    ],
+    planId: {
+      monthly: "custom-plan-id",
+      yearly: "custom-plan-id",
+    },
+  },
+];
 
-const BillingClient: React.FC<BillingClientProps> = ({
-  subscription,
-  products,
-  customerPortalUrl,
-}) => {
-  const [loading, setLoading] = useState<string | null>(null);
+export default function BillingClient({ user }: { user: User | null }) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );
-  const searchParams = useSearchParams();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>("");
+  const [cancelComment, setCancelComment] = useState<string>("");
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  // Get pre-selected plan from URL
-  const preSelectedPlan = searchParams.get("plan");
+  // Fetch current plan from Supabase
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (!user) return;
 
-  const plans = [
-    {
-      name: "Hobby",
-      description: "Perfect for personal projects and small websites",
-      price: {
-        monthly: "$2",
-        yearly: "$1.5",
-      },
-      features: [
-        "2 Websites",
-        "5 AI Chat Messages Per Month",
-        "Email Support",
-        "Chat to Edit",
-      ],
-      planKey: "hobby",
-    },
-    {
-      name: "Pro",
-      description: "Ideal for growing businesses and professionals",
-      price: {
-        monthly: "$15",
-        yearly: "$12",
-      },
-      features: [
-        "Unlimited Websites",
-        "20 AI Chat Messages Per Month",
-        "Custom Domains",
-        "Priority Support",
-      ],
-      popular: true,
-      planKey: "pro",
-    },
-    {
-      name: "Enterprise",
-      description: "For large businesses and teams",
-      price: {
-        monthly: "Custom",
-        yearly: "Custom",
-      },
-      features: [
-        "Unlimited websites",
-        "Unlimited AI Chat Messages",
-        "Custom domains",
-        "Priority support",
-      ],
-      planKey: "enterprise",
-    },
-  ];
+      try {
+        const response = await fetch("/api/user/profile");
+        if (response.ok) {
+          const data = await response.json();
+          console.log("User profile data:", data);
+          setCurrentSubscription({ plan: data.plan });
+        }
+      } catch (error) {
+        console.error("Error fetching user plan:", error);
+      }
+    };
 
-  const getCurrentPlan = () => {
-    if (!subscription) return null;
-    // Map subscription to plan name
-    const subName = subscription.product?.name?.toLowerCase();
-    return plans.find((plan) => plan.planKey === subName) || null;
-  };
+    fetchUserPlan();
+  }, [user]);
 
-  const currentPlan = getCurrentPlan();
+  const handleCheckout = async (plan: any) => {
+    if (!user) {
+      // Store the selected plan in session storage for after signup
+      sessionStorage.setItem("selectedPlan", plan.name.toLowerCase());
+      setShowAuthModal(true);
+      return;
+    }
 
-  const handleSelectPlan = async (plan: any) => {
+    // For Enterprise plan, open email instead of checkout
     if (plan.name === "Enterprise") {
       const subject = encodeURIComponent("Enterprise Plan Inquiry");
       const body = encodeURIComponent(
-        `Hi,\n\nI'm interested in the Enterprise plan for Builddrr.\n\nPlease provide more information about pricing and features.\n\nBest regards`
+        `Hi,\n\nI'm interested in the Enterprise plan for Builddrr.\n\nPlease provide more information about pricing and features.\n\nBest regards,\n${user.user_metadata?.full_name || user.email}`
       );
       window.location.href = `mailto:sales@builddrr.com?subject=${subject}&body=${body}`;
       return;
     }
 
     setLoading(plan.name);
-    if (customerPortalUrl) {
-      window.location.href = customerPortalUrl;
+    try {
+      const response = await fetch("/api/polar-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: plan.planId[billingCycle],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.url;
+      } else if (response.status === 401) {
+        // User is not authenticated, redirect to login
+        window.location.href = "/login";
+      } else {
+        const errorText = await response.text();
+        console.error("Failed to create checkout:", errorText);
+        // Show user-friendly error message
+      }
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+    } finally {
+      setLoading(null);
     }
-    setLoading(null);
+  };
+
+  const handleAuthSuccess = (user: User) => {
+    setShowAuthModal(false);
+
+    // Check if there's a stored plan selection
+    const selectedPlan = sessionStorage.getItem("selectedPlan");
+    if (selectedPlan) {
+      sessionStorage.removeItem("selectedPlan");
+      // For existing logged-in users, redirect to billing instead of plan selection
+      window.location.href = `/dashboard/account/billing?plan=${selectedPlan}`;
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+
+    try {
+      const response = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reason: cancelReason || "other",
+          comment: cancelComment || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setCurrentSubscription(null);
+        setShowCancelModal(false);
+        setCancelReason("");
+        setCancelComment("");
+
+        // Show success message or refresh page
+        window.location.reload();
+      } else {
+        console.error("Failed to cancel subscription:", data.error);
+        // Show error message to user
+      }
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      // Show error message to user
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const isCurrentPlan = (plan: any) => {
-    return currentPlan?.name === plan.name;
+    if (!currentSubscription) {
+      return false;
+    }
+
+    // Map plan names to match Supabase plan values
+    const planMapping: { [key: string]: string } = {
+      "Hobby": "hobby",
+      "Pro": "pro",
+      "Enterprise": "enterprise",
+    };
+
+    const currentPlan = planMapping[plan.name];
+    console.log("Plan check:", {
+      planName: plan.name,
+      currentPlan,
+      userPlan: currentSubscription.plan,
+      isMatch: currentSubscription.plan === currentPlan,
+    });
+    return currentSubscription.plan === currentPlan;
+  };
+
+  const getCurrentPlanDisplay = (plan: any) => {
+    if (isCurrentPlan(plan)) {
+      return (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gray-600 text-white text-sm font-medium px-4 py-1 rounded-full">
+          Current Plan
+        </div>
+      );
+    }
+    return null;
   };
 
   const getButtonText = (plan: any) => {
@@ -123,191 +281,376 @@ const BillingClient: React.FC<BillingClientProps> = ({
     if (isCurrentPlan(plan)) {
       return "Current Plan";
     }
-    return loading === plan.name ? "Loading..." : "Select Plan";
+    return loading === plan.name ? "Redirecting..." : "Get Started";
   };
 
   const getButtonVariant = (plan: any) => {
     if (isCurrentPlan(plan)) {
       return "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300";
     }
-    if (
-      plan.popular ||
-      (preSelectedPlan &&
-        plan.name.toLowerCase() === preSelectedPlan.toLowerCase())
-    ) {
+    if (plan.popular) {
       return "bg-black text-white hover:bg-gray-800 border-black";
     }
     return "bg-white text-black hover:bg-gray-50 border-gray-300 border";
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen ">
+      <div className="mx-auto px-4">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto text-center mb-16"
+          className="mb-8"
         >
-          <div className="flex justify-center mb-8">
-            <div className="h-12 flex items-center text-xl md:text-3xl font-bold text-gray-900 text-center">
-              <span className="flex items-center">
-                <Crown className="mx-2 size-7 md:size-12 text-yellow-600" />
-                Billing & Plans
-              </span>
+          <SiteHeader title={"Billing & Subscription"} />
+        </motion.div>
+
+        {/* Current Plan Overview */}
+        {currentSubscription?.plan && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-8"
+          >
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-100 border-blue-200">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Current Plan
+                    </CardTitle>
+                    <CardDescription>
+                      Your active subscription details
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-100 text-blue-800"
+                  >
+                    {currentSubscription.plan.charAt(0).toUpperCase() +
+                      currentSubscription.plan.slice(1)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      <Calendar className="inline h-4 w-4 mr-1" />
+                      Next billing:{" "}
+                      {billingCycle === "monthly" ? "Monthly" : "Yearly"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCancelModal(true)}
+                      className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <X className="h-4 w-4" />
+                      Cancel Plan
+                    </Button>
+                    <Button variant="outline" className="gap-2">
+                      <Mail className="h-4 w-4" />
+                      Contact Support
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Plan Selection Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {currentSubscription?.plan ? "Change Plan" : "Choose Your Plan"}
+              </h2>
+              <p className="text-gray-600">
+                {currentSubscription?.plan
+                  ? "Upgrade or downgrade your subscription"
+                  : "Select a plan to get started"}
+              </p>
             </div>
-          </div>
-
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-black">
-            Manage Your Subscription
-          </h1>
-          <p className="text-xl text-gray-700 mb-8">
-            {currentPlan
-              ? `You're currently on the ${currentPlan.name} plan. Upgrade or manage your subscription below.`
-              : "Choose a plan to unlock all features and start building amazing websites."}
-          </p>
-
-          <div className="relative inline-flex items-center bg-white rounded-xl p-1.5 border border-gray-300 shadow-sm">
-            <button
-              onClick={() => setBillingCycle("monthly")}
-              className={`relative z-10 px-8 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-center min-w-[100px] ${
-                billingCycle === "monthly"
-                  ? "text-white shadow-sm"
-                  : "text-gray-600 hover:text-black"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingCycle("yearly")}
-              className={`relative z-10 px-8 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-center min-w-[100px] ${
-                billingCycle === "yearly"
-                  ? "text-white shadow-sm"
-                  : "text-gray-600 hover:text-black"
-              }`}
-            >
-              Yearly
-            </button>
-            <div
-              className={`absolute top-1.5 bottom-1.5 bg-black rounded-lg transition-all duration-300 ease-out shadow-lg ${
-                billingCycle === "monthly"
-                  ? "left-1.5 right-[50.5%]"
-                  : "left-[49.5%] right-1.5"
-              }`}
-            />
+            <div className="flex items-center bg-white rounded-lg p-1 border shadow-sm">
+              <button
+                onClick={() => setBillingCycle("monthly")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  billingCycle === "monthly"
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle("yearly")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  billingCycle === "yearly"
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Yearly
+              </button>
+            </div>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative flex flex-col h-full bg-white rounded-xl shadow-sm border p-8 ${
-                plan.popular ||
-                isCurrentPlan(plan) ||
-                (preSelectedPlan &&
-                  plan.name.toLowerCase() === preSelectedPlan.toLowerCase())
-                  ? "border-black border-2"
-                  : "border-gray-300"
-              }`}
             >
-              {plan.popular && !isCurrentPlan(plan) && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black text-white text-sm font-medium px-4 py-1 rounded-full">
-                  Most Popular
-                </div>
-              )}
-
-              {isCurrentPlan(plan) && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-600 text-white text-sm font-medium px-4 py-1 rounded-full">
-                  Current Plan
-                </div>
-              )}
-
-              {preSelectedPlan &&
-                plan.name.toLowerCase() === preSelectedPlan.toLowerCase() &&
-                !isCurrentPlan(plan) && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-sm font-medium px-4 py-1 rounded-full">
-                    Selected
+              <Card
+                className={`relative h-full ${
+                  isCurrentPlan(plan)
+                    ? "border-blue-500 bg-blue-50/50"
+                    : plan.popular
+                      ? "border-gray-900 shadow-lg"
+                      : "border-gray-200"
+                }`}
+              >
+                {plan.popular && !isCurrentPlan(plan) && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-gray-900 text-white">
+                      Most Popular
+                    </Badge>
+                  </div>
+                )}
+                {isCurrentPlan(plan) && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-blue-600 text-white">
+                      Current Plan
+                    </Badge>
                   </div>
                 )}
 
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold mb-2 text-black">
-                  {plan.name}
-                </h3>
-                <p className="text-gray-700 mb-6">{plan.description}</p>
-                <div className="mb-8">
-                  <span className="text-4xl font-bold text-black">
-                    {plan.price[billingCycle]}
-                  </span>
-                  {plan.price[billingCycle] !== "Custom" && (
-                    <span className="text-gray-600">/month</span>
-                  )}
-                </div>
-                <ul className="space-y-4">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li
-                      key={feature + "-" + featureIndex}
-                      className="flex items-start gap-3"
-                    >
-                      <Check className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl">{plan.name}</CardTitle>
+                    {isCurrentPlan(plan) && (
+                      <Crown className="h-5 w-5 text-blue-600" />
+                    )}
+                  </div>
+                  <CardDescription className="text-sm">
+                    {plan.description}
+                  </CardDescription>
+                  <div className="pt-4">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold">
+                        {plan.price[billingCycle]}
+                      </span>
+                      {plan.price[billingCycle] !== "Custom" && (
+                        <span className="text-gray-500">
+                          /{billingCycle === "monthly" ? "month" : "year"}
+                        </span>
+                      )}
+                    </div>
+                    {/* {billingCycle === "yearly" &&
+                      plan.name !== "Enterprise" && (
+                        <p className="text-sm text-green-600 mt-1">
+                          Save 20% with yearly billing
+                        </p>
+                      )} */}
+                  </div>
+                </CardHeader>
 
-              <Button
-                onClick={() => handleSelectPlan(plan)}
-                disabled={loading === plan.name || isCurrentPlan(plan)}
-                className={`mt-8 w-full ${getButtonVariant(plan)}`}
-              >
-                {getButtonText(plan)}
-              </Button>
+                <CardContent className="space-y-6">
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, featureIndex) => (
+                      <li
+                        key={feature + "-" + featureIndex}
+                        className="flex items-start gap-3"
+                      >
+                        <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    onClick={() => handleCheckout(plan)}
+                    disabled={
+                      loading === plan.name ||
+                      (isCurrentPlan(plan) && plan.name !== "Enterprise")
+                    }
+                    className={`w-full ${getButtonVariant(plan)}`}
+                    size="lg"
+                  >
+                    {loading === plan.name ? (
+                      "Processing..."
+                    ) : isCurrentPlan(plan) ? (
+                      plan.name === "Enterprise" ? (
+                        "Contact Sales"
+                      ) : (
+                        "Current Plan"
+                      )
+                    ) : (
+                      <>
+                        {plan.name === "Enterprise"
+                          ? "Contact Sales"
+                          : "Select Plan"}
+                        {plan.name !== "Enterprise" && (
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        )}
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
             </motion.div>
           ))}
         </div>
 
-        {currentPlan && (
+        {/* Billing Information */}
+        {currentSubscription?.plan && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="max-w-2xl mx-auto mt-12"
+            className="mt-12"
           >
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
-              <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <Sparkles className="w-6 h-6 text-blue-600" />
-                </div>
-                <CardTitle className="text-xl">
-                  Subscription Management
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Billing Information
                 </CardTitle>
                 <CardDescription>
-                  Manage your billing, update payment methods, and view invoices
+                  Manage your payment methods and billing details
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
-                <Button
-                  onClick={() => {
-                    if (customerPortalUrl) {
-                      window.location.href = customerPortalUrl;
-                    }
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Open Customer Portal
-                </Button>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">Payment Method</p>
+                      <p className="text-sm text-gray-600">
+                        •••• •••• •••• 4242
+                      </p>
+                    </div>
+                    <Button variant="outline">Update</Button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">Billing History</p>
+                      <p className="text-sm text-gray-600">
+                        View past invoices and receipts
+                      </p>
+                    </div>
+                    <Button variant="outline">View History</Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
         )}
       </div>
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
+
+      {/* Cancellation Modal */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Cancel Subscription
+            </DialogTitle>
+            <DialogDescription>
+              Your subscription will be cancelled at the end of the current
+              billing period. You'll continue to have access until then.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cancel-reason">
+                Why are you cancelling? (Optional)
+              </Label>
+              <Select value={cancelReason} onValueChange={setCancelReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="too_expensive">Too expensive</SelectItem>
+                  <SelectItem value="missing_features">
+                    Missing features
+                  </SelectItem>
+                  <SelectItem value="switched_service">
+                    Switched to another service
+                  </SelectItem>
+                  <SelectItem value="unused">Not using it enough</SelectItem>
+                  <SelectItem value="customer_service">
+                    Customer service issues
+                  </SelectItem>
+                  <SelectItem value="low_quality">Quality concerns</SelectItem>
+                  <SelectItem value="too_complex">Too complex</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cancel-comment">
+                Additional feedback (Optional)
+              </Label>
+              <Textarea
+                id="cancel-comment"
+                placeholder="Tell us more about your experience..."
+                value={cancelComment}
+                onChange={(e) => setCancelComment(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelModal(false)}
+              disabled={isCancelling}
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelSubscription}
+              disabled={isCancelling}
+              className="gap-2"
+            >
+              {isCancelling ? (
+                "Cancelling..."
+              ) : (
+                <>
+                  <X className="h-4 w-4" />
+                  Cancel Subscription
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
-
-export default BillingClient;
+}
