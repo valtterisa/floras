@@ -1,36 +1,54 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Paperclip,
+  ArrowUpRight,
+  ArrowDown,
+  ChevronDown,
+  Book,
+  Camera,
+  Landmark,
+  Coffee,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { ArrowUpRight } from "lucide-react";
+import Logo from "@/components/logo";
+import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { User } from "@supabase/supabase-js";
-import { SiteHeader } from "@/components/site-header";
 import { generateProjectName } from "@/lib/actions/save-project-name";
-import { generateAppName } from "@/lib/utils";
 import { UpgradeModal } from "@/components/upgrade-modal";
 import {
   checkRemainingChatUsage,
   createWebsiteWithLimitCheck,
 } from "@/lib/actions/ai-usage";
+import { generateAppName } from "@/lib/utils";
+import { User } from "@supabase/supabase-js";
 
 const examples = [
   {
     name: "Cafe website",
-    prompt: "Make a simple website for my cafe",
+    prompt:
+      "Make a simple website for my cafe. It should have a menu, a contact form, and a about page. It should be a single page website.",
+    icon: <Coffee className="w-4 h-4" />,
   },
   {
     name: "Landing page for a software startup",
-    prompt: "Make a landing page for my software startup",
+    prompt:
+      "Make a landing page for my software startup. It should have a hero section, a features section, a pricing section, and a contact form. It should be a single page website.",
+    icon: <Landmark className="w-4 h-4" />,
   },
   {
     name: "Portfolio website for a photographer",
-    prompt: "Make a portfolio website for my photography business",
+    prompt:
+      "Make a portfolio website for my photography business. It should have a hero section, a features section, a pricing section, and a contact form. It should be a single page website.",
+    icon: <Camera className="w-4 h-4" />,
   },
   {
     name: "Blog website",
-    prompt: "Make a blog website for my blog",
+    prompt:
+      "Make a blog website for my blog. It should have a hero section, a features section, a blog section, and a contact form. It should be a single page website.",
+    icon: <Book className="w-4 h-4" />,
   },
 ];
 
@@ -40,7 +58,6 @@ type CreatePromptClientProps = {
 
 export default function CreatePromptClient({ user }: CreatePromptClientProps) {
   const [prompt, setPrompt] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [usageInfo, setUsageInfo] = useState<{
     hasRemainingUsage: boolean;
@@ -52,31 +69,51 @@ export default function CreatePromptClient({ user }: CreatePromptClientProps) {
     limit: 0,
   });
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Check usage limits on component mount
   useEffect(() => {
     const checkLimits = async () => {
-      const result = await checkRemainingChatUsage();
-      setUsageInfo({
-        hasRemainingUsage: result.hasRemainingUsage,
-        currentUsage: result.currentUsage,
-        limit: result.limit,
-      });
+      if (user) {
+        const result = await checkRemainingChatUsage();
+        setUsageInfo({
+          hasRemainingUsage: result.hasRemainingUsage,
+          currentUsage: result.currentUsage,
+          limit: result.limit,
+        });
+      }
     };
     checkLimits();
+  }, [user]);
+
+  // Listen for route changes to control loading state
+  useEffect(() => {
+    // Next.js App Router does not expose router.events, so we use window events
+    const handleStart = () => setIsLoading(true);
+    const handleStop = () => setIsLoading(false);
+
+    window.addEventListener("next-route-start", handleStart);
+    window.addEventListener("next-route-complete", handleStop);
+    window.addEventListener("next-route-error", handleStop);
+
+    return () => {
+      window.removeEventListener("next-route-start", handleStart);
+      window.removeEventListener("next-route-complete", handleStop);
+      window.removeEventListener("next-route-error", handleStop);
+    };
   }, []);
 
   const promptPlaceholders = [
-    "Make a landing page for my new product",
-    "I need a website for my cafeteria",
-    "Create a landing page for my software startup",
-    "Make a cool portfolio for my photography business",
+    "Make a landing page for my new product...",
+    "I need a website for my cafeteria...",
+    "Create a landing page for my software startup...",
+    "Make a cool portfolio for my photography business...",
   ];
+
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState("");
   const [isErasing, setIsErasing] = useState(false);
 
-  // Rotating placeholder effect
   useEffect(() => {
     const currentPrompt = promptPlaceholders[currentPromptIndex];
     let timeout: NodeJS.Timeout;
@@ -117,39 +154,44 @@ export default function CreatePromptClient({ user }: CreatePromptClientProps) {
   }, [displayedPlaceholder, isErasing, currentPromptIndex, promptPlaceholders]);
 
   const handleSend = async () => {
-    if (isLoading) return;
+    if (isLoading) return; // Prevent double submit
+    setIsLoading(true);
+
+    const supabase = createClient();
 
     if (!prompt.trim()) {
+      setIsLoading(false);
       return;
     }
-    if (!user) {
-      localStorage.setItem("builddrr_prompt", prompt);
-      return;
-    }
+    // User is guaranteed to be authenticated at this point (middleware ensures this)
 
-    setIsLoading(true);
+    // Store the prompt for the editor/chat
     sessionStorage.setItem("builddrr_generation_prompt", prompt);
 
     try {
-      // Generate unique app_name (slug) and friendly display_name
+      // Generate unique app_name (slug) and friendly name
       const app_name = generateAppName(user.id);
-      let display_name: string;
+      let name: string;
 
       try {
         const generatedName = await generateProjectName(prompt);
-        display_name =
+        name =
           generatedName && generatedName.length > 0 ? generatedName : app_name;
       } catch (nameError) {
         console.error("Error generating project name:", nameError);
-        display_name = app_name;
+        name = app_name;
       }
 
       // Use server action to create website with usage limit check
-      const result = await createWebsiteWithLimitCheck(app_name, display_name);
+      const result = await createWebsiteWithLimitCheck(app_name, name);
 
       if (!result.success) {
         if (result.error?.includes("usage limit exceeded")) {
           setShowUpgradeModal(true);
+        } else if (result.error?.includes("plan required")) {
+          // Redirect to billing for plan selection
+          router.push("/dashboard/account/billing");
+          return;
         } else {
           toast({
             title: "Error",
@@ -161,8 +203,12 @@ export default function CreatePromptClient({ user }: CreatePromptClientProps) {
         return;
       }
 
+      console.log("redirecting to editor:", app_name);
+      // Manually dispatch a route start event
+      window.dispatchEvent(new Event("next-route-start"));
       router.push(`/dashboard/website/${app_name}/editor`);
     } catch (error) {
+      console.error("Error in handleSend:", error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -174,53 +220,66 @@ export default function CreatePromptClient({ user }: CreatePromptClientProps) {
   };
 
   return (
-    <>
-      <SiteHeader title="Create Website" />
-      <div className="h-full w-full flex flex-col items-center justify-center relative">
-        <div className="relative z-10 w-full flex flex-col items-center">
-          <p className="py-2 text-base md:text-lg text-gray-500 text-center mb-4 max-w-xl">
-            Chat with AI to create your website.
-          </p>
-          <div className="w-full max-w-xl bg-gray-100 rounded-xl shadow p-4 flex flex-col gap-2">
-            <textarea
-              className="w-full bg-transparent text-gray-900 text-sm md:text-base resize-none outline-none border-none min-h-[5rem] placeholder:text-gray-400"
-              placeholder={displayedPlaceholder}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              disabled={isLoading}
-            />
-            <div className="flex items-center justify-between mt-1">
-              <div className="flex items-center gap-2"></div>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="icon"
-                  className="rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow h-7 w-7"
-                  disabled={!prompt.trim() || isLoading}
-                  onClick={handleSend}
-                >
-                  {isLoading ? (
-                    <span className="h-5 w-5 flex items-center justify-center">
-                      <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    </span>
-                  ) : (
-                    <ArrowUpRight className="h-5 w-5" />
-                  )}
-                </Button>
-              </div>
+    <div
+      className="min-h-[calc(100vh-6rem)] w-full flex h-screen flex-col items-center justify-center pb-12 pt-16 md:pt-8 px-2 relative"
+      style={{
+        backgroundImage: `radial-gradient(circle, rgba(107, 114, 128, 0.2) 1px, transparent 1px)`,
+        backgroundSize: "20px 20px",
+        backgroundColor: "#ffffff",
+      }}
+    >
+      <div className="relative z-10 w-full flex flex-col items-center">
+        {/* Loading overlay removed; editor/chat will show progress */}
+        <h1 className="pt-4 flex items-center text-2xl md:text-5xl font-bold text-gray-900 text-center ">
+          Build websites
+          <span className="flex items-center">
+            <Logo className="md:mx-3 mx-2 h-7 w-7 md:h-16 md:w-16" />
+            Builddrr
+          </span>
+        </h1>
+        <p className="py-2 text-base md:text-lg text-gray-500 text-center mb-4 max-w-xl">
+          Chat with AI to create your website.
+        </p>
+        <div className="w-full max-w-xl bg-white rounded-xl shadow border border-gray-200 p-4 flex flex-col gap-2">
+          <textarea
+            className="w-full bg-transparent text-gray-900 text-sm md:text-base resize-none outline-none border-none min-h-[5rem] placeholder:text-gray-400"
+            placeholder={displayedPlaceholder}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            disabled={isLoading}
+          />
+          <div className="flex items-center justify-end mt-1">
+            <div className="flex items-center gap-1">
+              <Button
+                size="icon"
+                className="rounded-full bg-black text-white hover:bg-gray-800 shadow h-7 w-7"
+                disabled={!prompt.trim() || isLoading}
+                onClick={handleSend}
+              >
+                {isLoading ? (
+                  <span className="h-5 w-5 flex items-center justify-center">
+                    <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  </span>
+                ) : (
+                  <ArrowUpRight className="h-5 w-5" />
+                )}
+              </Button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 pt-4">
-            {examples.map((example, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => setPrompt(example.prompt)}
-              >
-                {example.name}
-              </Button>
-            ))}
-          </div>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2 pt-4">
+          {examples.map((example, index) => (
+            <Button
+              key={index}
+              variant="outline"
+              size="sm"
+              onClick={() => setPrompt(example.prompt)}
+            >
+              {example.icon}
+              {example.name}
+            </Button>
+          ))}
         </div>
       </div>
 
@@ -230,6 +289,6 @@ export default function CreatePromptClient({ user }: CreatePromptClientProps) {
         currentUsage={usageInfo.currentUsage}
         limit={usageInfo.limit}
       />
-    </>
+    </div>
   );
 }

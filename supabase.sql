@@ -99,9 +99,9 @@ declare
 begin
   user_email := new.email;
 
-  -- Create a profile with free plan (default behavior)
+  -- Create a profile without a plan (user will select plan after signup)
   insert into public.profiles (id, email, created_at, plan)
-  values (new.id, new.email, now(), 'free');
+  values (new.id, new.email, now(), null);
 
   -- Check for pending invitation
   select * into invitation

@@ -40,10 +40,14 @@ export type NavMainItem =
       url: string;
       icon?: LucideIcon;
       target?: string;
+      disabled?: boolean;
+      disabledReason?: string;
       children?: {
         title: string;
         url: string;
         icon?: LucideIcon;
+        disabled?: boolean;
+        disabledReason?: string;
       }[];
     };
 
@@ -117,21 +121,39 @@ export function NavMain({
                   </Collapsible>
                 ) : item.target ? (
                   <a
-                    href={item.url}
-                    target={item.target}
+                    href={item.disabled ? undefined : item.url}
+                    target={item.disabled ? undefined : item.target}
                     className={cn(
                       "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] bg-sidebar hover:bg-sidebar-hover hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-hover active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
-                      pathname === item.url && "bg-sidebar-hover"
+                      pathname === item.url && "bg-sidebar-hover",
+                      item.disabled &&
+                        "opacity-50 cursor-not-allowed pointer-events-none"
                     )}
-                    aria-label={item.title}
+                    aria-label={
+                      item.disabled ? item.disabledReason : item.title
+                    }
                     role="menuitem"
-                    tabIndex={0}
+                    tabIndex={item.disabled ? -1 : 0}
                     aria-current={pathname === item.url ? "page" : undefined}
-                    onClick={handleMobileClose}
+                    onClick={item.disabled ? undefined : handleMobileClose}
+                    title={item.disabled ? item.disabledReason : undefined}
                   >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                   </a>
+                ) : item.disabled ? (
+                  <div
+                    className={cn(
+                      "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] bg-sidebar opacity-50 cursor-not-allowed [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0"
+                    )}
+                    aria-label={item.disabledReason}
+                    role="menuitem"
+                    tabIndex={-1}
+                    title={item.disabledReason}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </div>
                 ) : (
                   <Link
                     href={item.url}

@@ -29,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useTeams } from "@/hooks/use-teams";
+import { useSubscription } from "@/hooks/use-subscription";
 
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,7 +42,7 @@ export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { user: any }) {
-  const { setOpenMobile, isMobile } = useSidebar();
+  const { plan, hasAccess } = useSubscription();
   const params = useParams();
   const pathname = usePathname();
   const teamId =
@@ -100,12 +101,16 @@ export function AppSidebar({
       title: "Create Website",
       url: withTeam("/dashboard/website/create"),
       icon: PlusCircle,
+      disabled: !hasAccess,
+      disabledReason: "Select a plan to use this feature",
     },
     {
       type: "item" as const,
       title: "Domains",
       url: withTeam("/dashboard/domains"),
       icon: Network,
+      disabled: !hasAccess,
+      disabledReason: "Select a plan to use this feature",
     },
     // {
     //   type: "item" as const,
@@ -147,7 +152,7 @@ export function AppSidebar({
   ];
 
   function handleMobileClose() {
-    if (isMobile) setOpenMobile(false);
+    // Mobile close functionality - can be implemented if needed
   }
 
   return (

@@ -114,6 +114,8 @@ export default function PromptTool({ user }: { user: any }) {
       if (!result.success) {
         if (result.error?.includes("usage limit exceeded")) {
           setShowUpgradeModal(true);
+        } else if (result.error?.includes("plan required")) {
+          setShowUpgradeModal(true);
         } else {
           toast({
             title: "Error",

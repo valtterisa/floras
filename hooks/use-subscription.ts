@@ -1,5 +1,9 @@
 "use client";
 
+// Hook for managing user subscription state
+// Supports new plan structure: null (no plan), 'hobby', 'pro', 'enterprise'
+// Provides hasAccess and requiresUpgrade flags for feature gating
+
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,12 +15,14 @@ export type SubscriptionStatus =
   | null;
 
 export interface UserSubscription {
-  plan: "free" | "pro" | "enterprise";
+  plan: "hobby" | "pro" | "enterprise" | null;
   status: SubscriptionStatus;
   periodEnd: Date | null;
   isActive: boolean;
   isLoading: boolean;
   error: Error | null;
+  hasAccess: boolean; // Whether user can access paid features
+  requiresUpgrade: boolean; // Whether user should be prompted to upgrade
   aiUsageLimits?: {
     monthly_chat_requests: number;
     monthly_content_generation_requests: number;
@@ -28,12 +34,14 @@ export interface UserSubscription {
 
 export function useSubscription() {
   const [subscription, setSubscription] = useState<UserSubscription>({
-    plan: "free",
+    plan: null,
     status: null,
     periodEnd: null,
     isActive: false,
     isLoading: true,
     error: null,
+    hasAccess: false,
+    requiresUpgrade: false,
   });
 
   const [user, setUser] = useState<any>(null);
@@ -65,99 +73,101 @@ export function useSubscription() {
       setIsLoading(true);
       setError(null);
 
-      // Get user's websites
-      const { data: websites, error: websitesError } = await supabase
-        .from("websites")
-        .select("id")
-        .eq("user_id", user.id);
+      // Get user's plan from their profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", user.id)
+        .single();
 
-      if (websitesError) {
+      if (profileError) {
         throw new Error(
-          `Database error: ${websitesError.message || JSON.stringify(websitesError)}`
+          `Database error: ${profileError.message || JSON.stringify(profileError)}`
         );
       }
 
-      if (!websites || websites.length === 0) {
-        // No websites, default to free plan
-        setSubscription({
-          plan: "free",
-          status: null,
-          periodEnd: null,
-          isActive: false,
-          isLoading: false,
-          error: null,
-        });
-        return;
-      }
+      const userPlan = profile?.plan as "hobby" | "pro" | "enterprise" | null;
 
-      const websiteIds = websites.map((website) => website.id);
+      // If user has a plan, try to get subscription details from Polar
+      if (userPlan) {
+        try {
+          // Try to get subscription details for users with plans
+          const response = await fetch(
+            `/api/polar-subscription?externalId=${user.id}`
+          );
+          if (response.ok) {
+            const { subscription: polarSubscription } = await response.json();
 
-      // Get active subscription for any of user's websites
-      const { data: subscriptionData, error: subscriptionError } =
-        await supabase
-          .from("subscriptions")
-          .select(
-            `
-            id,
-            status,
-            current_period_end,
-            plan_id,
-            plans:plan_id (
-              name
-            )
-          `
-          )
-          .in("website_id", websiteIds)
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .maybeSingle();
-
-      if (subscriptionError) {
-        throw new Error(
-          `Database error: ${subscriptionError.message || JSON.stringify(subscriptionError)}`
-        );
-      }
-
-      if (!subscriptionData) {
-        // No active subscription, default to free plan
-        setSubscription({
-          plan: "free",
-          status: null,
-          periodEnd: null,
-          isActive: false,
-          isLoading: false,
-          error: null,
-        });
+            const isSubscriptionActive =
+              polarSubscription?.status === "active" ||
+              polarSubscription?.status === "trialing";
+            setSubscription({
+              plan: userPlan,
+              status: polarSubscription?.status || "active",
+              periodEnd: polarSubscription?.current_period_end
+                ? new Date(polarSubscription.current_period_end)
+                : null,
+              isActive: isSubscriptionActive,
+              isLoading: false,
+              error: null,
+              hasAccess: isSubscriptionActive,
+              requiresUpgrade: !isSubscriptionActive,
+            });
+          } else {
+            // User has plan in profile but no Polar subscription (may be in transition)
+            setSubscription({
+              plan: userPlan,
+              status: "active",
+              periodEnd: null,
+              isActive: true,
+              isLoading: false,
+              error: null,
+              hasAccess: true,
+              requiresUpgrade: false,
+            });
+          }
+        } catch (polarError) {
+          console.warn(
+            "Could not fetch Polar subscription details:",
+            polarError
+          );
+          // User has plan in profile, assume active
+          setSubscription({
+            plan: userPlan,
+            status: "active",
+            periodEnd: null,
+            isActive: true,
+            isLoading: false,
+            error: null,
+            hasAccess: true,
+            requiresUpgrade: false,
+          });
+        }
       } else {
-        // Determine plan from subscription data
-        const planName =
-          (subscriptionData.plans as any)?.name?.toLowerCase() || "free";
-        const periodEnd = subscriptionData.current_period_end
-          ? new Date(subscriptionData.current_period_end)
-          : null;
-
+        // User has no plan selected
         setSubscription({
-          plan:
-            planName === "pro" || planName === "enterprise" ? planName : "free",
-          status: subscriptionData.status as SubscriptionStatus,
-          periodEnd,
-          isActive:
-            subscriptionData.status === "active" ||
-            subscriptionData.status === "trialing",
+          plan: null,
+          status: null,
+          periodEnd: null,
+          isActive: false,
           isLoading: false,
           error: null,
+          hasAccess: false,
+          requiresUpgrade: true,
         });
       }
     } catch (err) {
       console.error("Error fetching subscription:", err);
       // Set default values if we can't fetch subscription data
       setSubscription({
-        plan: "free", // Default to free plan
+        plan: null, // Default to no plan
         status: null,
         periodEnd: null,
         isActive: false,
         isLoading: false,
         error: err instanceof Error ? err : new Error(String(err)),
+        hasAccess: false,
+        requiresUpgrade: true,
       });
       setError(err instanceof Error ? err : new Error(String(err)));
     }

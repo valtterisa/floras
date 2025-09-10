@@ -45,11 +45,38 @@ export async function checkRemainingChatUsage(): Promise<{
     const chatLimit = limits?.find((limit: any) => limit.usage_type === "chat");
 
     if (!chatLimit) {
-      // If no limits found, assume unlimited (enterprise plan)
+      // If no limits found, check if user has a plan
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.plan) {
+        // No plan = no access
+        return {
+          hasRemainingUsage: false,
+          currentUsage: 0,
+          limit: 0,
+          error: "No plan selected",
+        };
+      }
+
+      // Enterprise plan gets unlimited access
+      if (profile.plan === "enterprise") {
+        return {
+          hasRemainingUsage: true,
+          currentUsage: 0,
+          limit: -1,
+        };
+      }
+
+      // Other plans should have limits configured - if not, deny access
       return {
-        hasRemainingUsage: true,
+        hasRemainingUsage: false,
         currentUsage: 0,
-        limit: -1,
+        limit: 0,
+        error: "Usage limits not configured for plan",
       };
     }
 
@@ -219,6 +246,28 @@ export async function createWebsiteWithLimitCheck(
       return {
         success: false,
         error: "User not authenticated",
+      };
+    }
+
+    // Check if user has a valid plan first
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return {
+        success: false,
+        error: "Unable to verify user profile. Please try again.",
+      };
+    }
+
+    // Users must have a plan to create websites
+    if (!profile.plan) {
+      return {
+        success: false,
+        error: "plan required",
       };
     }
 

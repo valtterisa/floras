@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { polar } from "@/lib/polar";
 import { getPublicUrl } from "@/lib/env-config";
 
-
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -23,20 +22,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing productId" }, { status: 400 });
     }
 
+    const checkout = await polar.checkouts.create({
+      products: [productId],
+      customerEmail: user.email,
+      successUrl: `${getPublicUrl()}/dashboard`,
+    });
+
     try {
-      await polar.customers.create({
-        externalId: user.id,
-        email: user.email,
-        name: user.user_metadata?.full_name || user.email,
-        billingAddress: { country: "US" },
-      });
-
-      const checkout = await polar.checkouts.create({
-        products: [productId],
-        customerEmail: user.email,
-        successUrl: `${getPublicUrl()}/dashboard`,
-      });
-
       console.log("API: Checkout created successfully:", checkout.url);
       return NextResponse.json({ url: checkout.url });
     } catch (e) {

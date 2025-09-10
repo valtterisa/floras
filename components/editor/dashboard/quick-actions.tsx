@@ -12,9 +12,21 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FeedbackModal } from "@/components/feedback-modal";
+import { useSubscription } from "@/hooks/use-subscription";
 
 export function QuickActions() {
   const router = useRouter();
+  const { plan, hasAccess } = useSubscription();
+
+  const handleCreateWebsite = () => {
+    if (!hasAccess) {
+      // Redirect to billing if no access
+      router.push("/dashboard/account/billing");
+    } else {
+      router.push("/dashboard/website/create");
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Generate Website */}
@@ -32,10 +44,12 @@ export function QuickActions() {
             Start building a new website project in seconds.
           </p>
           <Button
-            className="px-4 py-2 rounded-md bg-primary text-white font-medium hover:bg-primary/90 transition"
-            onClick={() => router.push("/dashboard/website/create")}
+            className="px-4 py-2 rounded-md bg-primary text-white font-medium hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleCreateWebsite}
+            disabled={!hasAccess}
+            title={!hasAccess ? "Select a plan to use this feature" : undefined}
           >
-            Generate
+            {!hasAccess ? "Select Plan" : "Generate"}
           </Button>
         </CardContent>
       </Card>

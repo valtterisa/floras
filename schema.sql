@@ -23,7 +23,7 @@ CREATE TABLE public.profiles (
     full_name TEXT,
     avatar_url TEXT,
     website TEXT,
-    plan TEXT DEFAULT 'starter' CHECK (plan IN ('starter', 'pro', 'enterprise'))
+    plan TEXT CHECK (plan IS NULL OR plan IN ('hobby', 'pro', 'enterprise'))
 );
 
 -- Create websites table
@@ -44,7 +44,7 @@ CREATE TABLE public.websites (
     status TEXT DEFAULT 'creating',
     url TEXT,
     last_deployed TIMESTAMP WITH TIME ZONE,
-    plan TEXT DEFAULT 'starter' CHECK (plan IN ('starter', 'pro', 'enterprise'))
+    plan TEXT CHECK (plan IS NULL OR plan IN ('hobby', 'pro', 'enterprise'))
 );
 
 -- Create domains table

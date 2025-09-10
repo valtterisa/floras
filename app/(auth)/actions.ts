@@ -8,6 +8,7 @@ import { getPublicUrl } from "@/lib/env-config";
 
 import { createClient } from "@/lib/supabase/server";
 import { Provider } from "@supabase/supabase-js";
+import { createPolarCustomer } from "@/lib/polar";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -109,12 +110,32 @@ export async function signup(formData: FormData) {
     redirect("/error");
   }
 
-  // User is automatically assigned to free plan via Supabase trigger
-  // No Polar customer creation needed for free plan
+  // Create Polar customer (without plan) for billing integration
+  if (data.user) {
+    try {
+      await createPolarCustomer(
+        data.user.id,
+        validatedData.email,
+        `${validatedData.firstName} ${validatedData.lastName}`
+      );
+      console.log(
+        "Successfully created Polar customer for user:",
+        data.user.id
+      );
+    } catch (error) {
+      console.error(
+        "Failed to create Polar customer, but continuing signup:",
+        error
+      );
+      // Don't fail the signup if Polar customer creation fails
+    }
+  }
+
+  // No automatic plan assignment - user will select plan after signup
 
   revalidatePath("/", "layout");
   revalidatePath("/dashboard");
-  redirect("/");
+  redirect("/select-plan");
 }
 
 export async function logout() {

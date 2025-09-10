@@ -1,5 +1,7 @@
 "use client";
 
+// AI usage sidebar component that shows current plan and usage limits
+// Supports new plan structure: null (no plan), 'hobby', 'pro', 'enterprise'
 // Note: AI usage now handled via server actions in lib/actions/ai-usage.ts
 import { useState, useEffect } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -76,7 +78,7 @@ export function AIUsageSidebar() {
   }
 
   // Add safety checks for undefined values
-  if (!limits || !plan) {
+  if (!limits) {
     console.log("AI Usage Sidebar Debug:", { limits, plan });
     return (
       <div className="px-4 py-3 border-t border-border">
@@ -85,7 +87,7 @@ export function AIUsageSidebar() {
           <span className="text-sm font-medium">AI Usage</span>
         </div>
         <div className="text-xs text-muted-foreground">
-          {!plan ? "Loading plan..." : "Loading usage data..."}
+          Loading usage data...
         </div>
       </div>
     );
@@ -123,35 +125,53 @@ export function AIUsageSidebar() {
           <span className="text-sm font-medium">AI Usage</span>
         </div>
         <Badge
-          variant={isEnterprise ? "default" : "secondary"}
+          variant={!plan ? "outline" : isEnterprise ? "default" : "secondary"}
           className="text-xs"
         >
-          {plan}
+          {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "No Plan"}
         </Badge>
       </div>
 
       {/* Chat Usage Bar */}
-      <div className="space-y-2 mb-3">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1">
-            <MessageSquare className="h-3 w-3 text-muted-foreground" />
-            <span className="text-muted-foreground">Chat Messages</span>
+      {plan ? (
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3 text-muted-foreground" />
+              <span className="text-muted-foreground">Chat Messages</span>
+            </div>
+            <span className="font-medium">
+              {chatUsage} / {formatLimit(chatLimitValue)}
+            </span>
           </div>
-          <span className="font-medium">
-            {chatUsage} / {formatLimit(chatLimitValue)}
-          </span>
+          <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className={`h-full transition-all ${getUsageColor(chatPercentage)}`}
+              style={{ width: `${chatPercentage}%` }}
+            />
+          </div>
         </div>
-        <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-          <div
-            className={`h-full transition-all ${getUsageColor(chatPercentage)}`}
-            style={{ width: `${chatPercentage}%` }}
-          />
+      ) : (
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center justify-center text-xs text-muted-foreground py-4 border border-dashed border-gray-300 rounded-lg">
+            <span>Select a plan</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Action Buttons */}
       <div className="space-y-2 pt-2 border-t border-border">
-        {hasExceededLimits ? (
+        {!plan ? (
+          <Button
+            size="sm"
+            className="w-full text-xs"
+            variant="default"
+            onClick={() => router.push("/dashboard/account/billing")}
+          >
+            Select Plan
+            <ArrowUpRight className="ml-1 h-3 w-3" />
+          </Button>
+        ) : hasExceededLimits ? (
           <Button
             size="sm"
             className="w-full text-xs"

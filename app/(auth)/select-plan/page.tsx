@@ -4,7 +4,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useState, useEffect } from "react";
-import { AuthModal, User } from "@/components/auth-modal";
+import { useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import Logo from "@/components/logo";
 
 const plans = [
   {
@@ -76,41 +81,41 @@ const plans = [
   },
 ];
 
-export default function Pricing({ user }: { user: User | null }) {
+export default function SelectPlanPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );
   const [loading, setLoading] = useState<string | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
 
-  // Fetch current plan from Supabase
+  // Get pre-selected plan from URL
+  const preSelectedPlan = searchParams.get("plan");
+
   useEffect(() => {
-    const fetchUserPlan = async () => {
-      if (!user) return;
+    const getUser = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      try {
-        const response = await fetch("/api/user/profile");
-        if (response.ok) {
-          const data = await response.json();
-          console.log("User profile data:", data);
-          setCurrentSubscription({ plan: data.plan });
-        }
-      } catch (error) {
-        console.error("Error fetching user plan:", error);
+      if (!user) {
+        // Redirect to signup if not authenticated
+        router.push("/signup");
+        return;
       }
+
+      setUser(user);
     };
 
-    fetchUserPlan();
-  }, [user]);
+    getUser();
+  }, [router]);
 
-  const handleCheckout = async (plan: any) => {
-    if (!user) {
-      // Store the selected plan in session storage for after signup
-      sessionStorage.setItem("selectedPlan", plan.name.toLowerCase());
-      setShowAuthModal(true);
-      return;
-    }
+  const handleSelectPlan = async (plan: any) => {
+    if (!user) return;
 
     // For Enterprise plan, open email instead of checkout
     if (plan.name === "Enterprise") {
@@ -137,79 +142,40 @@ export default function Pricing({ user }: { user: User | null }) {
       if (response.ok) {
         const data = await response.json();
         window.location.href = data.url;
-      } else if (response.status === 401) {
-        // User is not authenticated, redirect to login
-        window.location.href = "/login";
       } else {
         const errorText = await response.text();
         console.error("Failed to create checkout:", errorText);
-        // Show user-friendly error message
+        toast({
+          title: "Error",
+          description: "Failed to start checkout process. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error creating checkout:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(null);
     }
-  };
-
-  const handleAuthSuccess = (user: User) => {
-    setShowAuthModal(false);
-
-    // Check if there's a stored plan selection
-    const selectedPlan = sessionStorage.getItem("selectedPlan");
-    if (selectedPlan) {
-      sessionStorage.removeItem("selectedPlan");
-      // For existing logged-in users, redirect to billing instead of plan selection
-      window.location.href = `/dashboard/account/billing?plan=${selectedPlan}`;
-    }
-  };
-
-  const isCurrentPlan = (plan: any) => {
-    if (!currentSubscription) {
-      return false;
-    }
-
-    // Map plan names to match Supabase plan values
-    const planMapping: { [key: string]: string } = {
-      "Hobby": "hobby",
-      "Pro": "pro",
-      "Enterprise": "enterprise",
-    };
-
-    const currentPlan = planMapping[plan.name];
-    console.log("Plan check:", {
-      planName: plan.name,
-      currentPlan,
-      userPlan: currentSubscription.plan,
-      isMatch: currentSubscription.plan === currentPlan,
-    });
-    return currentSubscription.plan === currentPlan;
-  };
-
-  const getCurrentPlanDisplay = (plan: any) => {
-    if (isCurrentPlan(plan)) {
-      return (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gray-600 text-white text-sm font-medium px-4 py-1 rounded-full">
-          Current Plan
-        </div>
-      );
-    }
-    return null;
   };
 
   const getButtonText = (plan: any) => {
     if (plan.name === "Enterprise") {
       return "Contact Sales";
     }
-    if (isCurrentPlan(plan)) {
-      return "Current Plan";
-    }
-    return loading === plan.name ? "Redirecting..." : "Get Started";
+    return loading === plan.name ? "Processing..." : "Select Plan";
   };
 
   const getButtonVariant = (plan: any) => {
-    if (isCurrentPlan(plan)) {
-      return "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300";
+    if (
+      preSelectedPlan &&
+      plan.name.toLowerCase() === preSelectedPlan.toLowerCase()
+    ) {
+      return "bg-black text-white hover:bg-gray-800 border-black";
     }
     if (plan.popular) {
       return "bg-black text-white hover:bg-gray-800 border-black";
@@ -217,22 +183,45 @@ export default function Pricing({ user }: { user: User | null }) {
     return "bg-white text-black hover:bg-gray-50 border-gray-300 border";
   };
 
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <section className="pb-16 pt-8">
+    <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4">
+        <div className="flex justify-end mb-8">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors px-4 py-2 rounded-lg hover:bg-white border border-gray-200 hover:border-gray-300 bg-white/80"
+          >
+            Skip for now
+            <ChevronLeft className="h-4 w-4 rotate-180" />
+          </Link>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="max-w-3xl mx-auto text-center mb-16"
+          className="max-w-4xl mx-auto text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black">
-            Simple, Transparent Pricing
-          </h2>
+          <div className="flex justify-center mb-8">
+            <div className="h-12 flex items-center text-xl md:text-3xl font-bold text-gray-900 text-center">
+              <span className="flex items-center">
+                <Logo className="mx-2 size-7 md:size-12" />
+                Builddrr
+              </span>
+            </div>
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-black">
+            Choose Your Plan
+          </h1>
           <p className="text-xl text-gray-700 mb-8">
-            Choose the perfect plan for your needs.
+            Welcome! Please select a plan to get started with Builddrr.
           </p>
+
           <div className="relative inline-flex items-center bg-white rounded-xl p-1.5 border border-gray-300 shadow-sm">
             <button
               onClick={() => setBillingCycle("monthly")}
@@ -254,7 +243,6 @@ export default function Pricing({ user }: { user: User | null }) {
             >
               Yearly
             </button>
-            {/* Animated background slider */}
             <div
               className={`absolute top-1.5 bottom-1.5 bg-black rounded-lg transition-all duration-300 ease-out shadow-lg ${
                 billingCycle === "monthly"
@@ -270,19 +258,28 @@ export default function Pricing({ user }: { user: User | null }) {
             <motion.div
               key={plan.name}
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              viewport={{ once: true }}
               className={`relative flex flex-col h-full bg-white rounded-xl shadow-sm border p-8 ${
-                plan.popular ? "border-black border-2" : "border-gray-300"
+                plan.popular ||
+                (preSelectedPlan &&
+                  plan.name.toLowerCase() === preSelectedPlan.toLowerCase())
+                  ? "border-black border-2"
+                  : "border-gray-300"
               }`}
             >
-              {plan.popular && (
+              {(plan.popular ||
+                (preSelectedPlan &&
+                  plan.name.toLowerCase() ===
+                    preSelectedPlan.toLowerCase())) && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black text-white text-sm font-medium px-4 py-1 rounded-full">
-                  Most Ideal
+                  {preSelectedPlan &&
+                  plan.name.toLowerCase() === preSelectedPlan.toLowerCase()
+                    ? "Selected"
+                    : "Most Popular"}
                 </div>
               )}
-              {getCurrentPlanDisplay(plan)}
+
               <div className="flex-1">
                 <h3 className="text-2xl font-bold mb-2 text-black">
                   {plan.name}
@@ -292,30 +289,25 @@ export default function Pricing({ user }: { user: User | null }) {
                   <span className="text-4xl font-bold text-black">
                     {plan.price[billingCycle]}
                   </span>
-                  {plan.price[billingCycle] !== "Free" &&
-                    plan.name !== "Enterprise" && (
-                      <span className="text-gray-600">/monthly</span>
-                    )}
+                  {plan.price[billingCycle] !== "Custom" && (
+                    <span className="text-gray-600">/month</span>
+                  )}
                 </div>
                 <ul className="space-y-4">
-                  {plan.features.map(
-                    (
-                      feature,
-                      index // @TODO: hotfix for now
-                    ) => (
-                      <li
-                        key={feature + "-" + index}
-                        className="flex items-start gap-3"
-                      >
-                        <Check className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{feature}</span>
-                      </li>
-                    )
-                  )}
+                  {plan.features.map((feature, featureIndex) => (
+                    <li
+                      key={feature + "-" + featureIndex}
+                      className="flex items-start gap-3"
+                    >
+                      <Check className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
+
               <Button
-                onClick={() => handleCheckout(plan)}
+                onClick={() => handleSelectPlan(plan)}
                 disabled={loading === plan.name}
                 className={`mt-8 w-full ${getButtonVariant(plan)}`}
               >
@@ -324,14 +316,13 @@ export default function Pricing({ user }: { user: User | null }) {
             </motion.div>
           ))}
         </div>
+
+        <div className="text-center mt-12">
+          <p className="text-sm text-gray-500">
+            You can always upgrade your plan later from your dashboard
+          </p>
+        </div>
       </div>
-      {showAuthModal && (
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onSuccess={handleAuthSuccess}
-        />
-      )}
-    </section>
+    </div>
   );
 }

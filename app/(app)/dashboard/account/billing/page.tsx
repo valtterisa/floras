@@ -5,6 +5,7 @@ import {
 } from "@/lib/polar";
 import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 import BillingClient from "./BillingClient";
+import { redirect } from "next/navigation";
 
 export default async function BillingPage() {
   // Get Supabase user on the server
@@ -16,7 +17,7 @@ export default async function BillingPage() {
 
   if (!user) {
     // Optionally, redirect to login or show an error
-    return <div className="p-8">You must be logged in to view billing.</div>;
+    redirect("/login");
   }
 
   const externalId = user.id;
