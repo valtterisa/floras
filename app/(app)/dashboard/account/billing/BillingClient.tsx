@@ -20,8 +20,13 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { AuthModal, User } from "@/components/auth-modal";
+import { useState } from "react";
+import { AuthModal } from "@/components/auth-modal";
+import {
+  createCustomerPortalUrl,
+  createCheckoutUrl,
+  UserSubscriptionData,
+} from "@/lib/actions/user-profile";
 import { SiteHeader } from "@/components/site-header";
 import {
   Dialog,
@@ -111,37 +116,23 @@ const plans = [
   },
 ];
 
-export default function BillingClient({ user }: { user: User | null }) {
+export default function BillingClient({
+  userData,
+}: {
+  userData: UserSubscriptionData;
+}) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );
   const [loading, setLoading] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState<string>("");
   const [cancelComment, setCancelComment] = useState<string>("");
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Fetch current plan from Supabase
-  useEffect(() => {
-    const fetchUserPlan = async () => {
-      if (!user) return;
-
-      try {
-        const response = await fetch("/api/user/profile");
-        if (response.ok) {
-          const data = await response.json();
-          console.log("User profile data:", data);
-          setCurrentSubscription({ plan: data.plan });
-        }
-      } catch (error) {
-        console.error("Error fetching user plan:", error);
-      }
-    };
-
-    fetchUserPlan();
-  }, [user]);
+  // Extract user and subscription data from props
+  const { profile: user, subscription: currentSubscription } = userData;
 
   const handleCheckout = async (plan: any) => {
     if (!user) {
@@ -155,33 +146,41 @@ export default function BillingClient({ user }: { user: User | null }) {
     if (plan.name === "Enterprise") {
       const subject = encodeURIComponent("Enterprise Plan Inquiry");
       const body = encodeURIComponent(
-        `Hi,\n\nI'm interested in the Enterprise plan for Builddrr.\n\nPlease provide more information about pricing and features.\n\nBest regards,\n${user.user_metadata?.full_name || user.email}`
+        `Hi,\n\nI'm interested in the Enterprise plan for Builddrr.\n\nPlease provide more information about pricing and features.\n\nBest regards,\n${user.full_name || user.email}`
       );
       window.location.href = `mailto:sales@builddrr.com?subject=${subject}&body=${body}`;
       return;
     }
 
+    // If user has an existing plan, open customer portal instead of checkout
+    if (currentSubscription?.plan) {
+      setLoading(plan.name);
+      try {
+        const result = await createCustomerPortalUrl();
+        if (result.url) {
+          window.location.href = result.url;
+        } else {
+          console.error(
+            "Failed to create customer portal session:",
+            result.error
+          );
+          // Show user-friendly error message
+        }
+      } catch (error) {
+        console.error("Error creating customer portal session:", error);
+      } finally {
+        setLoading(null);
+      }
+      return;
+    }
+
     setLoading(plan.name);
     try {
-      const response = await fetch("/api/polar-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId: plan.planId[billingCycle],
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        window.location.href = data.url;
-      } else if (response.status === 401) {
-        // User is not authenticated, redirect to login
-        window.location.href = "/login";
+      const result = await createCheckoutUrl(plan.planId[billingCycle]);
+      if (result.url) {
+        window.location.href = result.url;
       } else {
-        const errorText = await response.text();
-        console.error("Failed to create checkout:", errorText);
+        console.error("Failed to create checkout:", result.error);
         // Show user-friendly error message
       }
     } catch (error) {
@@ -191,7 +190,7 @@ export default function BillingClient({ user }: { user: User | null }) {
     }
   };
 
-  const handleAuthSuccess = (user: User) => {
+  const handleAuthSuccess = () => {
     setShowAuthModal(false);
 
     // Check if there's a stored plan selection
@@ -221,8 +220,7 @@ export default function BillingClient({ user }: { user: User | null }) {
       const data = await response.json();
 
       if (data.success) {
-        // Update local state
-        setCurrentSubscription(null);
+        // Close modal and reload page to get updated data
         setShowCancelModal(false);
         setCancelReason("");
         setCancelComment("");
@@ -279,14 +277,17 @@ export default function BillingClient({ user }: { user: User | null }) {
       return "Contact Sales";
     }
     if (isCurrentPlan(plan)) {
-      return "Current Plan";
+      return "Manage Plan";
+    }
+    if (currentSubscription?.plan) {
+      return loading === plan.name ? "Redirecting..." : "Change Plan";
     }
     return loading === plan.name ? "Redirecting..." : "Get Started";
   };
 
   const getButtonVariant = (plan: any) => {
     if (isCurrentPlan(plan)) {
-      return "bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300";
+      return "bg-gray-900 text-white hover:bg-gray-800 border-gray-900";
     }
     if (plan.popular) {
       return "bg-black text-white hover:bg-gray-800 border-black";
@@ -315,50 +316,74 @@ export default function BillingClient({ user }: { user: User | null }) {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mb-8"
           >
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-100 border-blue-200">
-              <CardHeader>
+            <Card className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700 shadow-2xl">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
-                      Current Plan
-                    </CardTitle>
-                    <CardDescription>
-                      Your active subscription details
-                    </CardDescription>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+                      <Crown className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-xl font-semibold">
+                        Current Plan
+                      </CardTitle>
+                      <CardDescription className="text-gray-300">
+                        Your active subscription
+                      </CardDescription>
+                    </div>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800"
-                  >
-                    {currentSubscription.plan.charAt(0).toUpperCase() +
-                      currentSubscription.plan.slice(1)}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge className="bg-white text-gray-900 font-semibold px-3 py-1 text-sm">
+                      {currentSubscription.plan.charAt(0).toUpperCase() +
+                        currentSubscription.plan.slice(1)}
+                    </Badge>
+                    <div className="flex items-center text-gray-300 text-sm">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {billingCycle === "monthly" ? "Monthly" : "Yearly"}
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4 border-t border-gray-700">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      <Calendar className="inline h-4 w-4 mr-1" />
-                      Next billing:{" "}
-                      {billingCycle === "monthly" ? "Monthly" : "Yearly"}
-                    </p>
+                  <div className="text-gray-300">
+                    <p className="text-sm mb-1">Plan Status</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-white font-medium">Active</span>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowCancelModal(true)}
-                      className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      <X className="h-4 w-4" />
-                      Cancel Plan
-                    </Button>
-                    <Button variant="outline" className="gap-2">
-                      <Mail className="h-4 w-4" />
-                      Contact Support
-                    </Button>
-                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={async () => {
+                      setLoading("portal");
+                      try {
+                        const result = await createCustomerPortalUrl();
+                        if (result.url) {
+                          window.location.href = result.url;
+                        } else {
+                          console.error(
+                            "Failed to create customer portal session:",
+                            result.error
+                          );
+                        }
+                      } catch (error) {
+                        console.error(
+                          "Error creating customer portal session:",
+                          error
+                        );
+                      } finally {
+                        setLoading(null);
+                      }
+                    }}
+                    className="gap-2 bg-white text-gray-900 hover:bg-gray-100"
+                    disabled={loading === "portal"}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    {loading === "portal"
+                      ? "Loading..."
+                      : "Manage Subscription"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -419,22 +444,15 @@ export default function BillingClient({ user }: { user: User | null }) {
               <Card
                 className={`relative h-full ${
                   isCurrentPlan(plan)
-                    ? "border-blue-500 bg-blue-50/50"
+                    ? "border-gray-900 bg-gray-50/50"
                     : plan.popular
                       ? "border-gray-900 shadow-lg"
                       : "border-gray-200"
                 }`}
               >
-                {plan.popular && !isCurrentPlan(plan) && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-gray-900 text-white">
-                      Most Popular
-                    </Badge>
-                  </div>
-                )}
                 {isCurrentPlan(plan) && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-blue-600 text-white">
+                    <Badge className="bg-gray-900 text-white">
                       Current Plan
                     </Badge>
                   </div>
@@ -444,7 +462,7 @@ export default function BillingClient({ user }: { user: User | null }) {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl">{plan.name}</CardTitle>
                     {isCurrentPlan(plan) && (
-                      <Crown className="h-5 w-5 text-blue-600" />
+                      <Crown className="h-5 w-5 text-gray-900" />
                     )}
                   </div>
                   <CardDescription className="text-sm">
@@ -485,27 +503,16 @@ export default function BillingClient({ user }: { user: User | null }) {
 
                   <Button
                     onClick={() => handleCheckout(plan)}
-                    disabled={
-                      loading === plan.name ||
-                      (isCurrentPlan(plan) && plan.name !== "Enterprise")
-                    }
+                    disabled={loading === plan.name}
                     className={`w-full ${getButtonVariant(plan)}`}
                     size="lg"
                   >
                     {loading === plan.name ? (
                       "Processing..."
-                    ) : isCurrentPlan(plan) ? (
-                      plan.name === "Enterprise" ? (
-                        "Contact Sales"
-                      ) : (
-                        "Current Plan"
-                      )
                     ) : (
                       <>
-                        {plan.name === "Enterprise"
-                          ? "Contact Sales"
-                          : "Select Plan"}
-                        {plan.name !== "Enterprise" && (
+                        {getButtonText(plan)}
+                        {!isCurrentPlan(plan) && plan.name !== "Enterprise" && (
                           <ArrowRight className="ml-2 h-4 w-4" />
                         )}
                       </>
@@ -516,50 +523,6 @@ export default function BillingClient({ user }: { user: User | null }) {
             </motion.div>
           ))}
         </div>
-
-        {/* Billing Information */}
-        {currentSubscription?.plan && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-12"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Billing Information
-                </CardTitle>
-                <CardDescription>
-                  Manage your payment methods and billing details
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Payment Method</p>
-                      <p className="text-sm text-gray-600">
-                        •••• •••• •••• 4242
-                      </p>
-                    </div>
-                    <Button variant="outline">Update</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Billing History</p>
-                      <p className="text-sm text-gray-600">
-                        View past invoices and receipts
-                      </p>
-                    </div>
-                    <Button variant="outline">View History</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
       </div>
       {showAuthModal && (
         <AuthModal
@@ -574,7 +537,7 @@ export default function BillingClient({ user }: { user: User | null }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle className="h-5 w-5 text-gray-600" />
               Cancel Subscription
             </DialogTitle>
             <DialogDescription>
@@ -634,10 +597,10 @@ export default function BillingClient({ user }: { user: User | null }) {
               Keep Subscription
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={handleCancelSubscription}
               disabled={isCancelling}
-              className="gap-2"
+              className="gap-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
             >
               {isCancelling ? (
                 "Cancelling..."

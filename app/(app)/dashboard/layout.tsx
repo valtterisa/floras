@@ -1,17 +1,28 @@
 import { ReactNode } from "react";
 import { DashboardShell } from "@/components/editor/dashboard/dashboard-shell";
-import { createClient } from "@/lib/supabase/server";
+import {
+  getUserProfileAndSubscription,
+  getUserWebsites,
+} from "@/lib/actions/user-profile";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const { data: userData, error: userError } =
+    await getUserProfileAndSubscription();
 
-  return <DashboardShell user={user}>{children}</DashboardShell>;
+  if (userError || !userData) {
+    redirect("/login");
+  }
+
+  const { websites } = await getUserWebsites();
+
+  return (
+    <DashboardShell userData={userData} websites={websites}>
+      {children}
+    </DashboardShell>
+  );
 }

@@ -209,26 +209,10 @@ export async function syncUsageData(
   }
 }
 
-/**
- * Calculate cost based on usage type and tokens
- * This should match your actual AI provider costs
- */
-function calculateCost(tokens: number, usageType: string): number {
-  // Adjust these rates based on your actual AI provider costs
-  const rates = {
-    chat: 0.000002, // $0.002 per 1K tokens
-    content_generation: 0.000003,
-    code_generation: 0.000004,
-    image_generation: 0.0001,
-  };
-
-  const rate = rates[usageType as keyof typeof rates] || rates.chat;
-  return (tokens / 1000) * rate;
-}
 
 /**
  * Get customer ID from user's subscription data (PAID plans only)
- * Free plan users don't have Polar customer IDs
+ * Since externalId IS the auth.users.id, we can use the userId directly for Polar
  */
 export async function getCustomerIdFromUser(
   userId: string
@@ -238,7 +222,7 @@ export async function getCustomerIdFromUser(
   // First check if user has a paid plan
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan, polar_customer_id")
+    .select("plan")
     .eq("id", userId)
     .single();
 
@@ -247,24 +231,12 @@ export async function getCustomerIdFromUser(
   }
 
   // Free plan users don't have Polar customer IDs
-  if (profile.plan === "free") {
+  if (profile.plan === "free" || !profile.plan) {
     return null;
   }
 
-  // Return customer ID if available for paid plans
-  if (profile.polar_customer_id) {
-    return profile.polar_customer_id;
-  }
-
-  // Try to get from subscriptions table for paid plans
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("polar_customer_id")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .single();
-
-  return subscription?.polar_customer_id || null;
+  // For paid plans, the userId IS the externalId used in Polar
+  return userId;
 }
 
 /**

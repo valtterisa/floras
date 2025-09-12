@@ -29,7 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useTeams } from "@/hooks/use-teams";
-import { useSubscription } from "@/hooks/use-subscription";
+import { UserSubscriptionData } from "@/lib/actions/user-profile";
 
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,9 +40,14 @@ import Logo from "./logo";
 export function AppSidebar({
   className = "",
   user,
+  userData,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { user: any }) {
-  const { plan, hasAccess } = useSubscription();
+}: React.ComponentProps<typeof Sidebar> & {
+  user: any;
+  userData?: UserSubscriptionData;
+}) {
+  const plan = userData?.subscription.plan;
+  const hasAccess = userData?.subscription.hasAccess || false;
   const params = useParams();
   const pathname = usePathname();
   const teamId =
@@ -170,7 +175,7 @@ export function AppSidebar({
         <NavMain items={navMain} handleMobileClose={handleMobileClose} />
 
         {/* AI Usage Component */}
-        <AIUsageSidebar />
+        <AIUsageSidebar userData={userData} />
 
         <NavSecondary
           items={navSecondary}

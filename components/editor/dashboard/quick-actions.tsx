@@ -12,11 +12,16 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FeedbackModal } from "@/components/feedback-modal";
-import { useSubscription } from "@/hooks/use-subscription";
+import { UserSubscriptionData } from "@/lib/actions/user-profile";
 
-export function QuickActions() {
+export function QuickActions({
+  userData,
+}: {
+  userData?: UserSubscriptionData;
+}) {
   const router = useRouter();
-  const { plan, hasAccess } = useSubscription();
+  const plan = userData?.subscription.plan;
+  const hasAccess = userData?.subscription.hasAccess || false;
 
   const handleCreateWebsite = () => {
     if (!hasAccess) {

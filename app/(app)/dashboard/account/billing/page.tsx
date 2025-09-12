@@ -1,19 +1,13 @@
-import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
-import BillingClient from "./BillingClient";
 import { redirect } from "next/navigation";
+import { getUserProfileAndSubscription } from "@/lib/actions/user-profile";
+import BillingClient from "./BillingClient";
 
 export default async function BillingPage() {
-  // Get Supabase user on the server
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const { data: userData, error } = await getUserProfileAndSubscription();
 
-  if (!user) {
-    // Optionally, redirect to login or show an error
+  if (error || !userData) {
     redirect("/login");
   }
 
-  return <BillingClient user={user} />;
+  return <BillingClient userData={userData} />;
 }

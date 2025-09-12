@@ -4,41 +4,40 @@
 // Supports new plan structure: null (no plan), 'hobby', 'pro', 'enterprise'
 // Note: AI usage now handled via server actions in lib/actions/ai-usage.ts
 import { useState, useEffect } from "react";
-import { useSubscription } from "@/hooks/use-subscription";
 import { checkCurrentUsageLimits } from "@/lib/actions/ai-usage";
+import { UserSubscriptionData } from "@/lib/actions/user-profile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Zap, MessageSquare, ArrowUpRight } from "lucide-react";
 import { AIUsageType } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
-const usageTypeIcons = {
-  chat: MessageSquare,
-};
-
-const usageTypeLabels = {
-  chat: "Chat Messages",
-};
-
-export function AIUsageSidebar() {
-  const { plan, isActive } = useSubscription();
+export function AIUsageSidebar({
+  userData,
+}: {
+  userData?: UserSubscriptionData;
+}) {
   const router = useRouter();
+
+  // Extract plan and status from userData prop
+  const plan = userData?.subscription.plan || null;
+  const isActive = userData?.subscription.isActive || false;
 
   // State for AI usage data
   const [limits, setLimits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load usage data on mount
+  // Load usage data on mount and when userData changes
   useEffect(() => {
     const loadUsageData = async () => {
       try {
         setIsLoading(true);
-        const result = await checkCurrentUsageLimits();
-        if (result.error) {
-          setError(result.error);
+        const usageResult = await checkCurrentUsageLimits();
+        if (usageResult.error) {
+          setError(usageResult.error);
         } else {
-          setLimits(result.limits);
+          setLimits(usageResult.limits);
           setError(null);
         }
       } catch (err) {
@@ -49,7 +48,7 @@ export function AIUsageSidebar() {
     };
 
     loadUsageData();
-  }, []);
+  }, [userData]);
 
   if (isLoading) {
     return (

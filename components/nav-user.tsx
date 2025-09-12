@@ -25,11 +25,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { logout } from "@/app/(auth)/actions";
+import { UserProfile } from "@/lib/actions/user-profile";
 
-export function NavUser({ user }: { user: any }) {
+export function NavUser({ user }: { user: UserProfile }) {
   const { isMobile } = useSidebar();
 
-  const { full_name, email, avatar_url } = user.user_metadata;
+  const { full_name, email, avatar_url } = user;
 
   return (
     <SidebarMenu>

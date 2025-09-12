@@ -1,74 +1,32 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { AppSidebar } from "../../app-sidebar";
 import { SidebarInset, SidebarProvider } from "../../ui/sidebar";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-
-// Define website type
-type Website = {
-  id: string;
-  name: string;
-  custom_domain: string | null;
-  primary_domain: string;
-  status: string;
-  is_active?: boolean; // Optional property to indicate if the website is active
-};
+import { UserSubscriptionData } from "@/lib/actions/user-profile";
+import { Website } from "@/lib/database";
 
 export function DashboardShell({
   children,
-  user,
+  userData,
+  websites,
 }: {
   children: React.ReactNode;
-  user: any;
+  userData: UserSubscriptionData;
+  websites: Website[];
 }) {
-  const router = useRouter();
   const pathname = usePathname();
-  const [websites, setWebsites] = useState<Website[]>([]);
   const [activeWebsite, setActiveWebsite] = useState<Website | null>(null);
-  const [isLoadingWebsites, setIsLoadingWebsites] = useState(true);
 
-  // Fetch user's websites
+  // Set first website as active if none is selected and websites are available
   useEffect(() => {
-    const fetchWebsites = async () => {
-      setIsLoadingWebsites(true);
-      try {
-        const supabase = createClient();
-        const { data: websitesData, error } = await supabase
-          .from("websites")
-          .select("*")
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-
-        if (websitesData && websitesData.length > 0) {
-          // Mark websites as active if they are deployed or deploying
-          const processedWebsites = websitesData.map((site) => ({
-            ...site,
-            is_active:
-              site.status === "deployed" || site.status === "deploying",
-          }));
-
-          setWebsites(processedWebsites);
-
-          // Set first website as active if none is selected
-          if (!activeWebsite) {
-            setActiveWebsite(processedWebsites[0]);
-            // Store selection in localStorage
-            localStorage.setItem("activeWebsiteId", processedWebsites[0].id);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching websites:", error);
-      } finally {
-        setIsLoadingWebsites(false);
-      }
-    };
-
-    fetchWebsites();
-  }, []);
+    if (websites.length > 0 && !activeWebsite) {
+      setActiveWebsite(websites[0]);
+      // Store selection in localStorage
+      localStorage.setItem("activeWebsiteId", websites[0].id);
+    }
+  }, [websites, activeWebsite]);
 
   // Load active website from localStorage on initial render
   useEffect(() => {
@@ -95,7 +53,11 @@ export function DashboardShell({
   return (
     <SidebarProvider>
       <div className="flex h-[100dvh] h-[100vh] px-2 md:p-2 md:px-0 w-full">
-        <AppSidebar className="hidden md:flex" user={user} />
+        <AppSidebar
+          className="hidden md:flex"
+          user={userData.profile}
+          userData={userData}
+        />
         <SidebarInset className="rounded-3xl min-w-0 flex-1">
           {children}
         </SidebarInset>

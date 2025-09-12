@@ -9,6 +9,7 @@ export type Profile = {
   full_name: string | null;
   avatar_url: string | null;
   email: string | null;
+  plan: string | null;
   referral_code: string | null;
   referred_by: string | null; // UUID reference to another profile
 };
