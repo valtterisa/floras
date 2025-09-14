@@ -31,47 +31,56 @@ export const useStreamingChat = () => {
           throw new Error("No response body");
         }
 
-        const decoder = new TextDecoder();
-        let buffer = "";
+        try {
+          const decoder = new TextDecoder();
+          let buffer = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            try {
-              const data = JSON.parse(line.slice(6));
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              try {
+                const data = JSON.parse(line.slice(6));
 
-              if (data.type === "status") {
-                if (data.value === "streaming") startStream();
-                else if (data.value === "ready") finishStream();
-                else if (data.value === "error") failStream();
-                else if (data.value === "submitted") setStatus("submitted");
-              } else if (data.type === "analysis") {
-                updateStream(data.content || "");
-              } else if (data.type === "progress") {
-                if (data.status === "deploying") {
-                  updateStream(`\n\n**🚀 Deploying your website...**\n\n`);
-                } else if (data.status === "deployed") {
-                  updateStream(
-                    `\n\n**✅ Deployment completed successfully!**\n\n`
-                  );
+                if (data.type === "status") {
+                  if (data.value === "streaming") startStream();
+                  else if (data.value === "ready") finishStream();
+                  else if (data.value === "error") failStream();
+                  else if (data.value === "submitted") setStatus("submitted");
+                } else if (data.type === "analysis") {
+                  updateStream(data.content || "");
+                } else if (data.type === "progress") {
+                  if (data.status === "deploying") {
+                    updateStream(`\n\n**🚀 Deploying your website...**\n\n`);
+                  } else if (data.status === "deployed") {
+                    updateStream(
+                      `\n\n**✅ Deployment completed successfully!**\n\n`
+                    );
+                  }
+                } else if (data.type === "error") {
+                  updateStream(`\n\n**Error streaming chat**`);
+                  failStream();
                 }
-              } else if (data.type === "error") {
-                updateStream(`\n\n**Error streaming chat**`);
-                failStream();
-              }
-            } catch {}
+              } catch {}
+            }
+          }
+
+          // Ensure we end in ready if server closed cleanly without status frame
+          finishStream();
+        } finally {
+          // Clean up any remaining resources
+          try {
+            reader.cancel();
+          } catch (e) {
+            // Ignore cleanup errors
           }
         }
-
-        // Ensure we end in ready if server closed cleanly without status frame
-        finishStream();
       } catch (error) {
         updateStream(`\n\n**Error streaming chat**`);
         failStream();

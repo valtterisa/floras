@@ -598,62 +598,62 @@ export async function ensureSandboxRunning(appName: string) {
   return deploySandboxAndStopExisting(appName);
 }
 
-export async function writeFilesToSandbox(
-  appName: string,
-  files: Record<string, string>
-) {
-  // Find existing sandbox; create only if stopped/missing via deploySandboxAndStopExisting
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("preview_environments")
-    .select("sandbox_id")
-    .eq("app_name", appName)
-    .single();
+// export async function writeFilesToSandbox(
+//   appName: string,
+//   files: Record<string, string>
+// ) {
+//   // Find existing sandbox; create only if stopped/missing via deploySandboxAndStopExisting
+//   const supabase = await createClient();
+//   const { data } = await supabase
+//     .from("preview_environments")
+//     .select("sandbox_id")
+//     .eq("app_name", appName)
+//     .single();
 
-  let sandbox;
-  if (data && data.sandbox_id) {
-    try {
-      sandbox = await Sandbox.get({
-        teamId: process.env.VERCEL_TEAM_ID!,
-        projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
-        token: process.env.VERCEL_TOKEN!,
-        sandboxId: data.sandbox_id,
-      });
-      if (sandbox.status !== "running" && sandbox.status !== "pending") {
-        // If not running, ensure (re)creation using existing flow
-        const { sandboxId } = await deploySandboxAndStopExisting(appName);
-        sandbox = await Sandbox.get({
-          teamId: process.env.VERCEL_TEAM_ID!,
-          projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
-          token: process.env.VERCEL_TOKEN!,
-          sandboxId,
-        });
-      }
-    } catch (e) {
-      // Fallback to creation
-      const { sandboxId } = await deploySandboxAndStopExisting(appName);
-      sandbox = await Sandbox.get({
-        teamId: process.env.VERCEL_TEAM_ID!,
-        projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
-        token: process.env.VERCEL_TOKEN!,
-        sandboxId,
-      });
-    }
-  } else {
-    const { sandboxId } = await deploySandboxAndStopExisting(appName);
-    sandbox = await Sandbox.get({
-      teamId: process.env.VERCEL_TEAM_ID!,
-      projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
-      token: process.env.VERCEL_TOKEN!,
-      sandboxId,
-    });
-  }
+//   let sandbox;
+//   if (data && data.sandbox_id) {
+//     try {
+//       sandbox = await Sandbox.get({
+//         teamId: process.env.VERCEL_TEAM_ID!,
+//         projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
+//         token: process.env.VERCEL_TOKEN!,
+//         sandboxId: data.sandbox_id,
+//       });
+//       if (sandbox.status !== "running" && sandbox.status !== "pending") {
+//         // If not running, ensure (re)creation using existing flow
+//         const { sandboxId } = await deploySandboxAndStopExisting(appName);
+//         sandbox = await Sandbox.get({
+//           teamId: process.env.VERCEL_TEAM_ID!,
+//           projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
+//           token: process.env.VERCEL_TOKEN!,
+//           sandboxId,
+//         });
+//       }
+//     } catch (e) {
+//       // Fallback to creation
+//       const { sandboxId } = await deploySandboxAndStopExisting(appName);
+//       sandbox = await Sandbox.get({
+//         teamId: process.env.VERCEL_TEAM_ID!,
+//         projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
+//         token: process.env.VERCEL_TOKEN!,
+//         sandboxId,
+//       });
+//     }
+//   } else {
+//     const { sandboxId } = await deploySandboxAndStopExisting(appName);
+//     sandbox = await Sandbox.get({
+//       teamId: process.env.VERCEL_TEAM_ID!,
+//       projectId: process.env.VERCEL_SANDBOX_TEMPLATE_PROJECT_ID!,
+//       token: process.env.VERCEL_TOKEN!,
+//       sandboxId,
+//     });
+//   }
 
-  const fileArray = Object.entries(files).map(([path, content]) => ({
-    path,
-    content: Buffer.from(content),
-  }));
+//   const fileArray = Object.entries(files).map(([path, content]) => ({
+//     path,
+//     content: Buffer.from(content),
+//   }));
 
-  // @ts-ignore: writeFiles is available on sandbox
-  await sandbox.writeFiles(fileArray);
-}
+//   // @ts-ignore: writeFiles is available on sandbox
+//   await sandbox.writeFiles(fileArray);
+// }

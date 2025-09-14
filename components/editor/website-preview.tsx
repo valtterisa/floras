@@ -272,7 +272,10 @@ export default function WebsitePreview({
       } else {
         // Begin lightweight client-side polling until running
         dispatch({ type: "SET_SANDBOX_LOADING", value: true });
-        dispatch({ type: "SET_DEPLOYMENT_STEP", value: "Preparing sandbox..." });
+        dispatch({
+          type: "SET_DEPLOYMENT_STEP",
+          value: "Preparing sandbox...",
+        });
         // start polling in background
         if (!isPollingRef.current) {
           isPollingRef.current = true;
@@ -286,12 +289,13 @@ export default function WebsitePreview({
                   body: JSON.stringify({ id: appName || id }),
                 });
                 if (!r.ok && r.status !== 404) {
-                  const err = await r.json().catch(() => ({} as any));
+                  const err = await r.json().catch(() => ({}) as any);
                   dispatch({ type: "SET_SANDBOX_LOADING", value: false });
                   dispatch({
                     type: "SET_DEPLOYMENT_STEP",
                     value:
-                      err?.error || `Preview error (${r.status}). Please try again.`,
+                      err?.error ||
+                      `Preview error (${r.status}). Please try again.`,
                   });
                   break;
                 }
@@ -299,7 +303,10 @@ export default function WebsitePreview({
                   const d = await r.json();
                   dispatch({ type: "SET_SANDBOX_URL", value: d.url });
                   dispatch({ type: "SET_SANDBOX_LOADING", value: false });
-                  dispatch({ type: "SET_DEPLOYMENT_STEP", value: "Sandbox ready" });
+                  dispatch({
+                    type: "SET_DEPLOYMENT_STEP",
+                    value: "Sandbox ready",
+                  });
                   setIframeNonce((n) => n + 1);
                   isReadyRef.current = true;
                   break;
@@ -339,7 +346,7 @@ export default function WebsitePreview({
     const shouldInit =
       typeof window !== "undefined" &&
       (window as any).useAIMode !== true &&
-      useChatStreamStore.getState().status !== "streaming" &&
+      useChatStreamStore.getState().status === "ready" &&
       !deploymentUrl &&
       !editorState.sandboxUrl &&
       !editorState.isSandboxLoading &&
@@ -347,7 +354,7 @@ export default function WebsitePreview({
     if (shouldInit) {
       initializeSandbox();
     }
-    return () => { };
+    return () => {};
   }, [
     deploymentUrl,
     editorState.sandboxUrl,
@@ -397,12 +404,13 @@ export default function WebsitePreview({
                   body: JSON.stringify({ id: appName || id }),
                 });
                 if (!r.ok && r.status !== 404) {
-                  const err = await r.json().catch(() => ({} as any));
+                  const err = await r.json().catch(() => ({}) as any);
                   dispatch({ type: "SET_SANDBOX_LOADING", value: false });
                   dispatch({
                     type: "SET_DEPLOYMENT_STEP",
                     value:
-                      err?.error || `Preview error (${r.status}). Please try again.`,
+                      err?.error ||
+                      `Preview error (${r.status}). Please try again.`,
                   });
                   break;
                 }
@@ -464,12 +472,13 @@ export default function WebsitePreview({
               body: JSON.stringify({ id: appName || id }),
             });
             if (!r.ok && r.status !== 404) {
-              const err = await r.json().catch(() => ({} as any));
+              const err = await r.json().catch(() => ({}) as any);
               dispatch({ type: "SET_SANDBOX_LOADING", value: false });
               dispatch({
                 type: "SET_DEPLOYMENT_STEP",
                 value:
-                  err?.error || `Preview error (${r.status}). Please try again.`,
+                  err?.error ||
+                  `Preview error (${r.status}). Please try again.`,
               });
               break;
             }
@@ -507,7 +516,7 @@ export default function WebsitePreview({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, sandboxId: editorState.sandboxId }),
         });
-      } catch (_) { }
+      } catch (_) {}
     };
     const interval = setInterval(() => {
       if (isActive) ping();
@@ -1249,14 +1258,15 @@ export default function WebsitePreview({
               <div className="h-full bg-white dark:bg-black">
                 <LoadingUI
                   message="Preparing preview..."
-                  submessage={editorState.deploymentStep}
+                  submessage={"Loading... this can take few minutes."}
                 />
               </div>
             ) : (
               <div className="w-full h-full flex items-start justify-center overflow-auto custom-scrollbar">
                 <div
-                  className={`${viewport === "mobile" ? "h-full w-[390px]" : "h-full w-full"
-                    } transition-[width] duration-300 ease-in-out`}
+                  className={`${
+                    viewport === "mobile" ? "h-full w-[390px]" : "h-full w-full"
+                  } transition-[width] duration-300 ease-in-out`}
                 >
                   <iframe
                     ref={iframeRef}

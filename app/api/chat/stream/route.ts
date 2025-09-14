@@ -59,6 +59,10 @@ export async function POST(req: NextRequest, context: NextFetchEvent) {
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
+      let chunkCount = 0;
+      const MAX_CHUNKS = 1000; // Limit total chunks to prevent memory issues
+      const MAX_CHUNK_SIZE = 10 * 1024; // 10KB max per chunk
+
       try {
         // Emit submitted status immediately
         controller.enqueue(
@@ -78,9 +82,39 @@ export async function POST(req: NextRequest, context: NextFetchEvent) {
           appName,
           repoExists
         )) {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
-          );
+          // Check chunk count limit
+          if (chunkCount >= MAX_CHUNKS) {
+            console.warn("Stream chunk limit reached, closing stream");
+            break;
+          }
+
+          const chunkData = JSON.stringify(chunk);
+
+          // Check chunk size limit
+          if (chunkData.length > MAX_CHUNK_SIZE) {
+            console.warn("Chunk size exceeded, truncating");
+            const truncatedChunk = {
+              ...chunk,
+              ...(chunk.type === "analysis" && "content" in chunk
+                ? {
+                    content:
+                      chunk.content.substring(0, MAX_CHUNK_SIZE - 100) + "...",
+                  }
+                : {}),
+            };
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(truncatedChunk)}\n\n`)
+            );
+          } else {
+            controller.enqueue(encoder.encode(`data: ${chunkData}\n\n`));
+          }
+
+          chunkCount++;
+
+          // Add backpressure - pause briefly every 10 chunks
+          if (chunkCount % 10 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 1));
+          }
         }
 
         controller.enqueue(

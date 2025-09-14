@@ -119,7 +119,11 @@ export async function uploadFilesToRepo(
   console.log("Uploading files to repo", repo);
   const octokit = await getOctokitAsInstallation();
 
-  for (const [path, content] of Object.entries(files)) {
+  // Process files one at a time to reduce memory usage
+  const fileEntries = Object.entries(files);
+  for (let i = 0; i < fileEntries.length; i++) {
+    const [path, content] = fileEntries[i];
+
     try {
       // First, try to get the current file's SHA if it exists
       let currentSha: string | undefined;
@@ -142,13 +146,16 @@ export async function uploadFilesToRepo(
         }
       }
 
+      // Convert content to base64 directly without storing Buffer in memory
+      const base64Content = Buffer.from(content).toString("base64");
+
       // Prepare the request payload
       const payload: any = {
         owner: ORG,
         repo: repo,
         path: path,
         message: currentSha ? `Update ${path}` : `Add ${path}`,
-        content: Buffer.from(content).toString("base64"),
+        content: base64Content,
         committer: {
           name: "Builddrr Deploy Bot",
           email: "deploy-bot@builddrr.com",
@@ -170,6 +177,14 @@ export async function uploadFilesToRepo(
       console.log(
         `Successfully ${currentSha ? "updated" : "uploaded"} ${path} to ${repo}`
       );
+
+      // Clear the content from memory after processing
+      (fileEntries[i] as any)[1] = undefined;
+
+      // Force garbage collection hint (if available)
+      if (global.gc) {
+        global.gc();
+      }
     } catch (error) {
       console.error(`Failed to upload ${path} to ${repo}:`, error);
     }

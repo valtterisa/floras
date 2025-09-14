@@ -22,6 +22,7 @@ type Store = {
   finishStream: () => void;
   failStream: () => void;
   clearStreamedContent: () => void;
+  clearAll: () => void;
 };
 
 export const useChatStreamStore = create<Store>((set, get) => ({
@@ -53,5 +54,13 @@ export const useChatStreamStore = create<Store>((set, get) => ({
 
   clearStreamedContent: () => {
     set({ streamedContent: "" });
+  },
+  clearAll: () => {
+    set({
+      messages: [],
+      streamedContent: "",
+      deploymentUrl: undefined,
+      status: "ready",
+    });
   },
 }));
