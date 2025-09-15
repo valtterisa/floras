@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Loader2, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getUserProfileAndSubscription } from "@/lib/actions/user-profile";
 
 interface CheckoutSuccessClientProps {
   user: any;
@@ -33,22 +34,15 @@ export default function CheckoutSuccessClient({
         try {
           attempts++;
 
-          // Fetch user's current plan from our API
-          const response = await fetch("/api/user/profile");
-          if (response.ok) {
-            const data = await response.json();
-
-            if (data.plan && data.plan !== null) {
-              // Plan has been updated by webhook
-              setPlanName(data.plan);
-              setStatus("success");
-
-              // Redirect to billing page after 3 seconds
-              setTimeout(() => {
-                router.push("/dashboard/account/billing");
-              }, 3000);
-              return;
-            }
+          const { data } = await getUserProfileAndSubscription();
+          const activePlan = data?.subscription.plan;
+          if (activePlan) {
+            setPlanName(activePlan);
+            setStatus("success");
+            setTimeout(() => {
+              router.push("/dashboard/account/billing");
+            }, 3000);
+            return;
           }
 
           // If we haven't found a plan yet and haven't exceeded max attempts

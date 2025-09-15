@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AuthModal, User } from "@/components/auth-modal";
+import { getUserProfileAndSubscription } from "@/lib/actions/user-profile";
 
 const plans = [
   {
@@ -90,11 +91,9 @@ export default function Pricing({ user }: { user: User | null }) {
       if (!user) return;
 
       try {
-        const response = await fetch("/api/user/profile");
-        if (response.ok) {
-          const data = await response.json();
-          console.log("User profile data:", data);
-          setCurrentSubscription({ plan: data.plan });
+        const { data } = await getUserProfileAndSubscription();
+        if (data?.subscription.plan) {
+          setCurrentSubscription({ plan: data.subscription.plan });
         }
       } catch (error) {
         console.error("Error fetching user plan:", error);
