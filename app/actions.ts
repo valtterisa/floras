@@ -210,7 +210,6 @@ export async function* generateAIResponseStream(
     prompt: prompt,
     temperature: 0,
     model: anthropic("claude-sonnet-4-20250514"),
-    maxTokens: 16000,
     onError: ({ error }) => {
       console.error("AI Stream Error:", error);
     },
@@ -243,7 +242,8 @@ export async function* generateAIResponseStream(
     buffer += value;
 
     // Use regex to find complete builddrr tags efficiently
-    const builddrrTagRegex = /<builddrr-write[^>]*file="([^"]+)"[^>]*>([\s\S]*?)<\/builddrr-write>/gi;
+    const builddrrTagRegex =
+      /<builddrr-write[^>]*file="([^"]+)"[^>]*>([\s\S]*?)<\/builddrr-write>/gi;
     let match;
     let lastIndex = 0;
     let cleanContent = "";
@@ -262,12 +262,16 @@ export async function* generateAIResponseStream(
       }
 
       // Normalize file path (remove leading slash for consistency)
-      const normalizedFileName = fileName.startsWith('/') ? fileName.substring(1) : fileName;
+      const normalizedFileName = fileName.startsWith("/")
+        ? fileName.substring(1)
+        : fileName;
 
       // Process the file if we haven't seen it before
       if (!collectedFiles[normalizedFileName]) {
         collectedFiles[normalizedFileName] = fileContent;
-        console.log(`📝 [generateAIResponseStream] Collected file: ${normalizedFileName}`);
+        console.log(
+          `📝 [generateAIResponseStream] Collected file: ${normalizedFileName}`
+        );
         cleanContent += `📝 Creating ${normalizedFileName}...\n`;
       }
 
@@ -278,9 +282,11 @@ export async function* generateAIResponseStream(
     if (lastIndex < buffer.length) {
       const afterLastTag = buffer.substring(lastIndex);
       // Only add if it doesn't look like the start of a builddrr tag
-      if (afterLastTag.trim() &&
+      if (
+        afterLastTag.trim() &&
         !BuilddrrTagExtractor.hasTags(afterLastTag) &&
-        !afterLastTag.includes('<builddrr-')) {
+        !afterLastTag.includes("<builddrr-")
+      ) {
         cleanContent += afterLastTag;
       }
     }
@@ -293,7 +299,8 @@ export async function* generateAIResponseStream(
         : cleanContent;
 
       if (newContent.trim()) {
-        const filteredContent = BuilddrrTagExtractor.filterContentForUser(newContent);
+        const filteredContent =
+          BuilddrrTagExtractor.filterContentForUser(newContent);
         if (filteredContent.trim() && shouldShowContent(filteredContent)) {
           console.log(
             "📝 [generateAIResponseStream] Yielding NEW content:",
@@ -309,9 +316,9 @@ export async function* generateAIResponseStream(
     // Smart buffer cleanup - remove processed content
     if (buffer.length > MAX_BUFFER_SIZE) {
       // Find the last complete builddrr tag to safely trim
-      const lastTagIndex = buffer.lastIndexOf('</builddrr-write>');
+      const lastTagIndex = buffer.lastIndexOf("</builddrr-write>");
       if (lastTagIndex > -1) {
-        const processedLength = lastTagIndex + '</builddrr-write>'.length;
+        const processedLength = lastTagIndex + "</builddrr-write>".length;
         processedContentLength += processedLength;
         buffer = buffer.substring(processedLength);
         console.log(
@@ -340,17 +347,25 @@ export async function* generateAIResponseStream(
     if (!BuilddrrTagExtractor.hasTags(buffer)) {
       const filteredContent = BuilddrrTagExtractor.filterContentForUser(buffer);
 
-      if (filteredContent && filteredContent.trim().length > 10 && shouldShowContent(filteredContent)) {
+      if (
+        filteredContent &&
+        filteredContent.trim().length > 10 &&
+        shouldShowContent(filteredContent)
+      ) {
         yield { type: "analysis", content: filteredContent.trim() };
       }
     } else {
-      console.log("🚫 [generateAIResponseStream] Skipping final content with builddrr tags");
+      console.log(
+        "🚫 [generateAIResponseStream] Skipping final content with builddrr tags"
+      );
     }
   }
 
   // After stream ends, check for any remaining complete blocks in buffer (silently collect files)
   const finalExtractedTags = BuilddrrTagExtractor.extractTags(buffer);
-  const finalWriteTags = finalExtractedTags.filter(tag => tag.type === 'write' && tag.file);
+  const finalWriteTags = finalExtractedTags.filter(
+    (tag) => tag.type === "write" && tag.file
+  );
 
   for (const tag of finalWriteTags) {
     const file = tag.file!;
@@ -365,7 +380,9 @@ export async function* generateAIResponseStream(
   }
 
   // Log completion
-  console.log(`[generateAIResponseStream] Stream completed. Collected ${Object.keys(collectedFiles).length} files.`);
+  console.log(
+    `[generateAIResponseStream] Stream completed. Collected ${Object.keys(collectedFiles).length} files.`
+  );
 
   // After streaming, deploy if files were collected
   if (Object.keys(collectedFiles).length > 0) {
@@ -418,7 +435,7 @@ export async function* generateAIResponseStream(
       // Invalidate context after deploy; next run rebuilds with fresh files
       try {
         await invalidateProjectContext(appName);
-      } catch (_) { }
+      } catch (_) {}
       if (ensure?.url) {
         yield {
           type: "progress",

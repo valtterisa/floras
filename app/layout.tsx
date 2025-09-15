@@ -3,14 +3,15 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { Suspense } from "react";
-import { PostHogProvider } from "@/components/PostHogProvider";
+import { ReactNode, Suspense } from "react";
+import { SandboxState } from "@/components/modals/sandbox-state";
+import { ChatProvider } from "@/lib/chat-context";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://builddrr.com"),
   title: "Builddrr - Make websites with AI",
-  description:
-    "Generate a professional website with AI. No coding required.",
+  description: "Generate a professional website with AI. No coding required.",
   openGraph: {
     title: "Builddrr - Make websites with AI",
     description: "Generate a professional website with AI. No coding required.",
@@ -21,7 +22,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Builddrr - Make websites with AI",
-    description: "Generate a professional one-page website with AI. No coding required.",
+    description:
+      "Generate a professional one-page website with AI. No coding required.",
     images: "/og-image.png",
   },
 };
@@ -30,16 +32,17 @@ const geist = Geist({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geist.className}`}>
-        <PostHogProvider>
-          <Suspense fallback={null}>{children}</Suspense>
-          <Toaster />
-        </PostHogProvider>
+      <body className={`${geist.className} antialiased`}>
+        <Suspense fallback={null}>
+          <NuqsAdapter>
+            <ChatProvider>{children}</ChatProvider>
+          </NuqsAdapter>
+        </Suspense>
+        <Toaster />
+        <SandboxState />
       </body>
     </html>
   );

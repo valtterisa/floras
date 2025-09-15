@@ -1,7 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-@source "../node_modules/streamdown/dist/index.js";
+@import "tailwindcss";
 
 body {
   font-family: Arial, Helvetica, sans-serif;
@@ -11,15 +8,6 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-
-  /* Mobile blocker utilities */
-  .mobile-blocker {
-    @apply fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black;
-  }
-
-  .mobile-blocker-content {
-    @apply relative max-w-lg mx-4 p-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl text-center border border-gray-200 dark:border-gray-700;
   }
 
   /* Responsive visibility utilities */
@@ -151,15 +139,6 @@ body {
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 10%;
     --sidebar-ring: 0 0% 100%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }
 
