@@ -123,7 +123,12 @@ function smartTrimContent(content: string, maxLength: number): string {
   ];
 
   for (const boundary of boundaries) {
-    const matches = [...content.matchAll(boundary)];
+    // Ensure global flag so matchAll is valid across runtimes
+    const globalBoundary = new RegExp(
+      boundary.source,
+      boundary.flags.includes("g") ? boundary.flags : boundary.flags + "g"
+    );
+    const matches = [...content.matchAll(globalBoundary)];
     for (const match of matches.reverse()) {
       // Start from the end
       const trimmedLength = match.index! + match[0].length;

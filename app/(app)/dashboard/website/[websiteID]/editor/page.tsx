@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import EditorPageClient from "@/components/editor/editor-page-client";
+import { checkRepoExists } from "@/lib/github";
+import { getProjectContext } from "@/lib/project-context";
 
 export default async function EditorPage({
   params,
@@ -13,5 +15,14 @@ export default async function EditorPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  return <EditorPageClient />; // @TODO: add user to the client component
+  const repoExists = await checkRepoExists(websiteID);
+  const projectContext = repoExists ? await getProjectContext(websiteID) : null;
+
+  return (
+    <EditorPageClient
+      appName={websiteID}
+      repoExists={repoExists}
+      projectContext={projectContext}
+    />
+  );
 }

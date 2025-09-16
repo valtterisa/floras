@@ -7,6 +7,7 @@ import { getWriteFiles } from "./generate-files/get-write-files";
 import { tool } from "ai";
 import description from "./generate-files.md";
 import z from "zod";
+import { createRepoFromTemplate, uploadFilesToRepo } from "@/lib/github";
 
 interface Params {
   writer: UIMessageStreamWriter<UIMessage<never, DataPart>>;
@@ -18,8 +19,16 @@ export const generateFiles = ({ writer }: Params) =>
     inputSchema: z.object({
       sandboxId: z.string(),
       paths: z.array(z.string()),
+      repo: z.string().describe("GitHub repo slug to upload to (in org)"),
+      ensureTemplate: z
+        .boolean()
+        .default(true)
+        .describe("Create repo from template when missing (default: true)"),
     }),
-    execute: async ({ sandboxId, paths }, { toolCallId, messages }) => {
+    execute: async (
+      { sandboxId, paths, repo, ensureTemplate = true },
+      { toolCallId, messages }
+    ) => {
       writer.write({
         id: toolCallId,
         type: "data-generating-files",
@@ -101,11 +110,24 @@ export const generateFiles = ({ writer }: Params) =>
         data: { paths: uploaded.map((file) => file.path), status: "done" },
       });
 
-      return `Successfully generated and uploaded ${
-        uploaded.length
-      } files. Their paths and contents are as follows:
-        ${uploaded
-          .map((file) => `Path: ${file.path}\nContent: ${file.content}\n`)
-          .join("\n")}`;
+      // Always upload to GitHub
+      if (uploaded.length > 0) {
+        try {
+          if (ensureTemplate) {
+            await createRepoFromTemplate(repo);
+          }
+          const filesMap = Object.fromEntries(
+            uploaded.map((f) => [f.path, f.content])
+          );
+          await uploadFilesToRepo(repo, filesMap);
+          return `Generated ${uploaded.length} files, wrote to sandbox, and uploaded to GitHub repo '${repo}'.`;
+        } catch (error) {
+          return `Generated ${uploaded.length} files and wrote to sandbox, but GitHub upload failed: ${String(
+            (error as any)?.message || error
+          )}`;
+        }
+      }
+
+      return `No files generated.`;
     },
   });

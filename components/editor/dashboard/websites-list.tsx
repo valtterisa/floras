@@ -149,14 +149,10 @@ export function WebsitesList({ websites }: WebsitesListProps) {
               </CardHeader>
               <CardContent className="mt-4 p-0">
                 <div className="flex gap-2">
-                  <Link
-                    href={`/dashboard/website/${website?.previewDetail?.app_name}/editor`}
-                  >
+                  <Link href={`/dashboard/website/${website.id}/editor`}>
                     <Button size="sm">Edit</Button>
                   </Link>
-                  <Link
-                    href={`/dashboard/website/${website?.previewDetail?.app_name}/domains`}
-                  >
+                  <Link href={`/dashboard/website/${website.id}/domains`}>
                     <Button variant="outline" size="sm">
                       Domains
                     </Button>

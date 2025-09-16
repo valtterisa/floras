@@ -1,7 +1,15 @@
 import type { ChatUIMessage } from "./types";
 import { MessagePart } from "./message-part";
 import { BotIcon, UserIcon } from "lucide-react";
-import { memo, createContext, useContext, useState, useEffect } from "react";
+import {
+  memo,
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+} from "react";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -25,17 +33,29 @@ export const Message = memo(function Message({ message }: Props) {
     number | null
   >(null);
 
-  const reasoningParts = message.parts
-    .map((part, index) => ({ part, index }))
-    .filter(({ part }) => part.type === "reasoning");
+  const latestReasoningIndex = useMemo(() => {
+    let lastIndex: number | null = null;
+    for (let i = message.parts.length - 1; i >= 0; i--) {
+      if (message.parts[i]?.type === "reasoning") {
+        lastIndex = i;
+        break;
+      }
+    }
+    return lastIndex;
+  }, [message.parts]);
+
+  const lastInitializedForMessageId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (reasoningParts.length > 0) {
-      const latestReasoningIndex =
-        reasoningParts[reasoningParts.length - 1].index;
-      setExpandedReasoningIndex(latestReasoningIndex);
+    if (lastInitializedForMessageId.current !== message.id) {
+      lastInitializedForMessageId.current = message.id;
+      if (latestReasoningIndex !== null) {
+        setExpandedReasoningIndex(latestReasoningIndex);
+      } else {
+        setExpandedReasoningIndex(null);
+      }
     }
-  }, [reasoningParts]);
+  }, [message.id, latestReasoningIndex]);
 
   return (
     <ReasoningContext.Provider

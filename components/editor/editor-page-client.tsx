@@ -1,10 +1,49 @@
+"use client";
+
+import { useCallback, useEffect } from "react";
 import { Horizontal, Vertical } from "@/components/layout/panels";
 import { TabContent, TabItem } from "@/components/tabs";
 import { Chat } from "./chat";
 import { Preview } from "./preview";
 import { EditorHeader } from "./editor-header";
+import { useSandboxStore } from "@/app/state";
 
-export default async function EditorPageClient() {
+interface Props {
+  appName?: string;
+  repoExists?: boolean;
+  projectContext?: string | null;
+}
+
+export default function EditorPageClient({
+  appName,
+  repoExists,
+  projectContext,
+}: Props) {
+  const { setUrl, setSandboxId, url } = useSandboxStore();
+
+  const startSandbox = useCallback(async () => {
+    if (!appName) return;
+    try {
+      const res = await fetch("/api/projects/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appName, port: 3000 }),
+      });
+      const data = await res.json();
+      if (!res.ok) return;
+      if (data.sandboxId) setSandboxId(data.sandboxId);
+      if (data.url) setUrl(data.url, crypto.randomUUID());
+    } catch (e) {
+      // no-op
+    }
+  }, [appName, setSandboxId, setUrl]);
+
+  useEffect(() => {
+    if (appName && !url && repoExists) {
+      startSandbox();
+    }
+  }, [appName, url, repoExists, startSandbox]);
+
   return (
     <>
       <div className="flex flex-col-reverse md:flex-col h-screen max-h-screen overflow-hidden p-2">
