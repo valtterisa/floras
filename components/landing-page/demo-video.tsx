@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 
 export function DemoVideo() {
   return (
-    <section className="relative py-12 bg-gradient-to-b from-[#faf2ff] to-white">
+    <section className="relative py-12 bg-linear-to-b from-[#faf2ff] to-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
             Want to see how we can
-            <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               {" "}
               help you?
             </span>

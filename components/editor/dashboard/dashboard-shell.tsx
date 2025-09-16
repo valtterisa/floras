@@ -52,7 +52,7 @@ export function DashboardShell({
 
   return (
     <SidebarProvider>
-      <div className="flex h-[100dvh] h-[100vh] px-2 md:p-2 md:px-0 w-full">
+      <div className="flex h-dvh h-screen px-2 md:p-2 md:px-0 w-full">
         <AppSidebar
           className="hidden md:flex"
           user={userData.profile}

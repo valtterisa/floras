@@ -36,7 +36,7 @@ Your goal: produce visually premium, accessible, mobile-friendly websites that l
 
 6. **Premium Visual Effects**
    - Glassmorphism for cards/overlays: backdrop-blur-sm bg-white/10 border border-white/20
-   - Gradient text: bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600
+   - Gradient text: bg-clip-text text-transparent bg-linear-to-r from-purple-600 to-blue-600
    - Floating elements: absolute blur-3xl opacity-20–50, max 2 per section.
 
 7. **Accessibility**
@@ -209,7 +209,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mt-6 text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600"
+          className="mt-6 text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-purple-600 to-blue-600"
         >
           Brewed to Perfection
         </motion.h1>
@@ -244,7 +244,7 @@ import { Laptop, CheckCircle2 } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative py-24 overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+    <section className="relative py-24 overflow-hidden bg-linear-to-br from-slate-900 to-slate-800 text-white">
       <div className="absolute inset-0 bg-grid-white/[0.05]" />
       <div className="container mx-auto px-4 text-center max-w-4xl relative">
         <Laptop className="mx-auto h-12 w-12 text-blue-400" />

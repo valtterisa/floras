@@ -123,23 +123,23 @@ export function SubscriptionPlans({ currentPlan, userId }: SubscriptionPlansProp
           <CardContent className="flex-1 px-8">
             <ul className="space-y-4">
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>One-page website</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>AI content generation</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>Basic templates</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-gray-300 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-gray-300 shrink-0 mt-0.5" />
                 <span className="text-muted-foreground">Custom domain</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-gray-300 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-gray-300 shrink-0 mt-0.5" />
                 <span className="text-muted-foreground">Contact forms</span>
               </li>
             </ul>
@@ -189,7 +189,7 @@ export function SubscriptionPlans({ currentPlan, userId }: SubscriptionPlansProp
             <ul className="space-y-4">
               {PLANS.PRO.features.map((feature, index) => (
                 <li key={index} className="flex items-start">
-                  <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                   <span>{feature}</span>
                 </li>
               ))}
@@ -237,23 +237,23 @@ export function SubscriptionPlans({ currentPlan, userId }: SubscriptionPlansProp
           <CardContent className="flex-1 px-8">
             <ul className="space-y-4">
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>Everything in Pro</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>Custom integrations</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>Dedicated account manager</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>Priority support</span>
               </li>
               <li className="flex items-start">
-                <Check className="h-5 w-5 mr-3 text-green-500 flex-shrink-0 mt-0.5" />
+                <Check className="h-5 w-5 mr-3 text-green-500 shrink-0 mt-0.5" />
                 <span>Advanced analytics</span>
               </li>
             </ul>

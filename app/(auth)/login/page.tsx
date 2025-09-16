@@ -125,7 +125,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white"
+                className="w-full bg-linear-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white"
               >
                 {loading ? (
                   <Loader2 className="animate-spin mr-2 h-4 w-4" />

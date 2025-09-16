@@ -112,7 +112,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         </DialogHeader>
         <div className="flex flex-col gap-4 mt-4">
           <Button
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800"
+            className="w-full bg-linear-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800"
             onClick={() => router.push("/login")}
           >
             Log In

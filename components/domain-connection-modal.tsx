@@ -283,7 +283,7 @@ export default function DomainConnectionModal({
 
             <div className="space-y-3">
               <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-l-4 border-blue-500">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
                 </div>
                 <div className="flex-1">
@@ -297,7 +297,7 @@ export default function DomainConnectionModal({
               </div>
 
               <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-l-4 border-blue-500">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
                 </div>
                 <div className="flex-1">
@@ -311,7 +311,7 @@ export default function DomainConnectionModal({
               </div>
 
               <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-l-4 border-blue-500">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
                 </div>
                 <div className="flex-1">
@@ -325,7 +325,7 @@ export default function DomainConnectionModal({
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 p-4 rounded-lg border">
+            <div className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 p-4 rounded-lg border">
               <div className="flex items-start space-x-3">
                 <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div>
@@ -480,7 +480,7 @@ export default function DomainConnectionModal({
             <Card className="border-green-200 dark:border-green-800">
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="bg-linear-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-semibold text-green-900 dark:text-green-100">

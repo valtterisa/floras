@@ -316,7 +316,7 @@ export default function BillingClient({
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mb-8"
           >
-            <Card className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700 shadow-2xl">
+            <Card className="bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700 shadow-2xl">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -495,7 +495,7 @@ export default function BillingClient({
                         key={feature + "-" + featureIndex}
                         className="flex items-start gap-3"
                       >
-                        <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <Check className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
                         <span className="text-sm text-gray-700">{feature}</span>
                       </li>
                     ))}

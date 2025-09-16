@@ -34,7 +34,7 @@ export function AIBuilderCTA() {
   ];
 
   return (
-    <section className="py-8 bg-gradient-to-b from-white to-purple-50">
+    <section className="py-8 bg-linear-to-b from-white to-purple-50">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
           <motion.div
@@ -61,7 +61,7 @@ export function AIBuilderCTA() {
                   viewport={{ once: true }}
                   className="flex items-start gap-4"
                 >
-                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
                     {feature.icon}
                   </div>
                   <div>
@@ -77,7 +77,7 @@ export function AIBuilderCTA() {
               <Button
                 onClick={() => router.push("/create")}
                 size="lg"
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+                className="bg-linear-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
               >
                 Try AI Builder Now
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -92,7 +92,7 @@ export function AIBuilderCTA() {
             className="relative"
           >
             <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20" />
+              <div className="absolute inset-0 bg-linear-to-r from-purple-600/20 to-blue-600/20" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg">
                   <Sparkles className="h-8 w-8 text-purple-600" />

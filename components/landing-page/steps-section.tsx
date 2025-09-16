@@ -5,7 +5,7 @@ import { Sparkles, PenTool, Rocket } from "lucide-react";
 
 export function StepsSection() {
   return (
-    <section className="py-8 bg-gradient-to-b from-purple-50 to-white">
+    <section className="py-8 bg-linear-to-b from-purple-50 to-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -46,7 +46,7 @@ export function StepsSection() {
                   whileInView={{ width: "100%" }}
                   transition={{ duration: 1, delay: 0.5 }}
                   viewport={{ once: true }}
-                  className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
+                  className="h-full bg-linear-to-r from-purple-600 to-blue-600"
                 />
               </div>
             </div>
@@ -77,7 +77,7 @@ export function StepsSection() {
                   whileInView={{ width: "100%" }}
                   transition={{ duration: 1, delay: 0.7 }}
                   viewport={{ once: true }}
-                  className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
+                  className="h-full bg-linear-to-r from-purple-600 to-blue-600"
                 />
               </div>
             </div>
@@ -105,7 +105,7 @@ export function StepsSection() {
                   whileInView={{ width: "100%" }}
                   transition={{ duration: 1, delay: 0.9 }}
                   viewport={{ once: true }}
-                  className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
+                  className="h-full bg-linear-to-r from-purple-600 to-blue-600"
                 />
               </div>
             </div>

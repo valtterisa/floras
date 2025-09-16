@@ -122,7 +122,7 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-purple-50">
+    <div className="min-h-screen bg-linear-to-b from-white to-purple-50">
       <div className="container py-12 md:px-4">
         <Button
           variant="ghost"
@@ -139,7 +139,7 @@ export default function TemplatesPage() {
           transition={{ duration: 0.5 }}
           className="mb-12 text-center"
         >
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 bg-linear-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             Choose Your Perfect Template
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -172,7 +172,7 @@ export default function TemplatesPage() {
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <Button
                         variant="secondary"
@@ -227,7 +227,7 @@ export default function TemplatesPage() {
           <Button
             onClick={handleContinue}
             disabled={!selectedTemplate}
-            className="px-8 py-6 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            className="px-8 py-6 text-lg bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
           >
             Continue to Editor
           </Button>

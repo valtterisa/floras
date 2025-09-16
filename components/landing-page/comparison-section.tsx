@@ -28,11 +28,11 @@ export function ComparisonTable() {
                         <div key={index} className={`grid grid-cols-3 border-t border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
                             <div className="p-4 md:p-6 font-semibold text-sm md:text-base text-black" style={{ fontFamily: 'Geist, sans-serif' }}>{row.feature}</div>
                             <div className="p-4 md:p-6 text-center border-l border-gray-200 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3">
-                                <Check className="w-4 h-4 md:w-5 md:h-5 text-black flex-shrink-0" />
+                                <Check className="w-4 h-4 md:w-5 md:h-5 text-black shrink-0" />
                                 <span className="font-medium text-sm md:text-base text-black" style={{ fontFamily: 'Geist, sans-serif' }}>{row.builddrr}</span>
                             </div>
                             <div className="p-4 md:p-6 text-center border-l border-gray-200 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3">
-                                <X className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
+                                <X className="w-4 h-4 md:w-5 md:h-5 text-gray-400 shrink-0" />
                                 <span className="text-sm md:text-base text-gray-600" style={{ fontFamily: 'Geist, sans-serif' }}>{row.others}</span>
                             </div>
                         </div>

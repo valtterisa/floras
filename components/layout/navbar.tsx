@@ -49,7 +49,7 @@ export default function Navbar({ user }: any) {
         ${scrolled ? "bg-white/90 backdrop-blur-sm shadow-md border-b border-gray-300" : "bg-transparent"}
       `}
     >
-      <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="max-w-(--breakpoint-xl) mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-1">
           <Logo className="h-4 w-4 md:h-8 md:w-8" />

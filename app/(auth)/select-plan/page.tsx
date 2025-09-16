@@ -299,7 +299,7 @@ export default function SelectPlanPage() {
                       key={feature + "-" + featureIndex}
                       className="flex items-start gap-3"
                     >
-                      <Check className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
+                      <Check className="h-5 w-5 text-black shrink-0 mt-0.5" />
                       <span className="text-gray-700">{feature}</span>
                     </li>
                   ))}

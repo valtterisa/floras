@@ -84,7 +84,7 @@ export default function TemplatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-purple-50">
+    <div className="min-h-screen bg-linear-to-b from-white to-purple-50">
       <div className="container py-12 md:px-4">
         <Button
           variant="ghost"
@@ -137,7 +137,7 @@ export default function TemplatePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold mb-4 bg-linear-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 {selectedTemplate.name}
               </h1>
               <div className="flex items-center mb-6">
@@ -216,7 +216,7 @@ export default function TemplatePage() {
 
               <Button
                 onClick={handleSelectTemplate}
-                className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                className="w-full py-6 text-lg bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
               >
                 Use This Template
               </Button>

@@ -4,7 +4,7 @@ import Footer from "@/components/layout/footer";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col bg-gradient-to-br from-gray-900 via-purple-900 to-violet-600 overflow-x-hidden">
+    <div className="flex flex-col bg-linear-to-br from-gray-900 via-purple-900 to-violet-600 overflow-x-hidden">
       <Navbar />
       <main className="flex-1 flex flex-col items-center justify-center text-white pb-6 pt-12 md:pb-12 md:pt-24 h-full">
         <h1 className="text-7xl font-extrabold mb-4 animate-bounce">404</h1>

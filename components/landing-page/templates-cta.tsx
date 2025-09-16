@@ -40,7 +40,7 @@ export function TemplatesCTA() {
   const router = useRouter();
 
   return (
-    <section className="py-8 bg-gradient-to-b from-purple-50 to-white">
+    <section className="py-8 bg-linear-to-b from-purple-50 to-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -67,7 +67,7 @@ export function TemplatesCTA() {
               viewport={{ once: true }}
               className="group relative overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
             >
-              <div className="aspect-[4/3] relative overflow-hidden">
+              <div className="aspect-4/3 relative overflow-hidden">
                 <Image
                   src={template.image}
                   alt={template.name}
@@ -111,7 +111,7 @@ export function TemplatesCTA() {
         >
           <Button
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 px-8 py-6 text-lg"
+            className="bg-linear-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 px-8 py-6 text-lg"
             onClick={() => router.push("/templates")}
           >
             Browse All Templates

@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export function RoadmapSection() {
     return (
-        <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <section className="py-16 bg-linear-to-b from-gray-50 to-white">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -132,7 +132,7 @@ export function RoadmapSection() {
                 </div>
 
                 {/* CTA Section */}
-                <div className="text-center bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8">
+                <div className="text-center bg-linear-to-r from-blue-50 to-purple-50 rounded-2xl p-8">
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">
                         Ready to Shape the Future?
                     </h3>

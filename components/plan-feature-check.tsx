@@ -11,9 +11,9 @@ export function PlanFeatureCheck({ feature, included, className }: PlanFeatureCh
   return (
     <div className={cn("flex items-center", className)}>
       {included ? (
-        <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+        <Check className="h-4 w-4 text-green-500 mr-2 shrink-0" />
       ) : (
-        <X className="h-4 w-4 text-gray-300 mr-2 flex-shrink-0" />
+        <X className="h-4 w-4 text-gray-300 mr-2 shrink-0" />
       )}
       <span className={included ? "" : "text-muted-foreground"}>{feature}</span>
     </div>

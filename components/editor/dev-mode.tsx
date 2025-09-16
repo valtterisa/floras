@@ -97,10 +97,10 @@ export default function DevMode() {
   ];
 
   const TAILWIND_BG_GRADIENTS = [
-    "bg-gradient-to-r",
-    "bg-gradient-to-l",
-    "bg-gradient-to-t",
-    "bg-gradient-to-b",
+    "bg-linear-to-r",
+    "bg-linear-to-l",
+    "bg-linear-to-t",
+    "bg-linear-to-b",
   ];
 
   const TAILWIND_BORDER_WIDTHS = [

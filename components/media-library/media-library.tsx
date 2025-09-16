@@ -233,7 +233,7 @@ export function MediaLibrary({ onSelectImage }: MediaLibraryProps) {
                         alt={image.name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
                         <div className="text-white text-sm font-medium truncate w-full">
                           {image.name}
                         </div>
@@ -272,7 +272,7 @@ export function MediaLibrary({ onSelectImage }: MediaLibraryProps) {
                     onClick={() => handleImageClick(image)}
                   >
                     <div className="col-span-5 flex items-center gap-3">
-                      <div className="h-10 w-10 rounded overflow-hidden flex-shrink-0">
+                      <div className="h-10 w-10 rounded overflow-hidden shrink-0">
                         <img
                           src={image.url || "/placeholder.svg"}
                           alt={image.name}
@@ -326,7 +326,7 @@ export function MediaLibrary({ onSelectImage }: MediaLibraryProps) {
               <p className="text-muted-foreground mb-6 text-sm">
                 Drag and drop your images or click to browse your files
               </p>
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+              <Button className="bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
                 Select Files
               </Button>
               <p className="text-xs text-muted-foreground mt-4">
@@ -355,7 +355,7 @@ export function MediaLibrary({ onSelectImage }: MediaLibraryProps) {
                       className="px-4 py-3 text-sm grid grid-cols-12 gap-4 items-center"
                     >
                       <div className="col-span-5 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded overflow-hidden flex-shrink-0">
+                        <div className="h-10 w-10 rounded overflow-hidden shrink-0">
                           <img
                             src={uploadPreviews[index] || "/placeholder.svg"}
                             alt={file.name}
@@ -369,7 +369,7 @@ export function MediaLibrary({ onSelectImage }: MediaLibraryProps) {
                       <div className="col-span-3">
                         <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-full transition-all duration-300"
+                            className="bg-linear-to-r from-purple-500 to-pink-500 h-full transition-all duration-300"
                             style={{ width: `${uploadProgress[index]}%` }}
                           ></div>
                         </div>
@@ -470,7 +470,7 @@ export function MediaLibrary({ onSelectImage }: MediaLibraryProps) {
                   </Button>
                   <Button
                     onClick={handleSelectImage}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    className="bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
                     Use in Editor
                   </Button>

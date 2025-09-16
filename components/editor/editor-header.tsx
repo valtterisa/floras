@@ -249,7 +249,7 @@ function EditorHeader({ id }: { id: string }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-80 p-0">
-              <div className="p-4 border-b bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50">
+              <div className="p-4 border-b bg-linear-to-r from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-xs font-medium text-green-700 dark:text-green-300 uppercase tracking-wide">
@@ -273,7 +273,7 @@ function EditorHeader({ id }: { id: string }) {
                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                   >
                     <div className="flex items-center min-w-0 flex-1">
-                      <div className="flex items-center justify-center h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-md mr-3 flex-shrink-0">
+                      <div className="flex items-center justify-center h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-md mr-3 shrink-0">
                         <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -286,7 +286,7 @@ function EditorHeader({ id }: { id: string }) {
                       </div>
                     </div>
                     <svg
-                      className="h-4 w-4 ml-2 flex-shrink-0 text-muted-foreground"
+                      className="h-4 w-4 ml-2 shrink-0 text-muted-foreground"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -308,7 +308,7 @@ function EditorHeader({ id }: { id: string }) {
                     setShowDomainModal(true);
                   }}
                 >
-                  <div className="flex items-center justify-center h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-md mr-3 flex-shrink-0">
+                  <div className="flex items-center justify-center h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-md mr-3 shrink-0">
                     <LinkIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -332,7 +332,7 @@ function EditorHeader({ id }: { id: string }) {
                     });
                   }}
                 >
-                  <div className="flex items-center justify-center h-8 w-8 bg-gray-100 dark:bg-gray-900/30 rounded-md mr-3 flex-shrink-0">
+                  <div className="flex items-center justify-center h-8 w-8 bg-gray-100 dark:bg-gray-900/30 rounded-md mr-3 shrink-0">
                     <svg
                       className="h-4 w-4 text-gray-600 dark:text-gray-400"
                       fill="none"
@@ -411,7 +411,7 @@ function EditorHeader({ id }: { id: string }) {
                   onClick={() => handlePublish(false)}
                   className="p-3 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center justify-center h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-md mr-3 flex-shrink-0">
+                  <div className="flex items-center justify-center h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-md mr-3 shrink-0">
                     <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -434,7 +434,7 @@ function EditorHeader({ id }: { id: string }) {
                   }}
                   className="p-3 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center justify-center h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-md mr-3 flex-shrink-0">
+                  <div className="flex items-center justify-center h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-md mr-3 shrink-0">
                     <LinkIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div className="min-w-0 flex-1">

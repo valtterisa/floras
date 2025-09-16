@@ -243,7 +243,7 @@ export default function PromptTool({ user }: { user: any }) {
         </p>
         <div className="w-full max-w-xl bg-white rounded-xl shadow border border-gray-200 p-4 flex flex-col gap-2">
           <textarea
-            className="w-full bg-transparent text-gray-900 text-sm md:text-base resize-none outline-none border-none min-h-[5rem] placeholder:text-gray-400"
+            className="w-full bg-transparent text-gray-900 text-sm md:text-base resize-none outline-none border-none min-h-20 placeholder:text-gray-400"
             placeholder={displayedPlaceholder}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}

@@ -102,7 +102,7 @@ export default function ResetPasswordPage() {
 
   if (!sessionChecked) {
     return (
-      <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-gradient-to-b from-purple-50 to-white">
+      <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-linear-to-b from-purple-50 to-white">
         <div className="flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
         </div>
@@ -111,7 +111,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-gradient-to-b from-purple-50 to-white">
+    <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-linear-to-b from-purple-50 to-white">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function ResetPasswordPage() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white"
+                className="w-full bg-linear-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white"
                 disabled={loading}
               >
                 {loading ? (

@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-gradient-to-b from-purple-50 to-white">
+    <div className="container flex items-center justify-center min-h-screen py-10 md:px-4 bg-linear-to-b from-purple-50 to-white">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white"
+                className="w-full bg-linear-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white"
                 disabled={loading}
               >
                 {loading ? (

@@ -36,7 +36,7 @@ export function FeaturesShowcase() {
                     <div className="space-y-6">
                         {features.map((feature, index) => (
                             <div key={index} className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                                         <feature.icon className="w-5 h-5 text-black" />
                                     </div>
