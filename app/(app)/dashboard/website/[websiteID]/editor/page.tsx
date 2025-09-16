@@ -13,5 +13,5 @@ export default async function EditorPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  return <EditorPageClient id={websiteID} user={user} />;
+  return <EditorPageClient />; // @TODO: add user to the client component
 }

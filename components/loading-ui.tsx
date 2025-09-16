@@ -24,13 +24,9 @@ export default function LoadingUI({
           <div className="absolute inset-0 animate-[pulse_1.2s_ease-in-out_infinite]" />
         </div>
         <div className="text-center">
-          <p className="text-sm text-black dark:text-white font-medium">
-            {message}
-          </p>
+          <p className="text-sm text-black font-medium">{message}</p>
           {submessage ? (
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              {submessage}
-            </p>
+            <p className="text-xs text-neutral-500  mt-1">{submessage}</p>
           ) : null}
         </div>
       </div>
