@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Sandbox } from "@vercel/sandbox";
 import { createAppAuth } from "@octokit/auth-app";
+import { createClient } from "@/lib/supabase/server";
 import {
   checkRepoExists,
   listRepoDirectory,
@@ -23,10 +24,8 @@ export async function POST(req: Request) {
     const exists = await checkRepoExists(appName);
     console.log("[projects/start] repoExists", { appName, exists });
     if (!exists) {
-      return NextResponse.json(
-        { error: "Repository not found" },
-        { status: 404 }
-      );
+      // Soft exit so the user can proceed with creation flow
+      return NextResponse.json({ repoExists: false });
     }
 
     // Use GitHub cloning when repo exists
@@ -56,6 +55,59 @@ export async function POST(req: Request) {
     console.log("[projects/start] sandbox created", {
       sandboxId: sandbox.sandboxId,
     });
+
+    // Install deps and start dev server
+    try {
+      console.log("[projects/start] running npm install");
+      const install = await sandbox.runCommand({
+        cmd: "npm",
+        args: ["install", "--silent"],
+      });
+      if (install.exitCode !== 0) {
+        console.warn("[projects/start] npm install failed", {
+          exitCode: install.exitCode,
+        });
+      }
+    } catch (e) {
+      console.warn("[projects/start] npm install error", e);
+    }
+
+    try {
+      console.log("[projects/start] starting dev server");
+      await sandbox.runCommand({
+        cmd: "npm",
+        args: ["run", "dev"],
+        detached: true,
+      });
+    } catch (e) {
+      console.warn("[projects/start] npm run dev error", e);
+    }
+
+    // Persist sandbox id to preview_environments
+    try {
+      const supabase = await createClient();
+      const { data: existing, error: selectError } = await supabase
+        .from("preview_environments")
+        .select("app_name, sandbox_id")
+        .eq("app_name", appName)
+        .maybeSingle();
+      if (selectError)
+        console.warn("[projects/start] select preview env failed", selectError);
+      if (existing) {
+        await supabase
+          .from("preview_environments")
+          .update({ sandbox_id: sandbox.sandboxId })
+          .eq("app_name", appName)
+          .select("app_name, sandbox_id");
+      } else {
+        await supabase
+          .from("preview_environments")
+          .insert({ app_name: appName, sandbox_id: sandbox.sandboxId })
+          .select("app_name, sandbox_id");
+      }
+    } catch (dbErr) {
+      console.error("[projects/start] failed to save sandbox_id", dbErr);
+    }
 
     const url = (
       await Sandbox.get({
