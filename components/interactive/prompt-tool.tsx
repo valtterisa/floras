@@ -91,8 +91,7 @@ export default function PromptTool({ user }: { user: any }) {
       return;
     }
 
-    // Store the prompt for the editor/chat
-    sessionStorage.setItem("builddrr_generation_prompt", prompt);
+    // No longer store prompt for the editor; generation will be triggered for the new site directly
 
     try {
       // Generate unique app_name (slug) and friendly name
@@ -126,6 +125,14 @@ export default function PromptTool({ user }: { user: any }) {
         }
         return;
       }
+
+      // Store the prompt under a namespaced key so the /editor page can auto-start generation
+      try {
+        sessionStorage.setItem(
+          `builddrr_generation_prompt:${app_name}`,
+          prompt
+        );
+      } catch (_) {}
 
       console.log("redirecting to editor:", app_name);
       // Manually dispatch a route start event

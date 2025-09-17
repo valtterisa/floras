@@ -7,6 +7,7 @@ import { Chat } from "./chat";
 import { Preview } from "./preview";
 import { EditorHeader } from "./editor-header";
 import { useSandboxStore } from "@/app/state";
+import { useSharedChatContext } from "@/lib/chat-context";
 
 interface Props {
   appName?: string;
@@ -20,6 +21,7 @@ export default function EditorPageClient({
   projectContext,
 }: Props) {
   const { setUrl, setSandboxId, url } = useSandboxStore();
+  const { chat } = useSharedChatContext();
 
   const startSandbox = useCallback(async () => {
     if (!appName) return;
@@ -44,6 +46,29 @@ export default function EditorPageClient({
     }
   }, [appName, url, repoExists, startSandbox]);
 
+  // Auto-start generation only if a namespaced prompt exists for this app
+  useEffect(() => {
+    if (!appName) return;
+    const kickoff = () => {
+      try {
+        const namespacedKey = `builddrr_generation_prompt:${appName}`;
+        const legacyKey = "builddrr_generation_prompt";
+        const pending =
+          sessionStorage.getItem(namespacedKey) ||
+          sessionStorage.getItem(legacyKey);
+        if (pending && pending.trim()) {
+          sessionStorage.removeItem(namespacedKey);
+          sessionStorage.removeItem(legacyKey);
+          const initial = `Project: ${appName}\n\n${pending}`;
+          chat.send({ role: "user", parts: [{ type: "text", text: initial }] });
+        }
+      } catch (_) {}
+    };
+    // Defer to ensure chat is mounted
+    const id = setTimeout(kickoff, 0);
+    return () => clearTimeout(id);
+  }, [appName, chat]);
+
   return (
     <>
       <div className="flex flex-col-reverse md:flex-col h-screen max-h-screen overflow-hidden p-2">
@@ -55,7 +80,7 @@ export default function EditorPageClient({
         {/* Mobile layout tabs taking the whole space*/}
         <div className="flex flex-1 w-full overflow-hidden pt-2 md:hidden">
           <TabContent tabId="chat" className="flex-1">
-            <Chat className="flex-1 overflow-hidden" />
+            <Chat className="flex-1 overflow-hidden" appName={appName} />
           </TabContent>
           <TabContent tabId="preview" className="flex-1">
             <Preview className="flex-1 overflow-hidden" />
@@ -68,7 +93,12 @@ export default function EditorPageClient({
         <div className="hidden flex-1 w-full min-h-0 overflow-hidden pt-2 md:flex">
           <Horizontal
             defaultLayout={[30, 70]}
-            left={<Chat className="flex-1 overflow-hidden w-full" />}
+            left={
+              <Chat
+                className="flex-1 overflow-hidden w-full"
+                appName={appName}
+              />
+            }
             right={
               <Vertical
                 defaultLayout={[100, 0, 0]}

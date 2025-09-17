@@ -6,12 +6,13 @@ import { getSandboxURL } from "./get-sandbox-url";
 import { runCommand } from "./run-command";
 interface Params {
   writer: UIMessageStreamWriter<UIMessage<never, DataPart>>;
+  appName?: string;
 }
 
-export function tools({ writer }: Params) {
+export function tools({ writer, appName }: Params) {
   return {
     createSandbox: createSandbox({ writer }),
-    generateFiles: generateFiles({ writer }),
+    generateFiles: generateFiles({ writer, appName }),
     getSandboxURL: getSandboxURL({ writer }),
     runCommand: runCommand({ writer }),
   };

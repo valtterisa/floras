@@ -41,7 +41,17 @@ export function EditorHeader() {
   const pathname = usePathname();
 
   const params = useParams();
-  const id = params.id as string;
+  // Derive appName from pathname (preferred), fallback to route params
+  const getRepoNameFromUrl = () => {
+    const pathParts = pathname.split("/");
+    const websiteIndex = pathParts.findIndex((part) => part === "website");
+    if (websiteIndex !== -1 && websiteIndex + 1 < pathParts.length) {
+      return pathParts[websiteIndex + 1];
+    }
+    const pid = (params as any)?.websiteID || (params as any)?.id || "";
+    return typeof pid === "string" ? pid : "";
+  };
+  const appName = getRepoNameFromUrl();
 
   const { toast } = useToast();
 
@@ -54,23 +64,24 @@ export function EditorHeader() {
           data: { user },
         } = await supabase.auth.getUser();
 
-        console.log("user", user);
-        console.log("id", id);
-        if (user) {
+        console.log("[EditorHeader] user", user);
+        console.log("[EditorHeader] appName", appName);
+        if (user && appName) {
           const { data, error } = await supabase
             .from("websites")
             .select("primary_url, status")
-            .eq("app_name", id)
+            .eq("app_name", appName)
             .eq("user_id", user.id)
             .single();
 
-          console.log("data", data);
-          console.log("error", error);
+          console.log("[EditorHeader] websites data", data);
+          console.log("[EditorHeader] websites error", error);
 
           if (!error && data?.primary_url) {
-            console.log("data", data);
             setDeployUrl(data.primary_url);
           }
+        } else {
+          console.log("[EditorHeader] Skipping fetch: missing user or appName");
         }
       } catch (error) {
         console.error("Failed to fetch deployment status:", error);
@@ -80,18 +91,9 @@ export function EditorHeader() {
     };
 
     fetchDeploymentStatus();
-  }, [id]);
+  }, [appName]);
 
-  // Extract repo name from URL path
-  const getRepoNameFromUrl = () => {
-    // URL pattern: /dashboard/website/{repoName}/editor
-    const pathParts = pathname.split("/");
-    const websiteIndex = pathParts.findIndex((part) => part === "website");
-    if (websiteIndex !== -1 && websiteIndex + 1 < pathParts.length) {
-      return pathParts[websiteIndex + 1];
-    }
-    return id; // fallback to id prop
-  };
+  // getRepoNameFromUrl defined above
 
   // Commented out publish logic
 
@@ -108,7 +110,7 @@ export function EditorHeader() {
     });
 
     try {
-      const result = await createSiteForUser(id);
+      const result = await createSiteForUser(appName);
 
       if (!result.ok) {
         toast({
@@ -147,7 +149,7 @@ export function EditorHeader() {
 
     setIsDownloading(true);
     try {
-      const repoName = getRepoNameFromUrl();
+      const repoName = appName || getRepoNameFromUrl();
       const response = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -542,7 +544,7 @@ export function EditorHeader() {
       <DomainConnectionModal
         isOpen={showDomainModal}
         onClose={() => setShowDomainModal(false)}
-        websiteId={id}
+        websiteId={appName}
       />
     </div>
   );

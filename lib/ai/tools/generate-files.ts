@@ -11,15 +11,18 @@ import { createRepoFromTemplate, uploadFilesToRepo } from "@/lib/github";
 
 interface Params {
   writer: UIMessageStreamWriter<UIMessage<never, DataPart>>;
+  appName?: string;
 }
 
-export const generateFiles = ({ writer }: Params) =>
+export const generateFiles = ({ writer, appName }: Params) =>
   tool({
     description,
     inputSchema: z.object({
       sandboxId: z.string(),
       paths: z.array(z.string()),
-      repo: z.string().describe("GitHub repo slug to upload to (in org)"),
+      repo: z
+        .string()
+        .describe("GitHub repo slug to upload to (in org) - must be appName"),
       ensureTemplate: z
         .boolean()
         .default(true)
@@ -113,9 +116,11 @@ export const generateFiles = ({ writer }: Params) =>
       // Always upload to GitHub
       if (uploaded.length > 0) {
         try {
-          if (ensureTemplate) {
-            await createRepoFromTemplate(repo);
+          // Enforce repo === appName when provided
+          if (appName && repo !== appName) {
+            return `Refusing to upload: repo slug '${repo}' must equal appName '${appName}'.`;
           }
+          // Never create a differently named repo; assume 'repo' is the appName slug
           const filesMap = Object.fromEntries(
             uploaded.map((f) => [f.path, f.content])
           );

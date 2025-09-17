@@ -12,7 +12,23 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { checkRemainingChatUsage, trackAICall } from "@/lib/ai-usage-tracker";
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages, appName } = await req.json();
+  try {
+    console.log("[/api/chat] start", {
+      appName,
+      messagesCount: Array.isArray(messages) ? messages.length : undefined,
+      hasFirstMessage:
+        Array.isArray(messages) && messages[0]
+          ? { role: messages[0].role, partCount: messages[0].parts?.length }
+          : undefined,
+    });
+  } catch (_) {}
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return new Response(JSON.stringify({ error: "No messages provided" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   // Enforce usage limits before invoking the model
   const { hasRemainingUsage } = await checkRemainingChatUsage();
@@ -54,11 +70,10 @@ export async function POST(req: Request) {
               return message;
             })
           ),
-          stopWhen: stepCountIs(10),
-          tools: tools({ writer }),
+          stopWhen: stepCountIs(5),
+          tools: tools({ writer, appName }),
           onError: (error) => {
-            console.error("Error communicating with AI");
-            console.error(JSON.stringify(error, null, 2));
+            console.error("[/api/chat] AI error", error);
           },
         });
         result.consumeStream();

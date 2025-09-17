@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { useSandboxStore } from '@/app/state'
-import { useEffect } from 'react'
-import useSWR from 'swr'
+} from "@/components/ui/dialog";
+import { useSandboxStore } from "@/app/state";
+import { useEffect } from "react";
+import useSWR from "swr";
 
 export function SandboxState() {
-  const { sandboxId, status, setStatus } = useSandboxStore()
-  if (status === 'stopped') {
+  const { sandboxId, status, setStatus } = useSandboxStore();
+  if (status === "stopped") {
     return (
       <Dialog open>
         <DialogHeader className="sr-only">
@@ -33,35 +33,35 @@ export function SandboxState() {
           </Button>
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return sandboxId ? (
     <DirtyChecker sandboxId={sandboxId} setStatus={setStatus} />
-  ) : null
+  ) : null;
 }
 
 interface DirtyCheckerProps {
-  sandboxId: string
-  setStatus: (status: 'running' | 'stopped') => void
+  sandboxId: string;
+  setStatus: (status: "running" | "stopped") => void;
 }
 
 function DirtyChecker({ sandboxId, setStatus }: DirtyCheckerProps) {
-  const content = useSWR<'ok' | 'stopped'>(
+  const content = useSWR<"ok" | "stopped">(
     `/api/sandboxes/${sandboxId}`,
     async (pathname: string, init: RequestInit) => {
-      const response = await fetch(pathname, init)
-      const { status } = await response.json()
-      return status
+      const response = await fetch(pathname, init);
+      const { status } = await response.json();
+      return status;
     },
-    { refreshInterval: 1000 }
-  )
+    { refreshInterval: 3000 }
+  );
 
   useEffect(() => {
-    if (content.data === 'stopped') {
-      setStatus('stopped')
+    if (content.data === "stopped") {
+      setStatus("stopped");
     }
-  }, [setStatus, content.data])
+  }, [setStatus, content.data]);
 
-  return null
+  return null;
 }

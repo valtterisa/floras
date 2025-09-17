@@ -130,11 +130,26 @@ export async function sendChatMessage(
 
   try {
     const chatKey = `chat:${userId}:${appName}`;
+    // Normalize message to plain text only
+    const normalize = (val: unknown): string => {
+      if (typeof val === "string") {
+        if (val.trim() === "[object Object]") return "";
+        return val;
+      }
+      if (val && typeof val === "object") {
+        const v: any = val as any;
+        const candidate =
+          v.text ?? v.message ?? v.content ?? v.data?.text ?? "";
+        return typeof candidate === "string" ? candidate : "";
+      }
+      return val != null ? String(val) : "";
+    };
+    const textMessage = normalize(message);
     const timestamp = new Date().toISOString();
 
     const messageObj: ChatMessage = {
       id: Date.now().toString(),
-      content: message,
+      content: textMessage,
       isUser,
       timestamp,
     };
