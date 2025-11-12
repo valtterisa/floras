@@ -4,6 +4,14 @@ import { NextResponse, type NextRequest } from "next/server";
 // Always use supabase.auth.getUser() to protect pages and user data.
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  if (pathname !== "/" && !pathname.startsWith("/api") && !pathname.startsWith("/_next")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
