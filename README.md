@@ -1,37 +1,168 @@
-## Architecture
+## Builddrr
 
-```
-User Action → Supabase (Service Limits) → Polar.sh (Billing - PAID ONLY)
-     ↓              ↓                        ↓
-  Check if      Track usage &         Track usage for
-  allowed       enforce limits        billing purposes
-                (ALL plans)          (pro/enterprise only)
-```
+> **Builddrr** is an AI-powered landing page builder that turns plain-English product ideas into **production-ready, high‑converting marketing sites**. It combines a rich visual editor, smart sections, and one‑click deploys so you can go from idea to live site in minutes instead of days.
 
-## Quick Start
+---
 
-### 1. Environment Variables
+### Contents
+
+- [Builddrr](#builddrr)
+  - [Why Builddrr](#why-builddrr)
+  - [Feature overview](#feature-overview)
+  - [Tech stack](#tech-stack)
+  - [Quickstart](#quickstart)
+  - [Architecture](#architecture)
+  - [Key folders](#key-folders)
+  - [Contributing](#contributing)
+
+---
+
+### Why Builddrr
+
+Builddrr is designed for founders, marketers, and product teams who want **fast iteration** without sacrificing code quality.
+
+- **AI-first workflow**: Describe your product and audience; Builddrr generates page structure, copy, and sections tailored to your use case.
+- **Visual editor**: Drag, reorder, and tweak sections with instant preview instead of wrestling with code or templates.
+- **Built for iteration**: Quickly adjust headlines, CTAs, and layouts to test new angles without touching your codebase.
+- **Production-grade output**: Clean Next.js pages with sensible structure, SEO-friendly markup, and responsive design.
+- **Integrated analytics & usage tracking**: Understand how your AI usage and features are being consumed across plans.
+
+> **Use case examples**
+>
+> - Launch a new SaaS landing page in an afternoon.
+> - Spin up variations of your pricing page for A/B testing.
+> - Hand developers production-ready code instead of screenshots.
+
+---
+
+### Feature overview
+
+#### Core product features
+
+- **Dashboard**
+  - Manage projects, see recent edits, and jump back into any landing page.
+  - Surface AI usage and project activity at a glance.
+
+- **Section library**
+  - Hero, features, pricing, FAQs, testimonials, and more – all generated and then fully editable.
+  - Opinionated defaults so pages look good out of the box.
+
+- **AI editing**
+  - Regenerate or refine individual sections and copy with contextual AI prompts.
+  - Keep human control while letting AI handle first drafts and variations.
+
+- **Deploy-ready output**
+  - Built on Next.js and TypeScript, ready to deploy to platforms like Vercel.
+  - SEO-friendly structure and responsive layouts baked in.
+
+- **Team & billing aware**
+  - Hooks into Supabase/Polar for plans, limits, and usage when configured.
+  - Enables usage-based features and paywalls if you wire them up.
+
+#### Developer-centric benefits
+
+| Area                | What you get                                                                    |
+| ------------------- | ------------------------------------------------------------------------------- |
+| **DX**              | Type-safe APIs, modular components, clear separation between editor and AI     |
+| **Performance**     | Next.js App Router, streaming AI responses, modern React patterns              |
+| **Extensibility**   | Pluggable AI backends and prompts in `lib/ai`, flexible section/component model |
+| **Maintainability** | Strong typing, cohesive folder structure, and focused domain boundaries        |
+
+---
+
+### Tech stack
+
+- **Frontend**
+  - Next.js App Router
+  - React + TypeScript
+  - Tailwind CSS + custom UI components
+
+- **Backend & data**
+  - Supabase (auth, database)
+  - Redis-based rate limiting and usage tracking
+
+- **Payments & billing**
+  - Polar.sh + Stripe integration for subscriptions and usage-based features
+
+- **AI**
+  - Pluggable AI layer (see `lib/ai/*`) for chat, generation, and editing flows
+
+---
+
+### Quickstart
+
+#### 1. Install dependencies
 
 ```bash
-# Polar API Configuration (only needed for paid plans)
-POLAR_API_KEY=your_polar_api_key_here
-NEXT_PUBLIC_POLAR_API_URL=https://api.polar.sh
+pnpm install
+```
 
+#### 2. Configure environment
+
+Create a `.env.local` file in the project root and configure at least your Supabase and auth-related variables. You can also enable billing/usage tracking:
+
+```bash
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Polar / billing (optional, for paid plans & usage-based features)
+POLAR_API_KEY=your_polar_api_key_here
+NEXT_PUBLIC_POLAR_API_URL=https://api.polar.sh
 ```
 
-### 2. Track Usage
+If you are wiring this into a full billing setup, also make sure your Stripe/Polar settings match what’s in `lib/stripe.ts` and `lib/polar.ts`.
 
-```typescript
-import { trackUsageAuto } from "@/lib/polar-usage-tracker";
+#### 3. Run the dev server
 
-// Automatically tracks in both systems (Polar only for paid plans)
-const result = await trackUsageAuto("chat", estimatedTokens, websiteId);
-
-if (result.success) {
-  console.log("Supabase tracked:", result.supabaseTracked);
-  console.log("Polar tracked:", result.polarTracked); // false for free plan users
-}
+```bash
+pnpm dev
 ```
+
+Then open `http://localhost:3000` and start creating landing pages.
+
+> **Tip**
+>
+> You can explore the main in-app experience at the dashboard route under `app/(app)/dashboard` once you have auth and Supabase wired up.
+
+---
+
+### Architecture
+
+At a high level, Builddrr coordinates:
+
+```text
+User action → AI layer (content & structure) → Editor + Preview UI → Deploy / Export
+         ↓             ↓                           ↓
+   Auth & teams   Usage tracking            Billing & limits
+    (Supabase)   (Supabase + Redis)     (Polar.sh / Stripe integration)
+```
+
+From a code perspective, the flow looks like this:
+
+1. **User initiates an action** (e.g. create page, refine section) from the dashboard/editor.
+2. **API routes in `app/api/*`** orchestrate AI calls, apply business rules, and update Supabase.
+3. **Editor state** is managed in the client (see `lib/editor-store.ts` and `components/editor/*`).
+4. **Usage and billing hooks** (Supabase, Polar, Stripe) track consumption and enforce plan limits when configured.
+
+---
+
+### Key folders
+
+- `app/(app)/dashboard/*` – main app flows and dashboard UI.
+- `components/editor/*` – page editor, sections, and preview components.
+- `components/landing-page/*` – marketing site sections and templates.
+- `lib/ai/*` – AI prompts, orchestration, and streaming logic.
+- `app/api/*` – backend endpoints for chat, generation, deploys, and usage.
+
+---
+
+### Contributing
+
+This project is still evolving. Good first areas to explore or improve include:
+
+- New section templates and layout variations.
+- Better analytics and insights inside the dashboard.
+- Additional AI editing tools and workflows.
+
+If you do open a PR, aim to keep changes focused and well-scoped (e.g. “new editor section type” or “improved AI prompt for hero sections”) so the review surface is small and the intent is clear.
