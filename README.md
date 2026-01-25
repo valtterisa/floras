@@ -1,5 +1,6 @@
 ## Landing page
-<img width="2880" height="10114" alt="image" src="https://github.com/user-attachments/assets/45ab34e7-7adb-46d3-b749-e2c2660eb556" />
+
+REMOVED DUE BAD ASPECT RATIO
 
 ## Dashboard
 <img width="1440" height="786" alt="Näyttökuva 2026-01-15 kello 12 38 17" src="https://github.com/user-attachments/assets/f6bb71d9-9efd-4b24-8c8b-6c38c083db04" />
