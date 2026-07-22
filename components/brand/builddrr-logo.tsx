@@ -24,7 +24,7 @@ export function BuilddrrLogo({
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center gap-[0.4em] text-[15px] font-semibold leading-none tracking-tight text-foreground",
+        "inline-flex items-center gap-[0.4em] text-[18px] font-semibold leading-none tracking-tight text-foreground",
         className
       )}
     >

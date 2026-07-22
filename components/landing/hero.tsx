@@ -20,22 +20,10 @@ export function Hero() {
                 preserveAspectRatio="none"
                 className="pointer-events-none absolute inset-x-0 bottom-[-0.06em] h-[0.28em] w-full"
               >
-                <defs>
-                  <linearGradient
-                    id="sentence-underline"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="0%"
-                  >
-                    <stop offset="0%" stopColor="#3245ff" />
-                    <stop offset="100%" stopColor="#b845ed" />
-                  </linearGradient>
-                </defs>
                 <path
                   d="M2 8.5 C40 3.5, 80 10.5, 120 6.5 S180 3, 198 7.5"
                   fill="none"
-                  stroke="url(#sentence-underline)"
+                  stroke="var(--brand)"
                   strokeWidth="3.2"
                   strokeLinecap="round"
                 />

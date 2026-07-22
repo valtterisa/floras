@@ -37,8 +37,8 @@ export function ThemeToggle() {
           className={cn(
             "inline-flex h-full cursor-pointer items-center gap-1.5 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors",
             active === "light"
-              ? "bg-[#0d0f14] text-white"
-              : "bg-white text-[#0d0f14]/55 hover:text-[#0d0f14]"
+              ? "bg-brand text-brand-foreground"
+              : "bg-card text-muted-foreground hover:bg-brand-soft hover:text-brand"
           )}
         >
           <Sun className="size-3.5 shrink-0" aria-hidden />
@@ -52,8 +52,8 @@ export function ThemeToggle() {
           className={cn(
             "inline-flex h-full cursor-pointer items-center gap-1.5 border-l border-border px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors",
             active === "dark"
-              ? "bg-[#0d0f14] text-white"
-              : "bg-white text-[#0d0f14]/55 hover:text-[#0d0f14]"
+              ? "bg-brand text-brand-foreground"
+              : "bg-card text-muted-foreground hover:bg-brand-soft hover:text-brand"
           )}
         >
           <Moon className="size-3.5 shrink-0" aria-hidden />

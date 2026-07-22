@@ -43,7 +43,7 @@ export function HeroProductPreview() {
                 <span className="text-[10px] text-neutral-500">Shop / Journal / Visit</span>
               </div>
               <div className="grid flex-1 gap-0 md:grid-cols-2">
-                <div className="flex flex-col justify-center gap-3 bg-[#f4f1ec] p-6 md:p-8">
+                <div className="flex flex-col justify-center gap-3 bg-muted p-6 md:p-8">
                   <p className="max-w-[14ch] text-2xl font-semibold leading-[1.05] tracking-tight text-neutral-900 md:text-3xl">
                     Small-batch coffee from the Pacific edge.
                   </p>

@@ -30,7 +30,7 @@ export function LogoWall() {
                   alt={item.name}
                   width={88}
                   height={22}
-                  className="h-5 w-auto opacity-80"
+                  className="h-5 w-auto opacity-80 dark:invert dark:opacity-70"
                 />
               </Reveal>
             </li>

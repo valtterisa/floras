@@ -199,7 +199,7 @@ export function PricingTableClient() {
               className={cn(
                 "flex flex-col border-border p-8",
                 i === 0 ? "border-b sm:border-b-0 sm:border-r" : "",
-                plan.highlight ? "bg-brand/[0.04]" : "bg-card/40"
+                plan.highlight ? "bg-brand-soft" : "bg-card/40"
               )}
             >
               <div className="flex items-baseline justify-between gap-4">
@@ -240,7 +240,7 @@ export function PricingTableClient() {
                 className={cn(
                   "mt-8 inline-flex h-11 cursor-pointer items-center justify-center px-5 font-mono text-[11px] uppercase tracking-[0.14em] transition-[filter] active:scale-[0.98]",
                   plan.highlight
-                    ? "bg-brand text-white hover:brightness-110"
+                    ? "bg-brand text-brand-foreground hover:brightness-110"
                     : "border border-border bg-card text-foreground hover:bg-background",
                   "disabled:cursor-not-allowed disabled:opacity-40"
                 )}

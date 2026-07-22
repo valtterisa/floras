@@ -32,11 +32,21 @@ export function Features() {
 
       <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
         <Reveal className="border-b border-border lg:border-b-0 lg:border-r">
-          <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+          <div className="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden bg-brand-soft">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-60"
+              style={{
+                backgroundImage:
+                  "radial-gradient(ellipse 70% 60% at 50% 45%, color-mix(in srgb, var(--brand) 28%, transparent), transparent 70%)",
+              }}
+            />
             <img
-              src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1400&h=900&q=80"
-              alt="Field of orange poppies against a blue sky"
-              className="h-full w-full object-cover"
+              src="/brand/logo-mark.png"
+              alt=""
+              aria-hidden
+              draggable={false}
+              className="relative z-[1] h-[58%] w-auto max-w-[70%] object-contain drop-shadow-sm"
             />
           </div>
           <div className="border-t border-border px-6 py-7 md:px-8">
