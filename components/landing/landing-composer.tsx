@@ -19,19 +19,19 @@ import {
 import { cn } from "@/lib/utils";
 
 const SUGGESTIONS = [
-  "Landing page for a solar-panel installer",
-  "Minimal portfolio for a product designer",
-  "Launch site with a blog for an indie coffee roaster",
-  "Waitlist page for a developer tool",
+  "Website for a solar-panel installer",
+  "Simple portfolio for a photographer",
+  "Launch site with a blog for a coffee roaster",
+  "Booking page for a yoga studio",
 ];
 
 const ROLLING = [
-  "a solar-panel installer landing page",
-  "a minimal portfolio for a product designer",
+  "a solar-panel installer website",
+  "a simple portfolio for a photographer",
   "a coffee roaster launch site with a blog",
-  "a waitlist page for a developer tool",
-  "a boutique hotel booking site",
-  "a SaaS docs homepage",
+  "a booking page for a yoga studio",
+  "a boutique hotel site",
+  "a homepage for a local bakery",
 ];
 
 const TEXTAREA_MIN_PX = 72;
@@ -80,7 +80,7 @@ export function LandingComposer() {
 
   const startGeneration = async (value: string, selectedModel: AgentModelId) => {
     if (!assertCanGenerate()) {
-      toast.error("AI credits too low. Upgrade or top up to continue.");
+      toast.error("Not enough credit left. Upgrade or top up to continue.");
       return;
     }
     setPending(true);

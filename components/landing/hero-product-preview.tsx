@@ -27,7 +27,7 @@ export function HeroProductPreview() {
               </div>
               <div className="rounded-xl border border-border/50 px-3 py-2.5">
                 <p className="text-[11px] leading-relaxed text-foreground/80">
-                  Scaffolded site, Tailwind, and a live preview on Box.
+                  Your site is ready — open the live preview anytime.
                 </p>
               </div>
               <div className="h-8 rounded-full border border-border/60 bg-muted/20" />

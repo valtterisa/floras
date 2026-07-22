@@ -24,7 +24,7 @@ export function CallToAction() {
         <div className="border-b border-brand-foreground/20 px-6 py-12 md:border-b-0 md:border-r md:px-8 md:py-16">
           <Reveal>
             <h2 className="max-w-[16ch] text-3xl font-semibold tracking-tight md:text-4xl">
-              Your next site is one sentence away.
+              Your next website is one sentence away.
             </h2>
           </Reveal>
         </div>
@@ -34,7 +34,7 @@ export function CallToAction() {
               href="/sign-up"
               className="inline-flex h-11 items-center justify-center border border-brand-foreground/30 bg-paper px-7 text-sm font-medium text-ink shadow-[0_0_0_1px_color-mix(in_srgb,var(--brand)_12%,transparent)] transition-[filter] hover:brightness-95 active:scale-[0.98]"
             >
-              Start building
+              Create your site
             </Link>
           </Reveal>
         </div>

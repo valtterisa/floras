@@ -1,14 +1,14 @@
 export const siteConfig = {
   name: "Floras",
-  tagline: "Astro sites from one sentence",
+  tagline: "A website from one sentence",
   description:
-    "Describe your idea. Floras generates a production-ready Astro site with a live preview in seconds — refine in chat and ship with confidence.",
+    "Describe your business in plain English. Floras builds a real website you can preview, tweak in chat, and share — no coding or design skills needed.",
   keywords: [
-    "Astro",
     "AI website builder",
-    "generate Astro site",
-    "AI web design",
-    "site generator",
+    "create a website",
+    "website from a description",
+    "no-code website",
+    "small business website",
     "Floras",
   ],
   ogImage: "/og-image.png",

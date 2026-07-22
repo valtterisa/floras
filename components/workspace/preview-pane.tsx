@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Queued",
-  provisioning: "Booting sandbox",
+  provisioning: "Getting ready",
   generating: "Building",
   ready: "Live",
   error: "Error",
@@ -39,7 +39,7 @@ export function PreviewPane({
           <p className="text-sm font-medium">{label}</p>
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">
             {busy
-              ? "Your live preview will appear here as soon as the sandbox is ready."
+              ? "Your live preview will appear here in a moment."
               : "The preview is not available yet."}
           </p>
         </div>

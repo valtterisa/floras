@@ -69,8 +69,8 @@ export function ChatPanel({
           <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
             <span>
               {balance < 0.05
-                ? "AI credits depleted."
-                : `${formatCredits(balance)} AI credits left.`}
+                ? "Out of credit."
+                : `${formatCredits(balance)} credit left.`}
             </span>
             <Button
               type="button"

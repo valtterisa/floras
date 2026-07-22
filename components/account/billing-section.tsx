@@ -90,7 +90,7 @@ export function BillingSection() {
   return (
     <AccountSection
       title="Billing"
-      description="Plan, usage, and payment settings for site generations."
+      description="Plan, usage, and payment settings for creating sites."
     >
       {!isAuthenticated ? (
         <p className="text-sm text-muted-foreground">

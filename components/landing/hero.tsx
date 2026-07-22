@@ -17,6 +17,9 @@ export function Hero() {
             </span>
             .
           </h1>
+          <p className="mx-auto mt-5 max-w-[36ch] text-center text-base leading-relaxed text-muted-foreground">
+            No code. No designer. Just describe what you need.
+          </p>
         </Reveal>
 
         <Reveal delay={0.06} className="w-full">

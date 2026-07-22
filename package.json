@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "Floras - AI Astro site generator with live Box sandbox preview",
+  "description": "Floras — turn one sentence into a real website, no coding required",
   "repository": {
     "type": "git",
     "url": "https://github.com/valtterisa/builddrr-app.git"

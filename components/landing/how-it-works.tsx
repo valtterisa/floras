@@ -3,15 +3,15 @@ import { Reveal } from "@/components/site/reveal";
 const STEPS = [
   {
     title: "Describe",
-    body: "Write one sentence about the site. Floras reads the brief and picks a design direction.",
+    body: "Write one sentence about your business, offer, or idea. Floras picks a look that fits.",
   },
   {
-    title: "Generate",
-    body: "A typed plan becomes a full site project in a fresh Box sandbox with a live dev server.",
+    title: "See it live",
+    body: "In moments you get a real website you can open, click through, and share.",
   },
   {
     title: "Refine",
-    body: "Chat to change copy, sections, and color. The preview updates as it builds.",
+    body: "Ask for new copy, sections, or colors in chat. The preview updates as you go.",
   },
 ];
 

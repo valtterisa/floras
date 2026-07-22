@@ -177,8 +177,8 @@ export function AuthForm({
           {magicSentTo
             ? `We sent a sign-in link to ${magicSentTo}. Open it to continue.`
             : prompt
-              ? "Sign in to start building your site."
-              : "Generate sites with a live preview."}
+              ? "Sign in to start creating your site."
+              : "Create websites with a live preview — no coding needed."}
         </p>
       </div>
 

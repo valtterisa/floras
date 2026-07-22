@@ -7,7 +7,7 @@ export function SiteFooter() {
         <div>
           <Logo />
           <p className="mt-5 max-w-[34ch] text-sm leading-relaxed text-muted-foreground">
-            Describe a site. Get a live preview in a real sandbox.
+            Describe your business. Get a website you can open and share.
           </p>
         </div>
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
