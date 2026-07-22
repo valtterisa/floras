@@ -78,14 +78,14 @@ export function PricingTableClient() {
           <Button
             onClick={() => onSelect(plan.id)}
             className={cn(
-              "mt-8",
+              "mt-8 active:scale-[0.98]",
               plan.highlight
                 ? "bg-brand text-brand-foreground hover:bg-brand/90"
                 : ""
             )}
             variant={plan.highlight ? "default" : "outline"}
           >
-            {plan.id === "free" ? "Start free" : "Upgrade to Pro"}
+            {plan.id === "free" ? "Start building" : "Upgrade to Pro"}
           </Button>
         </div>
       ))}

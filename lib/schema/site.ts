@@ -62,8 +62,8 @@ export const sitePlanSchema = z.object({
   theme: z.enum(["light", "dark"]).default("light"),
   fontFamily: z
     .string()
-    .describe("Google font family name, e.g. Geist or Inter")
-    .default("Inter"),
+    .describe("Google font family name. Prefer Geist, Outfit, Satoshi, Plus Jakarta Sans. Avoid Inter.")
+    .default("Geist"),
   nav: z.array(navItemSchema).default([]),
   pages: z.array(pageSchema).min(1),
   blog: z

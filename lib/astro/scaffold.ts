@@ -53,7 +53,7 @@ function tsconfig(): string {
 
 function globalCss(plan: SitePlan): string {
   const dark = plan.theme === "dark";
-  const font = plan.fontFamily || "Inter";
+  const font = plan.fontFamily || "Geist";
   return `@import "tailwindcss";
 
 :root {
@@ -64,8 +64,8 @@ function globalCss(plan: SitePlan): string {
 html {
   font-family: var(--font-sans);
   scroll-behavior: smooth;
-  background-color: ${dark ? "#0a0a0a" : "#ffffff"};
-  color: ${dark ? "#fafafa" : "#0a0a0a"};
+  background-color: ${dark ? "#0a0a0a" : "#fafafa"};
+  color: ${dark ? "#fafafa" : "#171717"};
 }
 
 * { border-color: ${dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)"}; }
@@ -91,7 +91,7 @@ export type Site = typeof site;
 }
 
 function fontLink(plan: SitePlan): string {
-  const family = (plan.fontFamily || "Inter").replace(/\s+/g, "+");
+  const family = (plan.fontFamily || "Geist").replace(/\s+/g, "+");
   return `<link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=${family}:wght@400;500;600;700;800&display=swap" rel="stylesheet" />`;
@@ -99,14 +99,14 @@ function fontLink(plan: SitePlan): string {
 
 function baseLayout(plan: SitePlan): string {
   const dark = plan.theme === "dark";
-  const surface = dark ? "bg-neutral-950 text-neutral-50" : "bg-white text-neutral-900";
-  const navBg = dark ? "bg-neutral-950/70" : "bg-white/70";
+  const surface = dark ? "bg-neutral-950 text-neutral-50" : "bg-neutral-50 text-neutral-900";
+  const navBg = dark ? "bg-neutral-950/70" : "bg-neutral-50/70";
   return `---
 import { site } from "../site";
 import "../styles/global.css";
 interface Props { title?: string; description?: string; }
 const { title, description } = Astro.props;
-const pageTitle = title ? title + " — " + site.siteName : site.siteName;
+const pageTitle = title ? title + " - " + site.siteName : site.siteName;
 ---
 <!doctype html>
 <html lang="en">
@@ -161,7 +161,7 @@ const { section } = Astro.props as { section: SectionData };
 const seed = encodeURIComponent(section.imagePrompt ?? section.heading ?? "site");
 ---
 {section.type === "hero" && (
-  <section class="mx-auto max-w-7xl px-6 pt-20 pb-16 grid lg:grid-cols-2 gap-12 items-center min-h-[80dvh]">
+  <section class="mx-auto max-w-7xl px-6 pt-20 pb-16 grid lg:grid-cols-2 gap-12 items-center min-h-[100dvh]">
     <div class="reveal">
       {section.eyebrow && <p class="text-sm font-semibold uppercase tracking-widest accent-text mb-4">{section.eyebrow}</p>}
       <h1 class="text-4xl md:text-6xl font-bold tracking-tight leading-[1.05]">{section.heading}</h1>

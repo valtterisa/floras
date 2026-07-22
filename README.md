@@ -1,183 +1,207 @@
-## Landing page
+# Nebula
 
-REMOVED DUE BAD ASPECT RATIO
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![Convex](https://img.shields.io/badge/Backend-Convex-orange)](https://convex.dev/)
 
-## Dashboard
-<img width="1440" height="786" alt="Näyttökuva 2026-01-15 kello 12 38 17" src="https://github.com/user-attachments/assets/f6bb71d9-9efd-4b24-8c8b-6c38c083db04" />
+**Nebula** turns a plain-English prompt into a production-ready [Astro](https://astro.build/) site with a live preview.
 
-## Editor
+It is a Next.js 15 (App Router) frontend backed by [Convex](https://www.convex.dev/), generating sites inside [box.ascii.dev](https://box.ascii.dev) sandboxes via an [AI SDK](https://ai-sdk.dev/) agent, with [Autumn](https://useautumn.com/) billing.
 
-<img width="1440" height="786" alt="Näyttökuva 2026-01-15 kello 12 59 42" src="https://github.com/user-attachments/assets/8db64823-a874-479c-ae27-61a41b08ebd1" />
+## Screenshots
 
+### Dashboard
 
-## Builddrr
+<img width="1440" height="786" alt="Dashboard" src="https://github.com/user-attachments/assets/f6bb71d9-9efd-4b24-8c8b-6c38c083db04" />
 
-> **Status: Archived** – This repository is no longer under active development. The code and documentation are kept for reference and inspiration, but features, dependencies, and infrastructure may be out of date.
+### Editor
 
-> **Builddrr** is an AI-powered landing page builder that turns plain-English product ideas into **production-ready, high‑converting marketing sites**. It combines a rich visual editor, smart sections, and one‑click deploys so you can go from idea to live site in minutes instead of days.
+<img width="1440" height="786" alt="Editor" src="https://github.com/user-attachments/assets/8db64823-a874-479c-ae27-61a41b08ebd1" />
 
----
+## Features
 
-### Contents
+- **Prompt → Astro site** — Describe the site; an agent plans and scaffolds a full Astro project
+- **Live sandbox preview** — Each project runs `astro dev` in a Box VM on a public URL
+- **Structured output** — Zod `SitePlan` drives a deterministic scaffolder (no brittle parsing of model text)
+- **Reactive chat UI** — Tool activity and summaries stream into Convex; the UI updates live
+- **Auth + billing** — Convex Auth (password) and Autumn usage gating
 
-- [Builddrr](#builddrr)
-  - [Why Builddrr](#why-builddrr)
-  - [Feature overview](#feature-overview)
-  - [Tech stack](#tech-stack)
-  - [Quickstart](#quickstart)
-  - [Architecture](#architecture)
-  - [Key folders](#key-folders)
-  - [Contributing](#contributing)
+## Table of contents
 
----
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Quickstart](#quickstart)
+- [Environment variables](#environment-variables)
+- [Development notes](#development-notes)
+- [Project structure](#project-structure)
+- [Scripts](#scripts)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
 
-### Why Builddrr
+## Tech stack
 
-Builddrr is designed for founders, marketers, and product teams who want **fast iteration** without sacrificing code quality.
+| Layer | Stack |
+| --- | --- |
+| Frontend | Next.js 15 App Router, Tailwind v4, AI SDK Elements |
+| Backend / DB | Convex + Convex Auth (password) |
+| Agent | AI SDK 7 `ToolLoopAgent` in a Convex Node action |
+| Output | Zod `SitePlan` → deterministic Astro scaffold |
+| Preview | box.ascii.dev VMs running `astro dev` |
+| Billing | Autumn (`@useautumn/convex` + `autumn-js`) |
 
-- **AI-first workflow**: Describe your product and audience; Builddrr generates page structure, copy, and sections tailored to your use case.
-- **Visual editor**: Drag, reorder, and tweak sections with instant preview instead of wrestling with code or templates.
-- **Built for iteration**: Quickly adjust headlines, CTAs, and layouts to test new angles without touching your codebase.
-- **Production-grade output**: Clean Next.js pages with sensible structure, SEO-friendly markup, and responsive design.
-- **Integrated analytics & usage tracking**: Understand how your AI usage and features are being consumed across plans.
+## Architecture
 
-> **Use case examples**
->
-> - Launch a new SaaS landing page in an afternoon.
-> - Spin up variations of your pricing page for A/B testing.
-> - Hand developers production-ready code instead of screenshots.
+```text
+Prompt → Convex generate action → AI agent (plan + tools)
+                ↓                        ↓
+         SitePlan (zod)          Box sandbox (astro dev)
+                ↓                        ↓
+      scaffold Astro project      public preview URL
+                ↓                        ↓
+         Convex tables  ←── reactive UI (chat + iframe)
+```
 
----
+- **Frontend:** Chat UI via `components/ai-elements/*`. Pages compose `MarketingLayout` / `AppLayout` with feature modules in `landing/`, `dashboard/`, `workspace/`, and shared shells in `site/`.
+- **Backend:** Convex (`convex/`). Reactive queries drive chat + preview.
+- **Agent:** `lib/ai/agent.ts` runs inside `convex/generate.ts`. Tool activity and summaries stream into Convex tables.
+- **Output schema:** `lib/schema/site.ts` → `lib/astro/scaffold.ts` emits a full Astro project.
+- **Sandbox:** `lib/box/client.ts` wraps `@asciidev/box-sdk`. Preview URLs use `*.on.ascii.dev`.
+- **Billing:** Backend gating in `convex/autumn.ts` (fail-open) + plans in `autumn.config.ts`. Frontend via `autumn-js/react` and `app/api/autumn/[...all]/route.ts`.
 
-### Feature overview
+Agent-oriented notes for Cursor / coding agents live in [`AGENTS.md`](AGENTS.md).
 
-#### Core product features
+## Prerequisites
 
-- **Dashboard**
-  - Manage projects, see recent edits, and jump back into any landing page.
-  - Surface AI usage and project activity at a glance.
+- Node.js 20+
+- [pnpm](https://pnpm.io/) 10+
+- A [Convex](https://www.convex.dev/) account (cloud deployment recommended for generation)
+- API keys for Anthropic, Box, and Autumn (see [`.env.example`](.env.example))
 
-- **Section library**
-  - Hero, features, pricing, FAQs, testimonials, and more – all generated and then fully editable.
-  - Opinionated defaults so pages look good out of the box.
+## Quickstart
 
-- **AI editing**
-  - Regenerate or refine individual sections and copy with contextual AI prompts.
-  - Keep human control while letting AI handle first drafts and variations.
-
-- **Deploy-ready output**
-  - Built on Next.js and TypeScript, ready to deploy to platforms like Vercel.
-  - SEO-friendly structure and responsive layouts baked in.
-
-- **Team & billing aware**
-  - Hooks into Supabase/Polar for plans, limits, and usage when configured.
-  - Enables usage-based features and paywalls if you wire them up.
-
-#### Developer-centric benefits
-
-| Area                | What you get                                                                    |
-| ------------------- | ------------------------------------------------------------------------------- |
-| **DX**              | Type-safe APIs, modular components, clear separation between editor and AI     |
-| **Performance**     | Next.js App Router, streaming AI responses, modern React patterns              |
-| **Extensibility**   | Pluggable AI backends and prompts in `lib/ai`, flexible section/component model |
-| **Maintainability** | Strong typing, cohesive folder structure, and focused domain boundaries        |
-
----
-
-### Tech stack
-
-- **Frontend**
-  - Next.js App Router
-  - React + TypeScript
-  - Tailwind CSS + custom UI components
-
-- **Backend & data**
-  - Supabase (auth, database)
-  - Redis-based rate limiting and usage tracking
-
-- **Payments & billing**
-  - Polar.sh + Stripe integration for subscriptions and usage-based features
-
-- **AI**
-  - Pluggable AI layer (see `lib/ai/*`) for chat, generation, and editing flows
-
----
-
-### Quickstart
-
-#### 1. Install dependencies
+### 1. Clone and install
 
 ```bash
+git clone https://github.com/valtterisa/builddrr-app.git
+cd builddrr-app
 pnpm install
 ```
 
-#### 2. Configure environment
-
-Create a `.env.local` file in the project root and configure at least your Supabase and auth-related variables. You can also enable billing/usage tracking:
+### 2. Environment
 
 ```bash
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Polar / billing (optional, for paid plans & usage-based features)
-POLAR_API_KEY=your_polar_api_key_here
-NEXT_PUBLIC_POLAR_API_URL=https://api.polar.sh
+cp .env.example .env.local
 ```
 
-If you are wiring this into a full billing setup, also make sure your Stripe/Polar settings match what’s in `lib/stripe.ts` and `lib/polar.ts`.
+Start Convex (writes `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` into `.env.local`):
 
-#### 3. Run the dev server
+```bash
+pnpm dev:convex
+```
+
+In another terminal, set Convex secrets:
+
+```bash
+npx convex env set ANTHROPIC_API_KEY <key>
+npx convex env set BOX_API_KEY <key>
+npx convex env set AUTUMN_SECRET_KEY <key>
+```
+
+Also put `AUTUMN_SECRET_KEY` in `.env.local` for the Next.js Autumn API route.
+
+Provision Convex Auth once:
+
+```bash
+npx @convex-dev/auth
+```
+
+Push Autumn plans (optional for local billing UI):
+
+```bash
+npx atmn push
+```
+
+### 3. Run
+
+Keep Convex running, then:
 
 ```bash
 pnpm dev
 ```
 
-Then open `http://localhost:3000` and start creating landing pages.
+Open [http://localhost:3000](http://localhost:3000).
 
-> **Tip**
->
-> You can explore the main in-app experience at the dashboard route under `app/(app)/dashboard` once you have auth and Supabase wired up.
+Without a running Convex deployment, client queries stay in a loading state.
 
----
+## Environment variables
 
-### Architecture
+Full reference: [`.env.example`](.env.example).
 
-At a high level, Builddrr coordinates:
+**Next.js (`.env.local`)**
 
-```text
-User action → AI layer (content & structure) → Editor + Preview UI → Deploy / Export
-         ↓             ↓                           ↓
-   Auth & teams   Usage tracking            Billing & limits
-    (Supabase)   (Supabase + Redis)     (Polar.sh / Stripe integration)
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_CONVEX_URL` | Convex client URL (from `convex dev`) |
+| `CONVEX_DEPLOYMENT` | Deployment name (from `convex dev`) |
+| `AUTUMN_SECRET_KEY` | Autumn handler on the Next.js side |
+
+**Convex deployment** (`npx convex env set …`)
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | yes | Anthropic API |
+| `BOX_API_KEY` | yes | box.ascii.dev sandboxes |
+| `AUTUMN_SECRET_KEY` | yes | Billing / usage gating |
+| `AGENT_MODEL` | no | Defaults to `claude-sonnet-4-5` |
+| `BOX_BASE_URL` | no | Defaults to `https://ascii.dev/api/box/v1` |
+| `JWT_PRIVATE_KEY` / `JWKS` / `SITE_URL` | yes | Via `npx @convex-dev/auth` |
+
+## Development notes
+
+- **`convex/_generated`** is committed as an untyped `AnyApi` fallback so the repo builds without a deployment. Running `convex dev` against a real deployment regenerates fully typed APIs.
+- **Heavy Node action:** `convex/generate.ts` bundles the AI SDK + Box SDK. The anonymous local backend (`CONVEX_AGENT_MODE=anonymous`) can hit the 64MB module-load limit. Prefer a real Convex cloud deployment for end-to-end generation.
+- **Preview hosts:** Sandbox Astro servers load over `*.on.ascii.dev`; the scaffolder sets Vite `server.allowedHosts: true`.
+- **Typecheck:** `next build` ignores type/lint errors (`next.config.mjs`). Use `pnpm typecheck` for real checking.
+
+## Project structure
+
+| Path | Role |
+| --- | --- |
+| `app/` | Next.js App Router (marketing, auth, workspace, Autumn API) |
+| `components/ai-elements/` | Chat UI primitives |
+| `components/site/` | Layouts, PageHeader, Section, EmptyState, Container, nav/footer |
+| `components/landing/` | Landing sections |
+| `components/dashboard/` | Dashboard prompt + project grid/cards |
+| `components/workspace/` | Workspace header, chat, preview |
+| `components/auth/` | Sign-in form + auth modal |
+| `components/dashboard/` | Dashboard prompt + project grid |
+| `convex/` | Schema, auth, generate action, Autumn, projects/messages |
+| `lib/ai/` | Agent + design guidelines |
+| `lib/schema/` | Zod `SitePlan` |
+| `lib/astro/` | Deterministic Astro scaffolder |
+| `lib/box/` | box.ascii.dev client |
+| `autumn.config.ts` | Autumn plans |
+
+## Scripts
+
+```bash
+pnpm dev          # Next.js (Turbopack) on :3000
+pnpm dev:convex   # Convex backend
+pnpm build        # Production build
+pnpm typecheck    # tsc --noEmit
+pnpm lint         # next lint
 ```
 
-From a code perspective, the flow looks like this:
+## Contributing
 
-1. **User initiates an action** (e.g. create page, refine section) from the dashboard/editor.
-2. **API routes in `app/api/*`** orchestrate AI calls, apply business rules, and update Supabase.
-3. **Editor state** is managed in the client (see `lib/editor-store.ts` and `components/editor/*`).
-4. **Usage and billing hooks** (Supabase, Polar, Stripe) track consumption and enforce plan limits when configured.
+Contributions are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, branch workflow, and PR expectations. Please also read the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
----
+## Security
 
-### Key folders
+Do not open public issues for vulnerabilities. See [`SECURITY.md`](SECURITY.md).
 
-- `app/(app)/dashboard/*` – main app flows and dashboard UI.
-- `components/editor/*` – page editor, sections, and preview components.
-- `components/landing-page/*` – marketing site sections and templates.
-- `lib/ai/*` – AI prompts, orchestration, and streaming logic.
-- `app/api/*` – backend endpoints for chat, generation, deploys, and usage.
+## License
 
----
-
-### Contributing
-
-This project is **archived** and not under active development. Pull requests and new feature ideas are generally **not accepted**.
-
-You are welcome to:
-
-- Fork the repository and adapt it for your own projects.
-- Use the architecture, editor patterns, and AI flows as inspiration.
-
-If you do open an issue or PR, please understand that maintainers may not respond or review changes in a timely manner, if at all.
+MIT — see [`LICENSE`](LICENSE).

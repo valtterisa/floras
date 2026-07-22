@@ -11,7 +11,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: "Nebula — Astro sites, generated",
+  title: "Nebula - Astro sites, generated",
   description:
     "Describe your idea. Nebula generates a production-ready Astro site with a live preview in seconds.",
 };

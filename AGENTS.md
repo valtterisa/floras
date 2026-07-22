@@ -8,10 +8,12 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
 
 - **Frontend:** Next.js App Router + Tailwind v4 (dark, locked theme). Chat UI is
   built with AI SDK Elements (`components/ai-elements/*`). Marketing/app UI is
-  composition-first (`components/site/*`, `components/landing/*`, `components/workspace/*`).
+  composition-first: pages use `MarketingLayout` / `AppLayout`, shared shells in
+  `components/site/*` (`PageHeader`, `Section`, `EmptyState`, `Container`), and
+  feature modules in `landing/`, `dashboard/`, `workspace/`, `auth/`.
 - **Backend/DB:** Convex (`convex/`). Auth via Convex Auth (password provider).
   Reactive queries drive the chat + preview.
-- **Agent:** AI SDK v5 `Experimental_Agent` (`lib/ai/agent.ts`) runs inside the
+- **Agent:** AI SDK 7 `ToolLoopAgent` (`lib/ai/agent.ts`) runs inside the
   Convex Node action `convex/generate.ts`. Tool activity + summaries stream back
   into Convex tables, so the UI updates reactively.
 - **Output schema:** `lib/schema/site.ts` (zod `SitePlan`) → `lib/astro/scaffold.ts`
@@ -39,9 +41,9 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   can hit its 64MB module-load limit while pushing this action. Use a real Convex
   cloud deployment (`npx convex dev` logged in) for end-to-end generation.
 - **Secrets live in the Convex deployment, not `.env.local`.** Set them with
-  `npx convex env set KEY value`: `AI_GATEWAY_API_KEY` (AI SDK Gateway),
+  `npx convex env set KEY value`: `ANTHROPIC_API_KEY` (Anthropic),
   `BOX_API_KEY` (box.ascii.dev), `AUTUMN_SECRET_KEY` (Autumn). Optional:
-  `AGENT_MODEL` (defaults to `anthropic/claude-sonnet-4.5`), `BOX_BASE_URL`.
+  `AGENT_MODEL` (defaults to `claude-sonnet-4-5`), `BOX_BASE_URL`.
 - **Convex Auth keys:** run `npx @convex-dev/auth` once to provision `JWT_PRIVATE_KEY`,
   `JWKS`, and `SITE_URL` in the Convex deployment env.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).

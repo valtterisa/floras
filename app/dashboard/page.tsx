@@ -1,13 +1,10 @@
-import { SiteNav } from "@/components/site/site-nav";
+import { AppLayout } from "@/components/site/app-layout";
 import { Dashboard } from "@/components/dashboard/dashboard";
 
 export default function DashboardPage() {
   return (
-    <>
-      <SiteNav />
-      <main>
-        <Dashboard />
-      </main>
-    </>
+    <AppLayout>
+      <Dashboard />
+    </AppLayout>
   );
 }

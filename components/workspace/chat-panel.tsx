@@ -33,7 +33,7 @@ export function ChatPanel({
         <PromptComposer
           onSubmit={handle}
           pending={busy}
-          placeholder="Ask for changes — copy, sections, colors, a blog…"
+          placeholder="Ask for changes: copy, sections, colors, a blog…"
         />
       </div>
     </div>

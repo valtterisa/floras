@@ -1,5 +1,5 @@
-import { Experimental_Agent as Agent, stepCountIs, tool } from "ai";
-import { gateway } from "@ai-sdk/gateway";
+import { ToolLoopAgent, isStepCount, tool } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { sitePlanSchema, type SitePlan } from "@/lib/schema/site";
 import { scaffoldAstroProject } from "@/lib/astro/scaffold";
@@ -29,18 +29,18 @@ export interface BuildAgentOptions {
 }
 
 function getModel() {
-  return gateway(process.env.AGENT_MODEL ?? "anthropic/claude-sonnet-4.5");
+  return anthropic(process.env.AGENT_MODEL ?? "claude-sonnet-4-5");
 }
 
-const SYSTEM = `You are an expert Astro web engineer inside a Linux sandbox. You generate and edit beautiful, production-ready Astro sites (landing pages and blogs) that live in the "site/" project directory.
+const INSTRUCTIONS = `You are an expert Astro web engineer inside a Linux sandbox. You generate and edit beautiful, production-ready Astro sites (landing pages and blogs) that live in the "site/" project directory.
 
 WORKFLOW
-1. Call plan_site once with a complete, well-structured site plan. This scaffolds a full working Astro project and boots a live preview automatically.
-2. Refine specific files with write_file / read_file for anything the scaffold does not fully capture (custom components, copy, styling).
+1. Infer a one-line design read from the user brief (see DESIGN GUIDELINES). Call plan_site once with a complete SitePlan that matches that read (font, theme, accent, varied section types, real imagePrompt seeds).
+2. Refine specific files with write_file / read_file for layout polish, copy, and styling the scaffold did not fully capture.
 3. Keep changes minimal and targeted. The dev server hot-reloads, so you never restart it manually.
-4. When the site satisfies the request, stop and give a one-paragraph summary of what you built.
+4. When the site satisfies the request and passes the design pre-flight, stop with a one-paragraph summary.
 
-Never dump large explanations between tool calls. Prefer editing files over describing them.
+Never dump large explanations between tool calls. Prefer editing files over describing them. Deliver complete file contents (no placeholders or "// ...").
 
 ${DESIGN_GUIDELINES}`;
 
@@ -53,7 +53,11 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         "Scaffold or fully re-generate the Astro site from a structured plan, then start the live preview.",
       inputSchema: sitePlanSchema,
       execute: async (plan) => {
-        await onStep({ kind: "plan", label: `Planned "${plan.siteName}"`, detail: `${plan.pages.length} page(s)` });
+        await onStep({
+          kind: "plan",
+          label: `Planned "${plan.siteName}"`,
+          detail: `${plan.pages.length} page(s)`,
+        });
         const files = scaffoldAstroProject(plan as SitePlan);
         await box.writeFiles(boxId, files);
         await onPlan(plan as SitePlan);
@@ -72,7 +76,9 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
     write_file: tool({
       description: "Create or overwrite one file in the site project.",
       inputSchema: z.object({
-        path: z.string().describe("Path relative to the site root, e.g. src/components/Hero.astro"),
+        path: z
+          .string()
+          .describe("Path relative to the site root, e.g. src/components/Hero.astro"),
         content: z.string(),
       }),
       execute: async ({ path, content }) => {
@@ -110,16 +116,24 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       inputSchema: z.object({ command: z.string() }),
       execute: async ({ command }) => {
         const res = await box.runCommand(boxId, command, { timeoutSeconds: 120 });
-        await onStep({ kind: "command", label: command, detail: res.stderr || undefined });
-        return { exitCode: res.exitCode, stdout: res.stdout.slice(0, 4000), stderr: res.stderr.slice(0, 2000) };
+        await onStep({
+          kind: "command",
+          label: command,
+          detail: res.stderr || undefined,
+        });
+        return {
+          exitCode: res.exitCode,
+          stdout: res.stdout.slice(0, 4000),
+          stderr: res.stderr.slice(0, 2000),
+        };
       },
     }),
   };
 
-  return new Agent({
+  return new ToolLoopAgent({
     model: getModel(),
-    system: SYSTEM,
+    instructions: INSTRUCTIONS,
     tools,
-    stopWhen: stepCountIs(24),
+    stopWhen: isStepCount(24),
   });
 }

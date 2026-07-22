@@ -1,72 +1,79 @@
-import { Container } from "@/components/site/container";
+import { Boxes, Gauge, PencilRuler } from "lucide-react";
+import { PageHeader } from "@/components/site/page-header";
 import { Reveal } from "@/components/site/reveal";
-import { Boxes, Gauge, PencilRuler, Rocket } from "lucide-react";
+import { Section } from "@/components/site/section";
 
 export function Features() {
   return (
-    <section id="features" className="py-28">
-      <Container>
-        <Reveal>
-          <h2 className="max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-            A generator that respects the craft.
-          </h2>
-          <p className="mt-4 max-w-xl text-muted-foreground">
-            Structured output, real sandboxes, and an agent tuned to avoid the
-            templated look most tools ship.
-          </p>
-        </Reveal>
+    <Section id="features">
+      <Reveal>
+        <PageHeader
+          as="h2"
+          size="section"
+          title="Built to look intentional, not templated."
+          description="Structured plans, real sandboxes, and design rules that kill the usual AI site tells."
+        />
+      </Reveal>
 
-        <div className="mt-14 grid gap-4 md:grid-cols-3 md:grid-rows-2">
-          <Reveal className="md:col-span-2 md:row-span-2">
-            <article className="flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-border/60 bg-card/40 p-8">
+      <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:gap-16">
+        <Reveal>
+          <article>
+            <div className="overflow-hidden rounded-2xl border border-border/60">
+              <img
+                src="https://picsum.photos/seed/nebula-workspace-preview/1400/900"
+                alt="Nebula workspace with chat and live site preview"
+                className="aspect-[16/10] h-full w-full object-cover"
+              />
+            </div>
+            <div className="mt-6 flex gap-3">
+              <PencilRuler className="mt-0.5 size-5 shrink-0 text-brand" />
               <div>
-                <PencilRuler className="size-6 text-brand" />
-                <h3 className="mt-5 text-2xl font-semibold tracking-tight">
-                  Anti-slop by design
+                <h3 className="text-xl font-semibold tracking-tight">
+                  Design rules in the agent
                 </h3>
-                <p className="mt-3 max-w-md text-muted-foreground">
-                  Every build follows a strict design system: one locked accent,
-                  real typographic hierarchy, motivated motion, and zero of the
-                  tells that make AI sites look identical.
+                <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                  One accent, real type hierarchy, varied layouts, and no purple-glow defaults.
+                  The scaffold ships a complete Astro project you can keep editing in chat.
                 </p>
               </div>
-              <div className="mt-8 aspect-[16/9] overflow-hidden rounded-2xl border border-border/60">
-                <img
-                  src="https://picsum.photos/seed/nebula-editor-canvas/1200/675"
-                  alt="Generated site preview"
-                  className="h-full w-full object-cover"
-                />
+            </div>
+          </article>
+        </Reveal>
+
+        <div className="flex flex-col justify-center divide-y divide-border/60 border-y border-border/60">
+          <Reveal delay={0.05}>
+            <article className="py-8">
+              <div className="flex gap-3">
+                <Boxes className="mt-0.5 size-5 shrink-0 text-brand" />
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight">
+                    Structured output
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    A typed site schema drives a deterministic Astro scaffold. No brittle parsing of
+                    model text.
+                  </p>
+                </div>
               </div>
             </article>
           </Reveal>
-
-          <Reveal delay={0.05}>
-            <article className="h-full rounded-3xl border border-border/60 bg-brand/10 p-7">
-              <Boxes className="size-6 text-brand" />
-              <h3 className="mt-5 text-xl font-semibold tracking-tight">
-                Structured output
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                A typed site schema drives a deterministic Astro scaffold. No
-                brittle parsing of model text.
-              </p>
-            </article>
-          </Reveal>
-
           <Reveal delay={0.1}>
-            <article className="h-full rounded-3xl border border-border/60 bg-card/40 p-7">
-              <Gauge className="size-6 text-brand" />
-              <h3 className="mt-5 text-xl font-semibold tracking-tight">
-                Live sandbox preview
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Each project runs in its own Box VM with a real dev server on a
-                public URL.
-              </p>
+            <article className="py-8">
+              <div className="flex gap-3">
+                <Gauge className="mt-0.5 size-5 shrink-0 text-brand" />
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight">
+                    Live sandbox preview
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Each project runs in its own Box VM with a real Astro dev server on a public URL.
+                  </p>
+                </div>
+              </div>
             </article>
           </Reveal>
         </div>
-      </Container>
-    </section>
+      </div>
+    </Section>
   );
 }

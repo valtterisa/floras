@@ -52,9 +52,8 @@ export function PreviewPane({
       <WebPreviewNavigation className="gap-2 px-3">
         <Badge
           variant="outline"
-          className="gap-1.5 border-brand/40 text-xs font-normal text-brand"
+          className="border-brand/40 text-xs font-normal text-brand"
         >
-          <span className="size-1.5 rounded-full bg-brand" />
           {label}
         </Badge>
         <WebPreviewUrl readOnly />

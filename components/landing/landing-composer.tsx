@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useConvexAuth } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AuthModal } from "@/components/auth/auth-modal";
 import { PromptComposer } from "@/components/site/prompt-composer";
 import { useCreateSite } from "@/lib/hooks/use-create-site";
 
@@ -19,12 +20,10 @@ export function LandingComposer() {
   const { isAuthenticated } = useConvexAuth();
   const createSite = useCreateSite();
   const [pending, setPending] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
 
-  const handle = async (text: string) => {
-    if (!isAuthenticated) {
-      router.push(`/signin?prompt=${encodeURIComponent(text)}`);
-      return;
-    }
+  const startGeneration = async (text: string) => {
     setPending(true);
     try {
       const id = await createSite({ prompt: text });
@@ -35,12 +34,31 @@ export function LandingComposer() {
     }
   };
 
+  const handle = async (text: string) => {
+    if (!isAuthenticated) {
+      setPendingPrompt(text);
+      setAuthOpen(true);
+      return false;
+    }
+    await startGeneration(text);
+  };
+
   return (
-    <PromptComposer
-      onSubmit={handle}
-      suggestions={SUGGESTIONS}
-      pending={pending}
-      autoFocus
-    />
+    <>
+      <PromptComposer
+        onSubmit={handle}
+        suggestions={SUGGESTIONS}
+        pending={pending}
+        autoFocus
+      />
+      <AuthModal
+        open={authOpen}
+        onOpenChange={(open) => {
+          setAuthOpen(open);
+          if (!open) setPendingPrompt(null);
+        }}
+        prompt={pendingPrompt}
+      />
+    </>
   );
 }

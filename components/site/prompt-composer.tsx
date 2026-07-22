@@ -15,7 +15,7 @@ import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { cn } from "@/lib/utils";
 
 export interface PromptComposerProps {
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string) => void | boolean | Promise<void | boolean>;
   suggestions?: string[];
   placeholder?: string;
   pending?: boolean;
@@ -33,17 +33,17 @@ export function PromptComposer({
 }: PromptComposerProps) {
   const [text, setText] = useState("");
 
-  const submit = (value: string) => {
+  const submit = async (value: string) => {
     const trimmed = value.trim();
     if (!trimmed || pending) return;
-    onSubmit(trimmed);
-    setText("");
+    const result = await onSubmit(trimmed);
+    if (result !== false) setText("");
   };
 
   return (
     <div className={cn("w-full", className)}>
       <PromptInput
-        className="rounded-3xl border-border/70 bg-card/80 shadow-2xl shadow-black/40 backdrop-blur-xl"
+        className="rounded-3xl border-border/70 bg-card/90 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.45)] backdrop-blur-xl"
         onSubmit={(message: PromptInputMessage) => submit(message.text ?? "")}
       >
         <PromptInputBody>
@@ -58,7 +58,7 @@ export function PromptComposer({
         <PromptInputFooter className="px-3 pb-3">
           <PromptInputTools>
             <span className="pl-2 text-xs text-muted-foreground">
-              Astro · Tailwind · live preview
+              Astro, Tailwind, live preview
             </span>
           </PromptInputTools>
           <PromptInputSubmit
@@ -72,13 +72,13 @@ export function PromptComposer({
       </PromptInput>
 
       {suggestions.length > 0 && (
-        <Suggestions className="mt-4 justify-center">
+        <Suggestions className="mt-4 justify-start">
           {suggestions.map((s) => (
             <Suggestion
               key={s}
               suggestion={s}
               onClick={() => submit(s)}
-              className="rounded-full border-border/70 bg-card/50 text-muted-foreground hover:text-foreground"
+              className="rounded-full border-border/70 bg-card/50 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:scale-[0.98]"
             />
           ))}
         </Suggestions>
