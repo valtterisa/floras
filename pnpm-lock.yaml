@@ -14,9 +14,12 @@ importers:
       '@asciidev/box-sdk':
         specifier: ^0.0.24
         version: 0.0.24
+      '@auth/core':
+        specifier: 0.41.1
+        version: 0.41.1
       '@convex-dev/auth':
         specifier: ^0.0.94
-        version: 0.0.94(@auth/core@0.41.3)(convex@1.42.3(react@19.2.8))(react@19.2.8)
+        version: 0.0.94(@auth/core@0.41.1)(convex@1.42.3(react@19.2.8))(react@19.2.8)
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.82.0(react@19.2.8))
@@ -282,12 +285,12 @@ packages:
   '@asciidev/box-sdk@0.0.24':
     resolution: {integrity: sha512-w77vTWA+yrJ5O+FmchCkurjux1UZkQ5yeurnzX/FJTlQulEtj1xp0g/2cSh/GZWLXrgCV0exU99E+NyiilBeHA==}
 
-  '@auth/core@0.41.3':
-    resolution: {integrity: sha512-sJ3JMHHkXMD3aOjopv7mOBTO1Ocw4b0fAEXJBz6k7YHLpYQI6C40jCUPc5fNvUKxXRXNE1/sRISA15UrwWJBTw==}
+  '@auth/core@0.41.1':
+    resolution: {integrity: sha512-t9cJ2zNYAdWMacGRMT6+r4xr1uybIdmYa49calBPeTqwgAFPV/88ac9TEvCR85pvATiSPt8VaNf+Gt24JIT/uw==}
     peerDependencies:
       '@simplewebauthn/browser': ^9.0.1
       '@simplewebauthn/server': ^9.0.2
-      nodemailer: ^7.0.7 || ^8.0.5
+      nodemailer: ^7.0.7
     peerDependenciesMeta:
       '@simplewebauthn/browser':
         optional: true
@@ -4126,7 +4129,7 @@ snapshots:
 
   '@asciidev/box-sdk@0.0.24': {}
 
-  '@auth/core@0.41.3':
+  '@auth/core@0.41.1':
     dependencies:
       '@panva/hkdf': 1.2.1
       jose: 6.2.3
@@ -4138,9 +4141,9 @@ snapshots:
 
   '@chevrotain/types@11.1.2': {}
 
-  '@convex-dev/auth@0.0.94(@auth/core@0.41.3)(convex@1.42.3(react@19.2.8))(react@19.2.8)':
+  '@convex-dev/auth@0.0.94(@auth/core@0.41.1)(convex@1.42.3(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@auth/core': 0.41.3
+      '@auth/core': 0.41.1
       '@oslojs/crypto': 1.0.1
       '@oslojs/encoding': 1.1.0
       convex: 1.42.3(react@19.2.8)

@@ -22,6 +22,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.18",
     "@asciidev/box-sdk": "^0.0.24",
+    "@auth/core": "0.41.1",
     "@convex-dev/auth": "^0.0.94",
     "@hookform/resolvers": "^5.4.0",
     "@radix-ui/react-accordion": "^1.2.17",
