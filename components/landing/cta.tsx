@@ -3,11 +3,21 @@ import { Reveal } from "@/components/site/reveal";
 
 export function CallToAction() {
   return (
-    <section
-      className="border-b border-border text-white"
-      style={{ backgroundImage: "var(--brand-gradient)" }}
-    >
-      <div className="grid gap-0 md:grid-cols-[1fr_auto]">
+    <section className="relative overflow-hidden border-b border-border text-white">
+      <img
+        aria-hidden
+        alt=""
+        src="https://images.unsplash.com/photo-1457089328109-e5d9bd499191?auto=format&fit=crop&w=1600&h=900&q=80"
+        className="absolute inset-0 h-full w-full scale-105 object-cover"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 mix-blend-multiply opacity-90"
+        style={{ backgroundImage: "var(--brand-gradient)" }}
+      />
+      <div aria-hidden className="absolute inset-0 bg-[#0d0f14]/25" />
+
+      <div className="relative grid gap-0 md:grid-cols-[1fr_auto]">
         <div className="border-b border-white/20 px-6 py-12 md:border-b-0 md:border-r md:px-8 md:py-16">
           <Reveal>
             <h2 className="max-w-[16ch] text-3xl font-semibold tracking-tight md:text-4xl">

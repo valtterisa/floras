@@ -1,11 +1,15 @@
 import { Reveal } from "@/components/site/reveal";
 import { LandingComposer } from "@/components/landing/landing-composer";
+import { BuilddrrLogoMark } from "@/components/brand/builddrr-logo";
 
 export function Hero() {
   return (
     <section className="border-b border-border px-6 py-12 md:px-8 md:py-16">
       <div className="mx-auto grid max-w-3xl gap-10 md:gap-12">
         <Reveal>
+          <div className="mb-6 flex justify-center text-[3.5rem] md:text-6xl">
+            <BuilddrrLogoMark />
+          </div>
           <h1 className="mx-auto max-w-[16ch] text-center text-4xl font-semibold tracking-tight text-foreground md:text-5xl md:leading-[1.1]">
             Astro sites from{" "}
             <span className="relative inline-block whitespace-nowrap px-0.5">

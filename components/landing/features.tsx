@@ -34,8 +34,8 @@ export function Features() {
         <Reveal className="border-b border-border lg:border-b-0 lg:border-r">
           <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
             <img
-              src="https://picsum.photos/seed/builddrr-light-workspace/1400/900"
-              alt="Builddrr workspace with chat and live site preview"
+              src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1400&h=900&q=80"
+              alt="Field of orange poppies against a blue sky"
               className="h-full w-full object-cover"
             />
           </div>
@@ -59,7 +59,9 @@ export function Features() {
                 i < POINTS.length - 1 ? "border-b border-border" : ""
               }`}
             >
-              <h3 className="text-lg font-semibold tracking-tight">{point.title}</h3>
+              <h3 className="text-lg font-semibold tracking-tight">
+                {point.title}
+              </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {point.body}
               </p>

@@ -10,10 +10,7 @@ export function SectionGutter({
   return (
     <div
       aria-hidden
-      className={cn(
-        "grid h-10 border-b border-border md:h-12",
-        className
-      )}
+      className={cn("grid h-10 border-b border-border md:h-12", className)}
       style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
     >
       {Array.from({ length: cols }, (_, i) => (

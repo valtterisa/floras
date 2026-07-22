@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { AuthContinueClient } from "@/components/auth/auth-continue-client";
+import { noIndexRobots } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Signing in",
+  robots: noIndexRobots,
+};
 
 export default function AuthContinuePage() {
   return (
