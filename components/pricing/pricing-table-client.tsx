@@ -6,7 +6,8 @@ import { useCustomer } from "autumn-js/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  FREE_PLAN_ID,
+  ENTERPRISE_CONTACT_HREF,
+  ENTERPRISE_PLAN_ID,
   PRO_MONTHLY_PLAN_ID,
   PRO_YEARLY_PLAN_ID,
   isPaidPlanId,
@@ -26,48 +27,42 @@ type PlanCard = {
   cta: string;
 };
 
+const PRO_FEATURES = [
+  "$20 AI credit every month",
+  "Full Astro sites from one sentence",
+  "Live preview while you refine in chat",
+  "Shareable link the moment it's ready",
+  "Top up credits anytime",
+];
+
+const ENTERPRISE_FEATURES = [
+  "Self-hosted Floras on your infra",
+  "White-label branding end to end",
+  "Custom models, limits, and SSO",
+  "Dedicated support & onboarding",
+  "Team seats and admin controls",
+];
+
 const PLANS: Record<BillingInterval, PlanCard[]> = {
   month: [
-    {
-      id: FREE_PLAN_ID,
-      name: "Free",
-      price: "$0",
-      features: [
-        "$2 credit / month",
-        "Only pay for what you use",
-        "Live preview as you go",
-        "A finished website you can share",
-      ],
-      cta: "Create your site",
-    },
     {
       id: PRO_MONTHLY_PLAN_ID,
       name: "Pro",
       price: "$20",
       cadence: "/mo",
       highlight: true,
-      features: [
-        "$20 credit / month",
-        "See how much credit you have left",
-        "Blog pages included",
-        "Faster previews",
-      ],
-      cta: "Upgrade to Pro",
+      features: PRO_FEATURES,
+      cta: "Get Pro",
+    },
+    {
+      id: ENTERPRISE_PLAN_ID,
+      name: "Enterprise",
+      price: "Custom",
+      features: ENTERPRISE_FEATURES,
+      cta: "Talk to founder",
     },
   ],
   year: [
-    {
-      id: FREE_PLAN_ID,
-      name: "Free",
-      price: "$0",
-      features: [
-        "$2 credit / month",
-        "Only pay for what you use",
-        "Live preview as you go",
-        "A finished website you can share",
-      ],
-      cta: "Create your site",
-    },
     {
       id: PRO_YEARLY_PLAN_ID,
       name: "Pro",
@@ -75,13 +70,15 @@ const PLANS: Record<BillingInterval, PlanCard[]> = {
       cadence: "/yr",
       note: "Save 20% vs monthly",
       highlight: true,
-      features: [
-        "$20 credit / month",
-        "See how much credit you have left",
-        "Blog pages included",
-        "Faster previews",
-      ],
-      cta: "Upgrade yearly",
+      features: PRO_FEATURES,
+      cta: "Get Pro yearly",
+    },
+    {
+      id: ENTERPRISE_PLAN_ID,
+      name: "Enterprise",
+      price: "Custom",
+      features: ENTERPRISE_FEATURES,
+      cta: "Talk to founder",
     },
   ],
 };
@@ -98,12 +95,12 @@ export function PricingTableClient() {
   const activePaid = data?.subscriptions?.find(
     (s) => s.status === "active" && isPaidPlanId(s.planId) && !s.autoEnable
   );
-  const currentPlanId = activePaid?.planId ?? FREE_PLAN_ID;
+  const currentPlanId = activePaid?.planId ?? null;
   const plans = PLANS[interval];
 
   const onSelect = async (planId: string) => {
-    if (planId === FREE_PLAN_ID) {
-      window.location.href = isAuthenticated ? "/dashboard" : "/sign-up";
+    if (planId === ENTERPRISE_PLAN_ID) {
+      window.open(ENTERPRISE_CONTACT_HREF, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -123,7 +120,7 @@ export function PricingTableClient() {
       const result = await attach({
         planId,
         redirectMode: "always",
-        successUrl: checkoutSuccessUrl("/account"),
+        successUrl: checkoutSuccessUrl("/dashboard/account"),
       });
 
       if (await redirectToCheckout(result)) return;
@@ -193,6 +190,7 @@ export function PricingTableClient() {
         {plans.map((plan, i) => {
           const isCurrent = plan.id === currentPlanId;
           const pending = pendingPlan === plan.id;
+          const isEnterprise = plan.id === ENTERPRISE_PLAN_ID;
           return (
             <div
               key={`${interval}-${plan.id}`}
@@ -235,7 +233,7 @@ export function PricingTableClient() {
               </ul>
               <button
                 type="button"
-                disabled={pending || (isCurrent && plan.id !== FREE_PLAN_ID)}
+                disabled={pending || (isCurrent && !isEnterprise)}
                 onClick={() => void onSelect(plan.id)}
                 className={cn(
                   "mt-8 inline-flex h-11 cursor-pointer items-center justify-center px-5 font-mono text-[11px] uppercase tracking-[0.14em] transition-[filter] active:scale-[0.98]",
@@ -247,7 +245,7 @@ export function PricingTableClient() {
               >
                 {pending
                   ? "Opening checkout…"
-                  : isCurrent && plan.id !== FREE_PLAN_ID
+                  : isCurrent && !isEnterprise
                     ? "Current plan"
                     : plan.cta}
               </button>

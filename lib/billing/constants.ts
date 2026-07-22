@@ -4,9 +4,9 @@ export const GENERATION_FEATURE = AI_CREDITS_FEATURE;
 
 export const TOP_UP_PLAN_ID = "credit_top_up";
 
-export const FREE_PLAN_ID = "free";
 export const PRO_MONTHLY_PLAN_ID = "pro";
 export const PRO_YEARLY_PLAN_ID = "pro_yearly";
+export const ENTERPRISE_PLAN_ID = "enterprise";
 
 export const PAID_PLAN_IDS = [PRO_MONTHLY_PLAN_ID, PRO_YEARLY_PLAN_ID] as const;
 
@@ -15,6 +15,8 @@ export type PaidPlanId = (typeof PAID_PLAN_IDS)[number];
 export function isPaidPlanId(planId: string | undefined | null): boolean {
   return Boolean(planId && PAID_PLAN_IDS.includes(planId as PaidPlanId));
 }
+
+export const ENTERPRISE_CONTACT_HREF = "https://cal.com/valtterisa/15min";
 
 /** Minimum dollar balance required to start a generation. */
 export const MIN_CREDIT_BALANCE = 0.05;

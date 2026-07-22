@@ -12,7 +12,7 @@ export async function redirectToCheckout(
   return false;
 }
 
-export function checkoutSuccessUrl(path = "/account"): string {
+export function checkoutSuccessUrl(path = "/dashboard/account"): string {
   if (typeof window === "undefined") return path;
   return `${window.location.origin}${path}`;
 }

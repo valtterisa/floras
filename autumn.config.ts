@@ -30,22 +30,6 @@ export const aiCredits = feature({
 	},
 });
 
-export const free = plan({
-	id: "free",
-	name: "Free",
-	addOn: false,
-	autoEnable: true,
-	items: [
-		item({
-			featureId: aiCredits.id,
-			included: 2,
-			reset: {
-				interval: "month",
-			},
-		}),
-	],
-});
-
 export const pro = plan({
 	id: "pro",
 	name: "Pro",

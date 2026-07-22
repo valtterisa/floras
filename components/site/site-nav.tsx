@@ -40,7 +40,7 @@ export function SiteNav() {
               Dashboard
             </Link>
             <Link
-              href="/account"
+              href="/dashboard/account"
               className="hidden items-center border-r border-border px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground sm:inline-flex"
             >
               Account

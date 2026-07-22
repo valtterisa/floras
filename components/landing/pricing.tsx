@@ -10,7 +10,7 @@ export function Pricing() {
             Simple pricing.
           </h2>
           <p className="mt-4 max-w-[48ch] text-base leading-relaxed text-muted-foreground">
-            Start free. Upgrade when you need more sites.
+            One plan for builders. Enterprise when you need it on your own stack.
           </p>
         </Reveal>
       </div>

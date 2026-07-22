@@ -49,9 +49,11 @@ export const updateProfile = mutation({
 
     if (args.name !== undefined) {
       const name = args.name.trim();
-      if (name.length === 0) throw new Error("Name cannot be empty");
+      if (name.length === 0) throw new Error("Call sign cannot be empty");
       if (name.length > MAX_NAME_LENGTH) {
-        throw new Error(`Name must be ${MAX_NAME_LENGTH} characters or fewer`);
+        throw new Error(
+          `Call sign must be ${MAX_NAME_LENGTH} characters or fewer`
+        );
       }
       patch.name = name;
     }

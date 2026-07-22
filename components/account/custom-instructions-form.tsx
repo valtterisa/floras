@@ -15,7 +15,7 @@ type Me = {
   id: string;
   name: string;
   email: string;
-  customInstructions: string;
+  customInstructions?: string;
 };
 
 export function CustomInstructionsForm() {
@@ -25,7 +25,7 @@ export function CustomInstructionsForm() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (me) setInstructions(me.customInstructions);
+    if (me) setInstructions(me.customInstructions ?? "");
   }, [me]);
 
   const onSave = async () => {
@@ -45,7 +45,7 @@ export function CustomInstructionsForm() {
   const dirty =
     me !== undefined &&
     me !== null &&
-    instructions !== me.customInstructions;
+    instructions !== (me.customInstructions ?? "");
 
   return (
     <AccountSection

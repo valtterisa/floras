@@ -23,8 +23,8 @@ export function BillingSection() {
   });
   const [pending, setPending] = useState(false);
 
-  let planName = "Free";
-  let planId = "free";
+  let planName = "No plan";
+  let planId: string | null = null;
   let remaining: number | null = null;
   let granted: number | null = null;
 
@@ -33,13 +33,13 @@ export function BillingSection() {
       (s) => s.status === "active" && isPaidPlanId(s.planId) && !s.autoEnable
     );
     const active = data.subscriptions.find((s) => s.status === "active");
-    planId = paid?.planId ?? active?.planId ?? "free";
+    planId = paid?.planId ?? active?.planId ?? null;
     planName =
       paid?.plan?.name ??
       paid?.planId ??
       active?.plan?.name ??
       active?.planId ??
-      "Free";
+      "No plan";
 
     try {
       const result = check({
@@ -63,7 +63,7 @@ export function BillingSection() {
       const result = await attach({
         planId: targetPlanId,
         redirectMode: "always",
-        successUrl: checkoutSuccessUrl("/account"),
+        successUrl: checkoutSuccessUrl("/dashboard/account"),
       });
       if (await redirectToCheckout(result)) return;
       await refetch();
@@ -80,7 +80,7 @@ export function BillingSection() {
   const onManage = async () => {
     try {
       await openCustomerPortal({
-        returnUrl: `${window.location.origin}/account`,
+        returnUrl: `${window.location.origin}/dashboard/account`,
       });
     } catch {
       toast.error("Could not open billing portal.");
@@ -113,7 +113,7 @@ export function BillingSection() {
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Generations left
+                Credits left
               </p>
               <p className="mt-1 text-xl font-semibold tracking-tight">
                 {remaining === null
@@ -132,7 +132,7 @@ export function BillingSection() {
                   onClick={() => void onUpgrade(PRO_MONTHLY_PLAN_ID)}
                   className="rounded-none bg-brand text-brand-foreground hover:brightness-110"
                 >
-                  {pending ? "Opening…" : "Upgrade monthly"}
+                  {pending ? "Opening…" : "Get Pro monthly"}
                 </Button>
                 <Button
                   disabled={pending}
@@ -140,7 +140,7 @@ export function BillingSection() {
                   variant="outline"
                   className="rounded-none"
                 >
-                  Upgrade yearly
+                  Get Pro yearly
                 </Button>
               </>
             ) : null}

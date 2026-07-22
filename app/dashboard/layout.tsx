@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { noIndexRobots } from "@/lib/seo";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -11,5 +12,5 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <DashboardShell>{children}</DashboardShell>;
 }

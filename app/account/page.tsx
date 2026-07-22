@@ -1,10 +1,5 @@
-import { AppLayout } from "@/components/site/app-layout";
-import { AccountPage } from "@/components/account/account-page";
+import { redirect } from "next/navigation";
 
-export default function AccountRoute() {
-  return (
-    <AppLayout>
-      <AccountPage />
-    </AppLayout>
-  );
+export default function AccountRedirect() {
+  redirect("/dashboard/account");
 }
