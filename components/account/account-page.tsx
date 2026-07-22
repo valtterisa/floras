@@ -1,23 +1,21 @@
 "use client";
 
-import { Container } from "@/components/site/container";
-import { PageHeader } from "@/components/site/page-header";
 import { ProfileForm } from "@/components/account/profile-form";
 import { BillingSection } from "@/components/account/billing-section";
 import { CustomInstructionsForm } from "@/components/account/custom-instructions-form";
 
 export function AccountPage() {
   return (
-    <Container className="py-14 md:py-16">
-      <PageHeader
-        title="Account"
-        description="Manage your profile, billing, and how Builddrr writes your sites."
-      />
-      <div className="mt-12 flex flex-col gap-10">
-        <ProfileForm />
-        <BillingSection />
-        <CustomInstructionsForm />
+    <div>
+      <div className="border-b border-border px-6 py-8 md:px-8">
+        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Account</h1>
+        <p className="mt-3 max-w-[48ch] text-sm leading-relaxed text-muted-foreground">
+          Manage your profile, billing, and how Builddrr writes your sites.
+        </p>
       </div>
-    </Container>
+      <ProfileForm />
+      <BillingSection />
+      <CustomInstructionsForm />
+    </div>
   );
 }

@@ -48,6 +48,7 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     initialPrompt: v.string(),
+    modelId: v.optional(v.string()),
     status: projectStatus,
     boxId: v.optional(v.string()),
     previewUrl: v.optional(v.string()),

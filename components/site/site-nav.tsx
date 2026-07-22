@@ -4,56 +4,57 @@ import Link from "next/link";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Logo } from "@/components/brand/logo";
-import { Container } from "@/components/site/container";
-import { Button } from "@/components/ui/button";
-
-const LINKS = [
-  { label: "How it works", href: "/#how" },
-  { label: "Features", href: "/#features" },
-  { label: "Pricing", href: "/pricing" },
-];
+import { ThemeToggle } from "@/components/site/theme-toggle";
 
 export function SiteNav() {
   const { signOut } = useAuthActions();
+
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-      <Container className="flex h-16 items-center justify-between">
-        <div className="flex items-center gap-10">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
+      <div className="grid h-14 grid-cols-[1fr_auto] items-stretch">
+        <div className="flex items-center border-r border-border px-5">
           <Logo />
-          <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-            {LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="transition-colors hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-stretch">
+          <ThemeToggle />
           <Unauthenticated>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/signin">Sign in</Link>
-            </Button>
-            <Button asChild size="sm" className="bg-brand text-brand-foreground hover:bg-brand/90">
-              <Link href="/signin">Start building</Link>
-            </Button>
+            <Link
+              href="/signin"
+              className="hidden items-center border-r border-border px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground sm:inline-flex"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/signin"
+              className="inline-flex items-center bg-brand px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.98]"
+            >
+              Start building
+            </Link>
           </Unauthenticated>
           <Authenticated>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/account">Account</Link>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => void signOut()}>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center border-r border-border px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/account"
+              className="hidden items-center border-r border-border px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground sm:inline-flex"
+            >
+              Account
+            </Link>
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="inline-flex cursor-pointer items-center px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            >
               Sign out
-            </Button>
+            </button>
           </Authenticated>
         </div>
-      </Container>
+      </div>
     </header>
   );
 }

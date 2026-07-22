@@ -1,6 +1,4 @@
-import { PageHeader } from "@/components/site/page-header";
 import { Reveal } from "@/components/site/reveal";
-import { Section } from "@/components/site/section";
 
 const STEPS = [
   {
@@ -13,31 +11,40 @@ const STEPS = [
   },
   {
     title: "Refine",
-    body: "Chat to change copy, sections, and color. Keep a blog if you need one. The preview updates as it builds.",
+    body: "Chat to change copy, sections, and color. The preview updates as it builds.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <Section id="how" bordered>
-      <Reveal>
-        <PageHeader as="h2" size="section" title="From sentence to site." />
-      </Reveal>
+    <section id="how" className="border-b border-border">
+      <div className="border-b border-border px-6 py-10 md:px-8 md:py-12">
+        <Reveal>
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+            From sentence to site.
+          </h2>
+        </Reveal>
+      </div>
 
-      <ol className="mt-16 divide-y divide-border/60 border-y border-border/60">
+      <ol>
         {STEPS.map((step, i) => (
-          <Reveal key={step.title} delay={i * 0.06}>
-            <li className="grid gap-4 py-10 md:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)] md:gap-12">
+          <li
+            key={step.title}
+            className={`grid gap-3 px-6 py-9 md:grid-cols-[minmax(0,0.28fr)_minmax(0,0.72fr)] md:items-center md:gap-12 md:px-8 ${
+              i < STEPS.length - 1 ? "border-b border-border" : ""
+            }`}
+          >
+            <Reveal delay={i * 0.06} className="grid gap-3 md:contents">
               <h3 className="text-2xl font-semibold tracking-tight md:text-3xl">
                 {step.title}
               </h3>
-              <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:pt-1.5">
+              <p className="max-w-xl text-base leading-relaxed text-muted-foreground">
                 {step.body}
               </p>
-            </li>
-          </Reveal>
+            </Reveal>
+          </li>
         ))}
       </ol>
-    </Section>
+    </section>
   );
 }

@@ -2,9 +2,12 @@
 
 import { useConvexAuth } from "convex/react";
 import { useCustomer } from "autumn-js/react";
-import { GENERATION_FEATURE } from "@/lib/billing/constants";
+import {
+  AI_CREDITS_FEATURE,
+  MIN_CREDIT_BALANCE,
+} from "@/lib/billing/constants";
 
-export { GENERATION_FEATURE };
+export { AI_CREDITS_FEATURE, GENERATION_FEATURE } from "@/lib/billing/constants";
 
 export function useGenerationAccess() {
   const { isAuthenticated } = useConvexAuth();
@@ -13,14 +16,14 @@ export function useGenerationAccess() {
     queryOptions: { enabled: isAuthenticated },
   });
 
-  const balance = data?.balances?.[GENERATION_FEATURE]?.remaining ?? null;
+  const balance = data?.balances?.[AI_CREDITS_FEATURE]?.remaining ?? null;
 
   const assertCanGenerate = (): boolean => {
     if (!isAuthenticated || !data) return true;
     try {
       const { allowed } = check({
-        featureId: GENERATION_FEATURE,
-        requiredBalance: 1,
+        featureId: AI_CREDITS_FEATURE,
+        requiredBalance: MIN_CREDIT_BALANCE,
       });
       return allowed !== false;
     } catch {

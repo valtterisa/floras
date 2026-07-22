@@ -1,6 +1,8 @@
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { buildSiteAgent } from "@/lib/ai/agent";
+import { resolveAgentModelId } from "@/lib/ai/models";
+import { trackAiTokenUsage } from "@/lib/billing/track-ai-usage";
 import * as box from "@/lib/box/client";
 
 export async function runGeneration(projectId: string, token: string) {
@@ -52,9 +54,13 @@ export async function runGeneration(projectId: string, token: string) {
     );
 
     const me = await fetchQuery((api as any).users.me, {}, { token });
+    const modelId = resolveAgentModelId(
+      typeof project.modelId === "string" ? project.modelId : null
+    );
 
     const agent = buildSiteAgent({
       boxId,
+      modelId,
       hasPreview: Boolean(project.previewUrl),
       customInstructions:
         typeof me?.customInstructions === "string"
@@ -88,6 +94,18 @@ export async function runGeneration(projectId: string, token: string) {
       }));
 
     const result = await agent.generate({ messages: convo });
+
+    if (typeof me?.id === "string") {
+      try {
+        await trackAiTokenUsage({
+          customerId: me.id,
+          modelId,
+          usage: result.totalUsage ?? result.usage,
+        });
+      } catch (err) {
+        console.error("Failed to track AI token usage", err);
+      }
+    }
 
     await fetchMutation(
       (api as any).messages.finish,

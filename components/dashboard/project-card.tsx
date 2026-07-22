@@ -1,20 +1,29 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { DashboardProject } from "@/components/dashboard/types";
 
 const STATUS_TONE: Record<string, string> = {
-  ready: "border-brand/40 text-brand",
-  error: "border-destructive/40 text-destructive",
+  ready: "text-brand",
+  error: "text-destructive",
+  generating: "text-muted-foreground",
 };
 
-export function ProjectCard({ project }: { project: DashboardProject }) {
+export function ProjectCard({
+  project,
+  className,
+}: {
+  project: DashboardProject;
+  className?: string;
+}) {
   return (
     <Link
       href={`/build/${project._id}`}
-      className="group overflow-hidden rounded-2xl border border-border/60 bg-card/40 transition-colors hover:border-border active:scale-[0.995]"
+      className={cn(
+        "group flex flex-col transition-colors hover:bg-white active:scale-[0.995]",
+        className
+      )}
     >
-      <div className="aspect-[16/10] overflow-hidden border-b border-border/60 bg-muted/30">
+      <div className="aspect-[16/10] overflow-hidden border-b border-border bg-muted/40">
         {project.previewUrl ? (
           <iframe
             src={project.previewUrl}
@@ -23,19 +32,23 @@ export function ProjectCard({ project }: { project: DashboardProject }) {
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+          <div className="flex h-full items-center justify-center font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             Preview pending
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 p-4">
-        <span className="truncate text-sm font-medium">{project.name}</span>
-        <Badge
-          variant="outline"
-          className={cn(STATUS_TONE[project.status] ?? "text-muted-foreground")}
+      <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+        <span className="truncate text-sm font-medium text-foreground">
+          {project.name}
+        </span>
+        <span
+          className={cn(
+            "shrink-0 font-mono text-[10px] uppercase tracking-[0.14em]",
+            STATUS_TONE[project.status] ?? "text-muted-foreground"
+          )}
         >
           {project.status}
-        </Badge>
+        </span>
       </div>
     </Link>
   );

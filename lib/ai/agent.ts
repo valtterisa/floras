@@ -5,6 +5,7 @@ import { sitePlanSchema, type SitePlan } from "@/lib/schema/site";
 import { scaffoldAstroProject } from "@/lib/astro/scaffold";
 import * as box from "@/lib/box/client";
 import { DESIGN_GUIDELINES } from "@/lib/ai/design-guidelines";
+import { resolveAgentModelId } from "@/lib/ai/model";
 
 export type AgentStepKind =
   | "plan"
@@ -27,10 +28,11 @@ export interface BuildAgentOptions {
   onPreview: (url: string) => Promise<void> | void;
   hasPreview: boolean;
   customInstructions?: string;
+  modelId?: string;
 }
 
-function getModel() {
-  return anthropic("claude-sonnet-4-5");
+function getModel(modelId?: string) {
+  return anthropic(resolveAgentModelId(modelId));
 }
 
 const INSTRUCTIONS = `You are an expert Astro web engineer inside a Linux sandbox. You generate and edit beautiful, production-ready Astro sites (landing pages and blogs) that live in the "site/" project directory.
@@ -141,7 +143,7 @@ ${custom}`
     : INSTRUCTIONS;
 
   return new ToolLoopAgent({
-    model: getModel(),
+    model: getModel(opts.modelId),
     instructions,
     tools,
     stopWhen: isStepCount(24),

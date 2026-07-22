@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/site/page-header";
 import { PromptComposer } from "@/components/site/prompt-composer";
 import { useCreateSite } from "@/lib/hooks/use-create-site";
 import { triggerGeneration } from "@/lib/generate/trigger-generation";
@@ -26,15 +25,20 @@ export function DashboardPrompt() {
   };
 
   return (
-    <div className="max-w-2xl">
-      <PageHeader
-        title="What are we building today?"
-        description="Describe a site and Builddrr generates it in a live sandbox."
-        size="section"
-      />
-      <div className="mt-8">
-        <PromptComposer onSubmit={handle} pending={pending} autoFocus />
+    <section className="border-b border-border">
+      <div className="border-b border-border px-6 py-8 md:px-8">
+        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+          What are we building today?
+        </h1>
+        <p className="mt-3 max-w-[48ch] text-sm leading-relaxed text-muted-foreground">
+          Describe a site and Builddrr generates it in a live sandbox.
+        </p>
       </div>
-    </div>
+      <div className="px-6 py-8 md:px-8 md:py-10">
+        <div className="mx-auto w-full max-w-2xl">
+          <PromptComposer onSubmit={handle} pending={pending} autoFocus />
+        </div>
+      </div>
+    </section>
   );
 }

@@ -1,29 +1,21 @@
-import { Container } from "@/components/site/container";
 import { Reveal } from "@/components/site/reveal";
 import { LandingComposer } from "@/components/landing/landing-composer";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-24 top-0 h-[480px] w-[480px] rounded-full bg-brand/12 blur-[140px]" />
-        <div
-          className="absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)",
-            backgroundSize: "56px 56px",
-            maskImage:
-              "radial-gradient(ellipse 80% 60% at 20% 20%, black 20%, transparent 75%)",
-          }}
-        />
+    <section className="border-b border-border">
+      <div className="border-b border-border px-6 py-8 md:px-8">
+        <Reveal>
+          <h1 className="text-center text-3xl font-semibold tracking-tight text-[#0d0f14] md:text-4xl">
+            Astro sites from one sentence.
+          </h1>
+        </Reveal>
       </div>
-
-      <Container className="flex min-h-[calc(100dvh-4rem)] items-center justify-center py-16 lg:py-20">
-        <Reveal className="w-full max-w-2xl">
+      <div className="px-6 py-10 md:px-8 md:py-14">
+        <Reveal delay={0.06} className="mx-auto w-full max-w-2xl">
           <LandingComposer />
         </Reveal>
-      </Container>
+      </div>
     </section>
   );
 }

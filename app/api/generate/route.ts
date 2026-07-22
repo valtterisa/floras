@@ -2,7 +2,10 @@ import { after } from "next/server";
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { fetchAction, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
-import { GENERATION_FEATURE } from "@/lib/billing/constants";
+import {
+  AI_CREDITS_FEATURE,
+  MIN_CREDIT_BALANCE,
+} from "@/lib/billing/constants";
 import { runGeneration } from "@/lib/generate/run-generation";
 
 export const maxDuration = 300;
@@ -39,27 +42,21 @@ export async function POST(req: Request) {
   try {
     const { data } = await fetchAction(
       (api as any).autumn.check,
-      { featureId: GENERATION_FEATURE, requiredBalance: 1 },
+      {
+        featureId: AI_CREDITS_FEATURE,
+        requiredBalance: MIN_CREDIT_BALANCE,
+      },
       { token }
     );
     if (data?.allowed === false) {
       return Response.json(
         {
           error:
-            "Generation limit reached. Upgrade your plan to continue.",
+            "AI credit balance too low. Upgrade or top up to continue.",
         },
         { status: 402 }
       );
     }
-  } catch {
-  }
-
-  try {
-    await fetchAction(
-      (api as any).autumn.track,
-      { featureId: GENERATION_FEATURE, value: 1 },
-      { token }
-    );
   } catch {
   }
 

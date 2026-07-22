@@ -8,23 +8,35 @@ export function ProjectGrid({
   projects: DashboardProject[] | undefined;
 }) {
   return (
-    <div>
-      <h2 className="text-sm font-medium text-muted-foreground">Your sites</h2>
+    <section>
+      <div className="border-b border-border px-6 py-4 md:px-8">
+        <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          Your sites
+        </h2>
+      </div>
+
       {projects === undefined ? (
-        <EmptyState title="Loading…" className="mt-2" />
+        <div className="border-b border-border px-6 py-10 md:px-8">
+          <EmptyState title="Loading…" />
+        </div>
       ) : projects.length === 0 ? (
-        <EmptyState
-          title="No sites yet"
-          description="Your first generation will show up here."
-          className="mt-2"
-        />
+        <div className="border-b border-border px-6 py-10 md:px-8">
+          <EmptyState
+            title="No sites yet"
+            description="Your first generation will show up here."
+          />
+        </div>
       ) : (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid border-l border-border sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <ProjectCard key={project._id} project={project} />
+            <ProjectCard
+              key={project._id}
+              project={project}
+              className="border-b border-r border-border"
+            />
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

@@ -1,29 +1,39 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useConvexAuth } from "convex/react";
 import { useCustomer } from "autumn-js/react";
 import { toast } from "sonner";
-import { GENERATION_FEATURE } from "@/lib/billing/constants";
+import {
+  GENERATION_FEATURE,
+  PRO_MONTHLY_PLAN_ID,
+  PRO_YEARLY_PLAN_ID,
+  isPaidPlanId,
+} from "@/lib/billing/constants";
+import { checkoutSuccessUrl, redirectToCheckout } from "@/lib/billing/checkout";
 import { Button } from "@/components/ui/button";
 import { AccountSection } from "@/components/account/account-section";
 
 export function BillingSection() {
   const { isAuthenticated } = useConvexAuth();
-  const { data, check, attach, openCustomerPortal } = useCustomer({
+  const { data, check, attach, openCustomerPortal, refetch } = useCustomer({
     errorOnNotFound: false,
     queryOptions: { enabled: isAuthenticated },
   });
+  const [pending, setPending] = useState(false);
 
   let planName = "Free";
+  let planId = "free";
   let remaining: number | null = null;
   let granted: number | null = null;
 
   if (data) {
     const paid = data.subscriptions.find(
-      (s) => s.status === "active" && s.planId !== "free" && !s.autoEnable
+      (s) => s.status === "active" && isPaidPlanId(s.planId) && !s.autoEnable
     );
     const active = data.subscriptions.find((s) => s.status === "active");
+    planId = paid?.planId ?? active?.planId ?? "free";
     planName =
       paid?.plan?.name ??
       paid?.planId ??
@@ -45,13 +55,25 @@ export function BillingSection() {
     }
   }
 
-  const isPro = planName.toLowerCase().includes("pro");
+  const isPro = isPaidPlanId(planId);
 
-  const onUpgrade = async () => {
+  const onUpgrade = async (targetPlanId: string) => {
+    setPending(true);
     try {
-      await attach({ planId: "pro" });
-    } catch {
-      toast.error("Could not open checkout. Make sure billing is configured.");
+      const result = await attach({
+        planId: targetPlanId,
+        redirectMode: "always",
+        successUrl: checkoutSuccessUrl("/account"),
+      });
+      if (await redirectToCheckout(result)) return;
+      await refetch();
+      toast.success("Plan updated.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not open checkout.";
+      toast.error(message);
+    } finally {
+      setPending(false);
     }
   };
 
@@ -104,18 +126,33 @@ export function BillingSection() {
           </div>
           <div className="flex flex-wrap gap-3">
             {!isPro ? (
-              <Button
-                onClick={() => void onUpgrade()}
-                className="bg-brand text-brand-foreground hover:bg-brand/90"
-              >
-                Upgrade to Pro
-              </Button>
+              <>
+                <Button
+                  disabled={pending}
+                  onClick={() => void onUpgrade(PRO_MONTHLY_PLAN_ID)}
+                  className="rounded-none bg-brand text-brand-foreground hover:brightness-110"
+                >
+                  {pending ? "Opening…" : "Upgrade monthly"}
+                </Button>
+                <Button
+                  disabled={pending}
+                  onClick={() => void onUpgrade(PRO_YEARLY_PLAN_ID)}
+                  variant="outline"
+                  className="rounded-none"
+                >
+                  Upgrade yearly
+                </Button>
+              </>
             ) : null}
-            <Button variant="outline" onClick={() => void onManage()}>
+            <Button
+              variant="outline"
+              className="rounded-none"
+              onClick={() => void onManage()}
+            >
               Manage billing
             </Button>
-            <Button asChild variant="ghost">
-              <Link href="/pricing">View pricing</Link>
+            <Button asChild variant="ghost" className="rounded-none">
+              <Link href="/#pricing">View pricing</Link>
             </Button>
           </div>
         </div>

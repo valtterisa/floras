@@ -1,16 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUp } from "lucide-react";
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputTextarea,
-  PromptInputFooter,
-  PromptInputSubmit,
-  type PromptInputMessage,
-} from "@/components/ai-elements/prompt-input";
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { cn } from "@/lib/utils";
 
 export interface PromptComposerProps {
@@ -25,7 +15,7 @@ export interface PromptComposerProps {
 export function PromptComposer({
   onSubmit,
   suggestions = [],
-  placeholder = "Describe the site you want to build…",
+  placeholder = "A site for…",
   pending = false,
   autoFocus = false,
   className,
@@ -41,42 +31,69 @@ export function PromptComposer({
 
   return (
     <div className={cn("w-full", className)}>
-      <PromptInput
-        className="rounded-3xl border-border/70 bg-card/90 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.45)] backdrop-blur-xl"
-        onSubmit={(message: PromptInputMessage) => submit(message.text ?? "")}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit(text);
+        }}
+        className="border border-border bg-card"
       >
-        <PromptInputBody>
-          <PromptInputTextarea
-            autoFocus={autoFocus}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={placeholder}
-            className="min-h-[88px] px-5 pt-4 text-base"
-          />
-        </PromptInputBody>
-        <PromptInputFooter className="px-3 pb-3">
-          <PromptInputSubmit
-            status={pending ? "submitted" : undefined}
-            disabled={pending}
-            className="size-9 rounded-full bg-brand text-brand-foreground hover:bg-brand/90"
+        <label htmlFor="prompt-composer" className="sr-only">
+          Describe the site to build
+        </label>
+        <textarea
+          id="prompt-composer"
+          name="message"
+          autoFocus={autoFocus}
+          value={text}
+          disabled={pending}
+          rows={5}
+          placeholder={placeholder}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void submit(text);
+            }
+          }}
+          className="min-h-[148px] w-full resize-none bg-transparent px-5 pt-5 pb-4 text-sm leading-relaxed text-foreground placeholder:text-sm placeholder:text-muted-foreground/45 focus:outline-none disabled:opacity-50"
+        />
+        <div className="flex items-center justify-between gap-4 border-t border-border px-4 py-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Shift + Enter for line
+          </p>
+          <button
+            type="submit"
+            disabled={pending || !text.trim()}
+            className={cn(
+              "h-9 min-w-[7.5rem] cursor-pointer px-4 font-mono text-[11px] uppercase tracking-[0.14em] transition-[filter] active:scale-[0.98]",
+              "bg-brand text-brand-foreground hover:brightness-110",
+              "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+            )}
           >
-            <ArrowUp className="size-4" />
-          </PromptInputSubmit>
-        </PromptInputFooter>
-      </PromptInput>
+            {pending ? "Building…" : "Build site"}
+          </button>
+        </div>
+      </form>
 
-      {suggestions.length > 0 && (
-        <Suggestions className="mt-4 justify-start">
+      {suggestions.length > 0 ? (
+        <ul className="mt-8 border-t border-border">
           {suggestions.map((s) => (
-            <Suggestion
-              key={s}
-              suggestion={s}
-              onClick={() => submit(s)}
-              className="rounded-full border-border/70 bg-card/50 text-muted-foreground transition-colors hover:border-border hover:text-foreground active:scale-[0.98]"
-            />
+            <li key={s} className="border-b border-border">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => void submit(s)}
+                className="group flex w-full cursor-pointer py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="text-sm text-muted-foreground transition-colors group-hover:text-foreground">
+                  {s}
+                </span>
+              </button>
+            </li>
           ))}
-        </Suggestions>
-      )}
+        </ul>
+      ) : null}
     </div>
   );
 }

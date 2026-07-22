@@ -8,6 +8,7 @@ export const create = mutation({
   args: {
     prompt: v.string(),
     name: v.optional(v.string()),
+    modelId: v.optional(v.string()),
   },
   returns: v.id("projects"),
   handler: async (ctx, args) => {
@@ -19,6 +20,7 @@ export const create = mutation({
       userId,
       name,
       initialPrompt: args.prompt,
+      modelId: args.modelId,
       status: "draft",
     });
 
@@ -133,6 +135,16 @@ export const setError = mutation({
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
     await ctx.db.patch(args.projectId, { status: "error", error: args.error });
+    return null;
+  },
+});
+
+export const setModel = mutation({
+  args: { projectId: v.id("projects"), modelId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, { modelId: args.modelId });
     return null;
   },
 });
