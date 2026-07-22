@@ -8,8 +8,8 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="astro-shell relative min-h-[100dvh] bg-transparent">
       <MarketingAtmosphere />
-      <div className="relative z-0 border-b border-border">
-        <div className="relative mx-auto w-full max-w-6xl border-x border-border bg-background/80 dark:bg-background/85">
+      <div className="relative z-0 flex min-h-[100dvh] flex-col border-b border-border">
+        <div className="relative mx-auto flex w-full min-h-[100dvh] max-w-6xl flex-1 flex-col border-x border-border bg-background/80 dark:bg-background/85">
           <Floral
             kind="sprig"
             className="absolute -left-[4.5rem] top-28 hidden w-16 opacity-80 xl:block"
@@ -27,7 +27,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             className="absolute -right-[5rem] top-[70rem] hidden w-20 opacity-80 xl:block"
           />
           <SiteNav />
-          <main>{children}</main>
+          <main className="flex flex-1 flex-col">{children}</main>
           <SiteFooter />
         </div>
       </div>
