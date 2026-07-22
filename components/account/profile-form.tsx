@@ -19,47 +19,45 @@ type Me = {
 export function ProfileForm() {
   const me = useQuery((api as any).users.me, {}) as Me | null | undefined;
   const updateProfile = useMutation((api as any).users.updateProfile);
-  const [callSign, setCallSign] = useState("");
+  const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (me) setCallSign(me.name ?? "");
+    if (me) setName(me.name ?? "");
   }, [me]);
 
   const onSave = async () => {
     setSaving(true);
     try {
-      await updateProfile({ name: callSign });
-      toast.success("Call sign saved");
+      await updateProfile({ name });
+      toast.success("Profile saved");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not save call sign"
-      );
+      toast.error(err instanceof Error ? err.message : "Could not save profile");
     } finally {
       setSaving(false);
     }
   };
 
-  const dirty = me != null && callSign.trim() !== (me.name ?? "").trim();
+  const dirty = me != null && name.trim() !== (me.name ?? "").trim();
 
   return (
     <AccountSection
       title="Profile"
-      description="Your call sign is how you appear in Floras. Email is tied to your sign-in."
+      description="Your display name appears in Floras. Email is tied to your sign-in."
     >
       {me === undefined ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (
         <div className="flex max-w-md flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="account-call-sign">Call sign</Label>
+            <Label htmlFor="account-name">Name</Label>
             <Input
-              id="account-call-sign"
-              value={callSign}
-              onChange={(e) => setCallSign(e.target.value)}
-              placeholder="e.g. Val"
+              id="account-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
               maxLength={80}
-              autoComplete="nickname"
+              autoComplete="name"
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -74,10 +72,10 @@ export function ProfileForm() {
           <div>
             <Button
               onClick={() => void onSave()}
-              disabled={saving || !callSign.trim() || !dirty}
+              disabled={saving || !name.trim() || !dirty}
               className="bg-brand text-brand-foreground hover:bg-brand/90"
             >
-              {saving ? "Saving…" : "Save call sign"}
+              {saving ? "Saving…" : "Save profile"}
             </Button>
           </div>
         </div>

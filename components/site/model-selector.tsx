@@ -45,16 +45,16 @@ export function ModelSelector({
         disabled={disabled}
         aria-label="Model"
         className={cn(
-          "inline-flex h-9 max-w-full cursor-pointer items-center gap-2 border border-border bg-background px-2.5 text-left transition-colors",
-          "hover:bg-card disabled:cursor-not-allowed disabled:opacity-40",
-          "focus:outline-none data-[state=open]:bg-card"
+          "inline-flex h-9 max-w-full cursor-pointer items-center gap-2 border border-border bg-background px-2.5 text-left text-muted-foreground transition-colors",
+          "hover:bg-card hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
+          "focus:outline-none data-[state=open]:bg-card data-[state=open]:text-foreground"
         )}
       >
         <ModelLogo provider={selected.provider} className="size-3.5" />
         <span className="truncate text-xs font-medium text-foreground">
           {selected.name}
         </span>
-        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+        <ChevronDown className="size-3.5 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"

@@ -8,10 +8,8 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   PRO_MONTHLY_PLAN_ID,
@@ -24,6 +22,13 @@ export type UpgradeProModalProps = {
   onOpenChange: (open: boolean) => void;
   onPurchased?: () => void;
 };
+
+const FEATURES = [
+  "AI usage included every month",
+  "Full Astro sites from one sentence",
+  "Live preview while you refine in chat",
+  "Top up credits anytime",
+];
 
 export function UpgradeProModal({
   open,
@@ -40,7 +45,8 @@ export function UpgradeProModal({
 
   const planId =
     interval === "month" ? PRO_MONTHLY_PLAN_ID : PRO_YEARLY_PLAN_ID;
-  const priceLabel = interval === "month" ? "$20/mo" : "$192/yr";
+  const priceLabel = interval === "month" ? "$20" : "$192";
+  const cadenceLabel = interval === "month" ? "/mo" : "/yr";
 
   const purchase = async () => {
     if (!isAuthenticated) {
@@ -70,71 +76,97 @@ export function UpgradeProModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-6 rounded-none sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Get Pro to build</DialogTitle>
-          <DialogDescription>
-            Floras needs an active Pro plan before you can prompt the AI. $20 of
-            AI credit every month, live previews, and chat refinements.
+      <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
+        <div className="border-b border-border px-6 py-5 pr-14">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Required to continue
+          </p>
+          <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">
+            Get Pro
+          </DialogTitle>
+          <DialogDescription className="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
+            Unlock generation, live preview, and chat refinements.
           </DialogDescription>
-        </DialogHeader>
+        </div>
 
         <div
           role="group"
           aria-label="Billing period"
-          className="inline-flex w-full border border-border"
+          className="grid grid-cols-2 border-b border-border"
         >
           <button
             type="button"
             aria-pressed={interval === "month"}
             onClick={() => setInterval("month")}
             className={cn(
-              "flex-1 cursor-pointer px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
+              "cursor-pointer px-5 py-4 text-left transition-colors",
               interval === "month"
-                ? "bg-brand text-brand-foreground"
-                : "text-muted-foreground hover:bg-card hover:text-foreground"
+                ? "bg-brand-soft"
+                : "hover:bg-background"
             )}
           >
-            Monthly · $20
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              Monthly
+            </span>
+            <span className="mt-1 flex items-baseline gap-1">
+              <span className="text-2xl font-semibold tracking-tight text-foreground">
+                $20
+              </span>
+              <span className="text-sm text-muted-foreground">/mo</span>
+            </span>
           </button>
           <button
             type="button"
             aria-pressed={interval === "year"}
             onClick={() => setInterval("year")}
             className={cn(
-              "flex-1 cursor-pointer border-l border-border px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
-              interval === "year"
-                ? "bg-brand text-brand-foreground"
-                : "text-muted-foreground hover:bg-card hover:text-foreground"
+              "cursor-pointer border-l border-border px-5 py-4 text-left transition-colors",
+              interval === "year" ? "bg-brand-soft" : "hover:bg-background"
             )}
           >
-            Yearly · $192
+            <span className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Yearly
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-brand">
+                −20%
+              </span>
+            </span>
+            <span className="mt-1 flex items-baseline gap-1">
+              <span className="text-2xl font-semibold tracking-tight text-foreground">
+                $192
+              </span>
+              <span className="text-sm text-muted-foreground">/yr</span>
+            </span>
           </button>
         </div>
 
-        <ul className="border-y border-border text-sm text-muted-foreground">
-          {[
-            "AI usage included every month",
-            "Full Astro sites from one sentence",
-            "Live preview while you refine in chat",
-            "Top up credits anytime",
-          ].map((item) => (
+        <ul>
+          {FEATURES.map((item) => (
             <li
               key={item}
-              className="border-b border-border py-2.5 last:border-b-0"
+              className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0"
             >
               {item}
             </li>
           ))}
         </ul>
 
-        <Button
-          onClick={() => void purchase()}
-          disabled={pending || !isAuthenticated}
-          className="w-full rounded-none bg-brand text-brand-foreground hover:brightness-110 active:scale-[0.98]"
-        >
-          {pending ? "Opening checkout…" : `Get Pro · ${priceLabel}`}
-        </Button>
+        <div className="border-t border-border p-0">
+          <button
+            type="button"
+            onClick={() => void purchase()}
+            disabled={pending || !isAuthenticated}
+            className={cn(
+              "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] active:scale-[0.99]",
+              "hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+            )}
+          >
+            {pending
+              ? "Opening checkout…"
+              : `Get Pro · ${priceLabel}${cadenceLabel}`}
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );
