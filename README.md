@@ -1,22 +1,16 @@
-# Nebula
+# Builddrr
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![Convex](https://img.shields.io/badge/Backend-Convex-orange)](https://convex.dev/)
 
-**Nebula** turns a plain-English prompt into a production-ready [Astro](https://astro.build/) site with a live preview.
+<p align="center">
+  <img src="public/og-image.png" alt="Builddrr — chat with AI to create your website" width="720" />
+</p>
 
-It is a Next.js 15 (App Router) frontend backed by [Convex](https://www.convex.dev/), generating sites inside [box.ascii.dev](https://box.ascii.dev) sandboxes via an [AI SDK](https://ai-sdk.dev/) agent, with [Autumn](https://useautumn.com/) billing.
+**Builddrr** turns a plain-English prompt into a production-ready [Astro](https://astro.build/) site with a live preview.
 
-## Screenshots
-
-### Dashboard
-
-<img width="1440" height="786" alt="Dashboard" src="https://github.com/user-attachments/assets/f6bb71d9-9efd-4b24-8c8b-6c38c083db04" />
-
-### Editor
-
-<img width="1440" height="786" alt="Editor" src="https://github.com/user-attachments/assets/8db64823-a874-479c-ae27-61a41b08ebd1" />
+It is a Next.js 16 (App Router) frontend backed by [Convex](https://www.convex.dev/), generating sites inside [box.ascii.dev](https://box.ascii.dev) sandboxes via an [AI SDK](https://ai-sdk.dev/) agent, with [Autumn](https://useautumn.com/) billing.
 
 ## Features
 
@@ -44,7 +38,7 @@ It is a Next.js 15 (App Router) frontend backed by [Convex](https://www.convex.d
 
 | Layer | Stack |
 | --- | --- |
-| Frontend | Next.js 15 App Router, Tailwind v4, AI SDK Elements |
+| Frontend | Next.js 16 App Router, Tailwind v4, AI SDK Elements |
 | Backend / DB | Convex + Convex Auth (password) |
 | Agent | AI SDK 7 `ToolLoopAgent` in a Convex Node action |
 | Output | Zod `SitePlan` → deterministic Astro scaffold |
@@ -176,7 +170,6 @@ Full reference: [`.env.example`](.env.example).
 | `components/dashboard/` | Dashboard prompt + project grid/cards |
 | `components/workspace/` | Workspace header, chat, preview |
 | `components/auth/` | Sign-in form + auth modal |
-| `components/dashboard/` | Dashboard prompt + project grid |
 | `convex/` | Schema, auth, generate action, Autumn, projects/messages |
 | `lib/ai/` | Agent + design guidelines |
 | `lib/schema/` | Zod `SitePlan` |

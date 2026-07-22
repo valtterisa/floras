@@ -19,7 +19,7 @@ export function SiteFooter() {
           </Link>
         </nav>
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Nebula
+          &copy; {new Date().getFullYear()} Builddrr
         </p>
       </Container>
     </footer>

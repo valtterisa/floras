@@ -27,7 +27,7 @@ export function DashboardPrompt() {
     <div className="max-w-2xl">
       <PageHeader
         title="What are we building today?"
-        description="Describe a site and Nebula generates it in a live sandbox."
+        description="Describe a site and Builddrr generates it in a live sandbox."
         size="section"
       />
       <div className="mt-8">

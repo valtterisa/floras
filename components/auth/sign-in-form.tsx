@@ -108,7 +108,7 @@ export function SignInForm({
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        {flow === "signUp" ? "Already have an account?" : "New to Nebula?"}{" "}
+        {flow === "signUp" ? "Already have an account?" : "New to Builddrr?"}{" "}
         <button
           type="button"
           onClick={() => setFlow(flow === "signUp" ? "signIn" : "signUp")}

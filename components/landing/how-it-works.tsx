@@ -5,7 +5,7 @@ import { Section } from "@/components/site/section";
 const STEPS = [
   {
     title: "Describe",
-    body: "Write one sentence about the site. Nebula reads the brief and picks a design direction.",
+    body: "Write one sentence about the site. Builddrr reads the brief and picks a design direction.",
   },
   {
     title: "Generate",

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a bug in Nebula
+description: Report a bug in Builddrr
 labels: ["bug"]
 body:
   - type: markdown

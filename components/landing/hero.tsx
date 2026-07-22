@@ -27,7 +27,7 @@ export function Hero() {
             <div className="flex items-center gap-3">
               <LogoMark className="size-9 rounded-xl" />
               <span className="text-2xl font-semibold tracking-tight md:text-3xl">
-                Nebula
+                Builddrr
               </span>
             </div>
           </Reveal>

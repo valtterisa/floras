@@ -1,7 +1,7 @@
-# Nebula — AI Astro site generator
+# Builddrr — AI Astro site generator
 
-Nebula turns a plain-English prompt into a production-ready Astro site with a live
-preview. It is a Next.js 15 (App Router) frontend backed by Convex, generating
+Builddrr turns a plain-English prompt into a production-ready Astro site with a live
+preview. It is a Next.js 16 (App Router) frontend backed by Convex, generating
 sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
 
 ## Architecture

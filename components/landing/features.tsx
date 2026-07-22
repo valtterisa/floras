@@ -20,8 +20,8 @@ export function Features() {
           <article>
             <div className="overflow-hidden rounded-2xl border border-border/60">
               <img
-                src="https://picsum.photos/seed/nebula-workspace-preview/1400/900"
-                alt="Nebula workspace with chat and live site preview"
+                src="https://picsum.photos/seed/builddrr-workspace-preview/1400/900"
+                alt="Builddrr workspace with chat and live site preview"
                 className="aspect-[16/10] h-full w-full object-cover"
               />
             </div>

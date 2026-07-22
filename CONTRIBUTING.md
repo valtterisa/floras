@@ -1,4 +1,4 @@
-# Contributing to Nebula
+# Contributing to Builddrr
 
 Thanks for contributing. This guide covers local setup, how we work, and what makes a good pull request.
 
@@ -17,7 +17,7 @@ Participation is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). Be respe
 - Node.js 20+
 - pnpm 10+ (`packageManager` in `package.json`)
 - Convex account (cloud deployment recommended)
-- Keys for AI Gateway, Box, and Autumn (see [`.env.example`](.env.example))
+- Keys for Anthropic, Box, and Autumn (see [`.env.example`](.env.example))
 
 ## Local setup
 
