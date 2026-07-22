@@ -1,13 +1,19 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { updateSession } from "./lib/supabase/middleware";
+import {
+  convexAuthNextjsMiddleware,
+  nextjsMiddlewareRedirect,
+} from "@convex-dev/auth/nextjs/server";
 
-export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+function isProtected(pathname: string): boolean {
+  return pathname.startsWith("/build") || pathname.startsWith("/dashboard");
 }
 
+export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
+  const pathname = request.nextUrl.pathname;
+  if (isProtected(pathname) && !(await convexAuth.isAuthenticated())) {
+    return nextjsMiddlewareRedirect(request, "/signin");
+  }
+});
+
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
 };

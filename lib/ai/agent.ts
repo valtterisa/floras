@@ -1,0 +1,125 @@
+import { Experimental_Agent as Agent, stepCountIs, tool } from "ai";
+import { gateway } from "@ai-sdk/gateway";
+import { z } from "zod";
+import { sitePlanSchema, type SitePlan } from "@/lib/schema/site";
+import { scaffoldAstroProject } from "@/lib/astro/scaffold";
+import * as box from "@/lib/box/client";
+import { DESIGN_GUIDELINES } from "@/lib/ai/design-guidelines";
+
+export type AgentStepKind =
+  | "plan"
+  | "write"
+  | "read"
+  | "command"
+  | "preview"
+  | "note";
+
+export interface AgentStep {
+  kind: AgentStepKind;
+  label: string;
+  detail?: string;
+}
+
+export interface BuildAgentOptions {
+  boxId: string;
+  onStep: (step: AgentStep) => Promise<void> | void;
+  onPlan: (plan: SitePlan) => Promise<void> | void;
+  onPreview: (url: string) => Promise<void> | void;
+  hasPreview: boolean;
+}
+
+function getModel() {
+  return gateway(process.env.AGENT_MODEL ?? "anthropic/claude-sonnet-4.5");
+}
+
+const SYSTEM = `You are an expert Astro web engineer inside a Linux sandbox. You generate and edit beautiful, production-ready Astro sites (landing pages and blogs) that live in the "site/" project directory.
+
+WORKFLOW
+1. Call plan_site once with a complete, well-structured site plan. This scaffolds a full working Astro project and boots a live preview automatically.
+2. Refine specific files with write_file / read_file for anything the scaffold does not fully capture (custom components, copy, styling).
+3. Keep changes minimal and targeted. The dev server hot-reloads, so you never restart it manually.
+4. When the site satisfies the request, stop and give a one-paragraph summary of what you built.
+
+Never dump large explanations between tool calls. Prefer editing files over describing them.
+
+${DESIGN_GUIDELINES}`;
+
+export function buildSiteAgent(opts: BuildAgentOptions) {
+  const { boxId, onStep, onPlan, onPreview } = opts;
+
+  const tools = {
+    plan_site: tool({
+      description:
+        "Scaffold or fully re-generate the Astro site from a structured plan, then start the live preview.",
+      inputSchema: sitePlanSchema,
+      execute: async (plan) => {
+        await onStep({ kind: "plan", label: `Planned "${plan.siteName}"`, detail: `${plan.pages.length} page(s)` });
+        const files = scaffoldAstroProject(plan as SitePlan);
+        await box.writeFiles(boxId, files);
+        await onPlan(plan as SitePlan);
+        await onStep({ kind: "write", label: `Scaffolded ${files.length} files` });
+        const url = await box.startPreview(boxId);
+        await onPreview(url);
+        await onStep({ kind: "preview", label: "Live preview ready", detail: url });
+        return {
+          ok: true,
+          files: files.map((f) => f.path),
+          previewUrl: url,
+        };
+      },
+    }),
+
+    write_file: tool({
+      description: "Create or overwrite one file in the site project.",
+      inputSchema: z.object({
+        path: z.string().describe("Path relative to the site root, e.g. src/components/Hero.astro"),
+        content: z.string(),
+      }),
+      execute: async ({ path, content }) => {
+        await box.writeFiles(boxId, [{ path, content }]);
+        await onStep({ kind: "write", label: `Edited ${path}` });
+        return { ok: true };
+      },
+    }),
+
+    read_file: tool({
+      description: "Read one file from the site project.",
+      inputSchema: z.object({ path: z.string() }),
+      execute: async ({ path }) => {
+        const content = await box.readFile(boxId, path);
+        await onStep({ kind: "read", label: `Read ${path}` });
+        return { content };
+      },
+    }),
+
+    list_files: tool({
+      description: "List the files in the site project.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const res = await box.runCommand(
+          boxId,
+          "find . -type f -not -path './node_modules/*' -not -path './.astro/*' | sort"
+        );
+        await onStep({ kind: "command", label: "Listed project files" });
+        return { files: res.stdout.split("\n").filter(Boolean) };
+      },
+    }),
+
+    run_command: tool({
+      description: "Run a short shell command in the site project (e.g. install a package).",
+      inputSchema: z.object({ command: z.string() }),
+      execute: async ({ command }) => {
+        const res = await box.runCommand(boxId, command, { timeoutSeconds: 120 });
+        await onStep({ kind: "command", label: command, detail: res.stderr || undefined });
+        return { exitCode: res.exitCode, stdout: res.stdout.slice(0, 4000), stderr: res.stderr.slice(0, 2000) };
+      },
+    }),
+  };
+
+  return new Agent({
+    model: getModel(),
+    system: SYSTEM,
+    tools,
+    stopWhen: stepCountIs(24),
+  });
+}

@@ -1,59 +1,36 @@
-import type React from "react";
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import { ReactNode, Suspense } from "react";
-import { SandboxState } from "@/components/modals/sandbox-state";
-import { ChatProvider } from "@/lib/chat-context";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
+import { ConvexClientProvider } from "./ConvexClientProvider";
+import { AutumnWrapper } from "./AutumnWrapper";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://builddrr.com"),
-  title: "Builddrr - Make websites with AI",
-  description: "Generate a professional website with AI. No coding required.",
-  openGraph: {
-    title: "Builddrr - Make websites with AI",
-    description: "Generate a professional website with AI. No coding required.",
-    url: "https://builddrr.com",
-    siteName: "Builddrr",
-    images: "/og-image.png",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Builddrr - Make websites with AI",
-    description:
-      "Generate a professional one-page website with AI. No coding required.",
-    images: "/og-image.png",
-  },
+  title: "Nebula — Astro sites, generated",
+  description:
+    "Describe your idea. Nebula generates a production-ready Astro site with a live preview in seconds.",
 };
-
-const geist = Geist({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: ReactNode }>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geist.className} antialiased bg-background text-foreground`}
-      >
-        <Suspense fallback={null}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem={false}
-            forcedTheme="light"
-            disableTransitionOnChange
-          >
-            <NuqsAdapter>
-              <ChatProvider>{children}</ChatProvider>
-            </NuqsAdapter>
-          </ThemeProvider>
-        </Suspense>
-        <Toaster />
-      </body>
-    </html>
+    <ConvexAuthNextjsServerProvider>
+      <html lang="en" className={`dark ${geist.variable} ${geistMono.variable}`}>
+        <body className="min-h-[100dvh] bg-background text-foreground antialiased font-sans">
+          <ConvexClientProvider>
+            <AutumnWrapper>
+              <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+              <Toaster position="top-center" richColors />
+            </AutumnWrapper>
+          </ConvexClientProvider>
+        </body>
+      </html>
+    </ConvexAuthNextjsServerProvider>
   );
 }
