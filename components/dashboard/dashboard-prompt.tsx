@@ -7,6 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUp, Check, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelSelector } from "@/components/site/model-selector";
+import { MessageResponse } from "@/components/ai-elements/message";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
   DropdownMenu,
@@ -332,9 +333,20 @@ export function DashboardPrompt({
                   <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     {turn.role === "user" ? "You" : "Floras"}
                   </p>
-                  <p className="whitespace-pre-wrap">
-                    {turn.content || (pending ? "…" : "")}
-                  </p>
+                  {turn.role === "user" ? (
+                    <p className="whitespace-pre-wrap">{turn.content}</p>
+                  ) : turn.content ? (
+                    <MessageResponse
+                      isAnimating={
+                        pending &&
+                        turn.id === askTurns[askTurns.length - 1]?.id
+                      }
+                    >
+                      {turn.content}
+                    </MessageResponse>
+                  ) : pending ? (
+                    <p>…</p>
+                  ) : null}
                 </li>
               ))}
             </ul>
