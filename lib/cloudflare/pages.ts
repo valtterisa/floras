@@ -9,6 +9,7 @@ import { domainStatusSchema } from "@/lib/publish/types";
 export type CloudflareConfig = {
   apiToken: string;
   accountId: string;
+  zoneId: string;
 };
 
 export type ProjectPublishInfo = {
@@ -25,23 +26,25 @@ export type EnsurePagesProjectResult = {
 export function getCloudflareConfig(): CloudflareConfig {
   const apiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
-  if (!apiToken || !accountId) {
+  const zoneId = process.env.CLOUDFLARE_ZONE_ID?.trim();
+  if (!apiToken || !accountId || !zoneId) {
     throw new AppError(
       "config",
       "Cloudflare publishing is not configured.",
       {
         detail:
-          "CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID must be set in the Next.js environment",
+          "CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, and CLOUDFLARE_ZONE_ID must be set in the Next.js environment",
       }
     );
   }
-  return { apiToken, accountId };
+  return { apiToken, accountId, zoneId };
 }
 
 export function cloudflareConfigured(): boolean {
   return Boolean(
     process.env.CLOUDFLARE_API_TOKEN?.trim() &&
-      process.env.CLOUDFLARE_ACCOUNT_ID?.trim()
+      process.env.CLOUDFLARE_ACCOUNT_ID?.trim() &&
+      process.env.CLOUDFLARE_ZONE_ID?.trim()
   );
 }
 
@@ -251,7 +254,7 @@ export async function removeDomain(
   }
 }
 
-function mapCloudflareError(error: unknown, fallback: string): AppError {
+export function mapCloudflareError(error: unknown, fallback: string): AppError {
   if (error instanceof AppError) return error;
   if (error instanceof APIError) {
     const status = error.status;

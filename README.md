@@ -137,8 +137,10 @@ Full reference: [`.env.example`](.env.example).
 | `CONVEX_DEPLOYMENT` | Deployment name (from `convex dev`) |
 | `AUTUMN_SECRET_KEY` | Autumn handler on the Next.js side |
 | `BOX_API_KEY` | Box sandboxes (generate + publish) |
-| `CLOUDFLARE_API_TOKEN` | Pages Edit token for publish/domains |
+| `CLOUDFLARE_API_TOKEN` | Pages Edit + Zone DNS Edit (floras.app) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account for Pages projects |
+| `CLOUDFLARE_ZONE_ID` | floras.app zone ID (per-subdomain CNAMEs) |
+| `FLORAS_SITES_DOMAIN` | Public host suffix (default `floras.app`) |
 
 **Convex deployment** (`npx convex env set …`)
 

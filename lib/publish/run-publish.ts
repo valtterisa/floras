@@ -2,6 +2,10 @@ import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import * as box from "@/lib/box/client";
 import {
+  deleteFlorasCname,
+  upsertFlorasCname,
+} from "@/lib/cloudflare/dns";
+import {
   addDomain,
   cloudflareConfigured,
   deletePagesProject,
@@ -67,6 +71,8 @@ export async function runPublish(projectId: string, token: string) {
 
   const name = pagesProjectName(projectId);
   let createdProjectThisRun = false;
+  let florasHost: string | undefined;
+  let florasHostIsNew = false;
   let committed = false;
 
   try {
@@ -113,7 +119,7 @@ export async function runPublish(projectId: string, token: string) {
       }
     );
 
-    await withRetry(() => getProjectPublishInfo(name), {
+    const publishInfo = await withRetry(() => getProjectPublishInfo(name), {
       attempts: 4,
       initialDelayMs: 500,
       maxDelayMs: 4000,
@@ -123,11 +129,13 @@ export async function runPublish(projectId: string, token: string) {
 
     const existingSubdomain =
       typeof project.cfSubdomain === "string" ? project.cfSubdomain : "";
-    const florasHost = isFlorasHostname(existingSubdomain)
-      ? existingSubdomain
-      : generateFlorasHostname();
+    florasHostIsNew = !isFlorasHostname(existingSubdomain);
+    const host = florasHostIsNew
+      ? generateFlorasHostname()
+      : existingSubdomain;
+    florasHost = host;
 
-    await withRetry(() => addDomain(name, florasHost), {
+    await withRetry(() => addDomain(name, host), {
       attempts: 3,
       initialDelayMs: 800,
       maxDelayMs: 6000,
@@ -136,14 +144,25 @@ export async function runPublish(projectId: string, token: string) {
     });
 
     await withRetry(
+      () => upsertFlorasCname(host, publishInfo.subdomain),
+      {
+        attempts: 3,
+        initialDelayMs: 800,
+        maxDelayMs: 6000,
+        label: "upsertFlorasCname",
+        retryable: isRetryableCloudflareError,
+      }
+    );
+
+    await withRetry(
       () =>
         fetchMutation(
           (api as any).projects.setPublished,
           {
             projectId,
             cfProjectName: name,
-            cfSubdomain: florasHost,
-            publishedUrl: `https://${florasHost}`,
+            cfSubdomain: host,
+            publishedUrl: `https://${host}`,
             publishedAt: Date.now(),
           },
           { token }
@@ -158,6 +177,18 @@ export async function runPublish(projectId: string, token: string) {
     );
     committed = true;
   } catch (error) {
+    if (!committed && florasHost && florasHostIsNew) {
+      await withRetry(() => deleteFlorasCname(florasHost!), {
+        attempts: 3,
+        initialDelayMs: 500,
+        maxDelayMs: 4000,
+        label: "deleteFlorasCname",
+        retryable: isRetryableCloudflareError,
+      }).catch((rollbackError) => {
+        console.error("Failed to roll back Floras DNS", rollbackError);
+      });
+    }
+
     if (createdProjectThisRun && !committed) {
       await withRetry(() => deletePagesProject(name), {
         attempts: 3,
@@ -180,8 +211,8 @@ export async function runPublish(projectId: string, token: string) {
       (api as any).projects.setPublishError,
       { projectId, error: appError.message },
       { token }
-    ).catch(() => {});
+    ).catch(() => { });
   } finally {
-    await box.scrubCfEnv(boxId).catch(() => {});
+    await box.scrubCfEnv(boxId).catch(() => { });
   }
 }

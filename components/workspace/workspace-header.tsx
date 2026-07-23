@@ -41,6 +41,7 @@ export function WorkspaceHeader({
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
   const awaitingResult = useRef(false);
 
   useEffect(() => {
@@ -80,10 +81,11 @@ export function WorkspaceHeader({
   const creditLabel = formatCredits(balance);
   const isPublishing = publishing || publishStatus === "publishing";
   const isPublished = publishStatus === "published";
+  const busy = isPublishing || unpublishing;
   const canOpenPublish = Boolean(boxId);
 
   async function handlePublish() {
-    if (!boxId || isPublishing) return;
+    if (!boxId || busy) return;
     setPublishing(true);
     awaitingResult.current = true;
     try {
@@ -101,6 +103,27 @@ export function WorkspaceHeader({
       awaitingResult.current = false;
       setPublishing(false);
       toast.error(AppError.from(error).message);
+    }
+  }
+
+  async function handleUnpublish() {
+    if (!isPublished || busy) return;
+    setUnpublishing(true);
+    try {
+      const res = await fetch("/api/publish", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId }),
+      });
+      if (!res.ok) {
+        toast.error((await AppError.fromResponse(res)).message);
+        return;
+      }
+      setPublishOpen(false);
+    } catch (error) {
+      toast.error(AppError.from(error).message);
+    } finally {
+      setUnpublishing(false);
     }
   }
 
@@ -145,7 +168,7 @@ export function WorkspaceHeader({
 
           <button
             type="button"
-            disabled={!canOpenPublish}
+            disabled={!canOpenPublish || unpublishing}
             onClick={() => setPublishOpen(true)}
             className={cn(
               "inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 bg-brand px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter,transform] hover:brightness-110 active:scale-[0.98]",
@@ -156,6 +179,11 @@ export function WorkspaceHeader({
               <>
                 <Loader2 className="size-3.5 animate-spin" />
                 <span className="hidden sm:inline">Publishing</span>
+              </>
+            ) : unpublishing ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                <span className="hidden sm:inline">Unpublishing</span>
               </>
             ) : isPublished ? (
               "Live"
@@ -170,7 +198,9 @@ export function WorkspaceHeader({
         open={publishOpen}
         onOpenChange={setPublishOpen}
         onConfirm={() => void handlePublish()}
+        onUnpublish={() => void handleUnpublish()}
         publishing={isPublishing}
+        unpublishing={unpublishing}
         isPublished={isPublished}
         publishedUrl={publishedUrl}
         cfSubdomain={cfSubdomain}

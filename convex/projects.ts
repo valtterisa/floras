@@ -222,6 +222,27 @@ export const setPublishError = mutation({
   },
 });
 
+export const clearPublished = mutation({
+  args: { projectId: v.id("projects") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, {
+      publishStatus: "idle",
+      cfProjectName: undefined,
+      cfSubdomain: undefined,
+      publishedUrl: undefined,
+      publishedAt: undefined,
+      publishError: undefined,
+      customDomain: undefined,
+      customDomainStatus: undefined,
+      customDomainError: undefined,
+      customDomainUpdatedAt: undefined,
+    });
+    return null;
+  },
+});
+
 export const setCustomDomain = mutation({
   args: {
     projectId: v.id("projects"),

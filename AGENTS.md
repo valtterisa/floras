@@ -24,7 +24,9 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   User Boxes are created with `noEnv: true`.
 - **Publish / domains:** Next.js routes `app/api/publish` and `app/api/domains`. Build +
   Wrangler Direct Upload run **inside** the Box; Pages project/domain CRUD uses the
-  official `cloudflare` SDK. Live URL comes from Pages REST GET, not Wrangler stdout.
+  official `cloudflare` SDK. Because Pages has no wildcard custom domains, publish
+  also upserts a DNS CNAME for `{id}.floras.app` → the project `*.pages.dev` host.
+  Live URL is the floras.app hostname (custom domains optional afterward).
 - **Billing:** `autumn-js` via Next.js (`app/api/autumn/[...all]`, `lib/billing/get-access.ts`,
   fail-open) + `autumn.config.ts` plans. Frontend uses `autumn-js/react`.
 
@@ -50,10 +52,13 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   `AGENT_MODEL` (defaults to `claude-sonnet-4-5`), `BOX_BASE_URL`.
   New Boxes clone `https://github.com/valtterisa/astro-template.git` into `site/`.
 - **Cloudflare publish (Next.js `.env.local` / host secrets, not Box dashboard):**
-  `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit) and
-  `CLOUDFLARE_ACCOUNT_ID`. Do **not** put these in Box Dashboard → Secrets — user
-  Boxes are `noEnv` and must not receive Floras hosting credentials. Publish injects
-  them into the Box only for the Wrangler deploy command, then scrubs the temp file.
+  `CLOUDFLARE_API_TOKEN` (User token: Account → Cloudflare Pages → Edit **and**
+  Zone → DNS → Edit on `floras.app`), `CLOUDFLARE_ACCOUNT_ID`, and
+  `CLOUDFLARE_ZONE_ID` (floras.app zone). Pages does not support wildcard custom
+  domains, so publish upserts a per-site CNAME `{id}.floras.app` → `*.pages.dev`.
+  Do **not** put these in Box Dashboard → Secrets — user Boxes are `noEnv` and
+  must not receive Floras hosting credentials. Publish injects them into the Box
+  only for the Wrangler deploy command, then scrubs the temp file.
 - **Convex Auth keys:** run `npx @convex-dev/auth` once to provision `JWT_PRIVATE_KEY`,
   `JWKS`, and `SITE_URL` in the Convex deployment env.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).

@@ -92,7 +92,7 @@ const RULES: Array<{ code: AppErrorCode; test: (text: string) => boolean }> = [
   {
     code: "config",
     test: (t) =>
-      /\b(api.?key|box_api_key|cloudflare_api_token|cloudflare_account_id|\.env|not configured|environment secrets|missing secret)\b/.test(
+      /\b(api.?key|box_api_key|cloudflare_api_token|cloudflare_account_id|cloudflare_zone_id|\.env|not configured|environment secrets|missing secret)\b/.test(
         t
       ),
   },

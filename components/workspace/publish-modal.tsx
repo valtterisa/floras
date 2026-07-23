@@ -16,7 +16,9 @@ export type PublishModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  onUnpublish?: () => void;
   publishing: boolean;
+  unpublishing?: boolean;
   isPublished: boolean;
   publishedUrl?: string | null;
   cfSubdomain?: string | null;
@@ -32,7 +34,9 @@ export function PublishModal({
   open,
   onOpenChange,
   onConfirm,
+  onUnpublish,
   publishing,
+  unpublishing = false,
   isPublished,
   publishedUrl,
   cfSubdomain,
@@ -40,6 +44,7 @@ export function PublishModal({
   customDomainStatus,
 }: PublishModalProps) {
   const [copied, setCopied] = useState(false);
+  const busy = publishing || unpublishing;
 
   const florasUrl =
     publishedUrl ?? (cfSubdomain ? `https://${cfSubdomain}` : null);
@@ -66,7 +71,8 @@ export function PublishModal({
   const facts = isPublished
     ? [
         "Anyone with the link can open this site",
-        "Republish to replace the live build with this version",
+        "Update live to replace the current build",
+        "Unpublish removes the Cloudflare project and floras.app DNS",
       ]
     : [
         "Builds the site and puts it on the public web",
@@ -86,7 +92,7 @@ export function PublishModal({
           </DialogTitle>
           <DialogDescription className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
             {isPublished
-              ? "Open the public URL, or republish to push the latest version."
+              ? "Open the public URL, update the live build, or take it down."
               : "Confirm where this site will live, then publish."}
           </DialogDescription>
         </div>
@@ -175,41 +181,84 @@ export function PublishModal({
         </ul>
 
         <div className="border-t border-border p-0">
-          {isPublished && liveUrl ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2">
-              <a
-                href={liveUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
-              >
-                <ExternalLink className="size-3.5" />
-                Open site
-              </a>
-              <button
-                type="button"
-                onClick={onConfirm}
-                disabled={publishing}
-                className={cn(
-                  "inline-flex h-12 cursor-pointer items-center justify-center gap-2 border-t border-border bg-background px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card active:scale-[0.99] sm:border-t-0 sm:border-l",
-                  "disabled:cursor-not-allowed disabled:opacity-40"
-                )}
-              >
-                {publishing ? (
-                  <>
-                    <Loader2 className="size-3.5 animate-spin" />
-                    Publishing…
-                  </>
-                ) : (
-                  "Update live"
-                )}
-              </button>
-            </div>
+          {isPublished ? (
+            <>
+              {liveUrl ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  <a
+                    href={liveUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
+                  >
+                    <ExternalLink className="size-3.5" />
+                    Open site
+                  </a>
+                  <button
+                    type="button"
+                    onClick={onConfirm}
+                    disabled={busy}
+                    className={cn(
+                      "inline-flex h-12 cursor-pointer items-center justify-center gap-2 border-t border-border bg-background px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card active:scale-[0.99] sm:border-t-0 sm:border-l",
+                      "disabled:cursor-not-allowed disabled:opacity-40"
+                    )}
+                  >
+                    {publishing ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />
+                        Publishing…
+                      </>
+                    ) : (
+                      "Update live"
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onConfirm}
+                  disabled={busy}
+                  className={cn(
+                    "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] active:scale-[0.99]",
+                    "hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+                  )}
+                >
+                  {publishing ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" />
+                      Publishing…
+                    </>
+                  ) : (
+                    "Update live"
+                  )}
+                </button>
+              )}
+              {onUnpublish ? (
+                <button
+                  type="button"
+                  onClick={onUnpublish}
+                  disabled={busy}
+                  className={cn(
+                    "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 border-t border-border bg-background px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-destructive transition-colors hover:bg-destructive/5 active:scale-[0.99]",
+                    "disabled:cursor-not-allowed disabled:opacity-40"
+                  )}
+                >
+                  {unpublishing ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" />
+                      Unpublishing…
+                    </>
+                  ) : (
+                    "Unpublish"
+                  )}
+                </button>
+              ) : null}
+            </>
           ) : (
             <button
               type="button"
               onClick={onConfirm}
-              disabled={publishing}
+              disabled={busy}
               className={cn(
                 "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] active:scale-[0.99]",
                 "hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
