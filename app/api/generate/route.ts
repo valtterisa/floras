@@ -1,7 +1,8 @@
 import { after } from "next/server";
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
-import { fetchAction, fetchQuery } from "convex/nextjs";
+import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
+import { getAccess } from "@/lib/billing/get-access";
 import { runGeneration } from "@/lib/generate/run-generation";
 
 export const maxDuration = 300;
@@ -35,31 +36,29 @@ export async function POST(req: Request) {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
-  try {
-    const access = await fetchAction(
-      (api as any).billingGate.getAccess,
-      {},
-      { token }
+  const me = await fetchQuery((api as any).users.me, {}, { token });
+  if (!me?.id) {
+    return Response.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const access = await getAccess(me.id);
+  if (!access.hasPaidPlan) {
+    return Response.json(
+      {
+        error: "Pro plan required to generate sites.",
+        code: "NO_PLAN",
+      },
+      { status: 402 }
     );
-    if (!access?.hasPaidPlan) {
-      return Response.json(
-        {
-          error: "Pro plan required to generate sites.",
-          code: "NO_PLAN",
-        },
-        { status: 402 }
-      );
-    }
-    if (access.creditAllowed === false) {
-      return Response.json(
-        {
-          error: "AI credit balance too low. Top up to continue.",
-          code: "NO_CREDITS",
-        },
-        { status: 402 }
-      );
-    }
-  } catch {
+  }
+  if (!access.creditAllowed) {
+    return Response.json(
+      {
+        error: "AI credit balance too low. Top up to continue.",
+        code: "NO_CREDITS",
+      },
+      { status: 402 }
+    );
   }
 
   after(() => runGeneration(projectId, token));

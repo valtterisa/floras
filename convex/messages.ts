@@ -73,6 +73,22 @@ export const addStep = mutation({
   },
 });
 
+export const setContent = mutation({
+  args: {
+    messageId: v.id("messages"),
+    content: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const msg = await ctx.db.get(args.messageId);
+    if (!msg || msg.userId !== userId) throw new Error("Not found");
+    await ctx.db.patch(args.messageId, { content: args.content });
+    return null;
+  },
+});
+
 export const finish = mutation({
   args: {
     messageId: v.id("messages"),

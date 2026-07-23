@@ -5,7 +5,10 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { MessageList, type ChatMessage } from "@/components/workspace/message-list";
-import { PromptComposer } from "@/components/site/prompt-composer";
+import {
+  PromptComposer,
+  type ComposerMode,
+} from "@/components/site/prompt-composer";
 import { TopUpModal } from "@/components/billing/top-up-modal";
 import { UpgradeProModal } from "@/components/billing/upgrade-pro-modal";
 import { Button } from "@/components/ui/button";
@@ -16,20 +19,23 @@ import {
   type AgentModelId,
 } from "@/lib/ai/models";
 import { useGenerationAccess } from "@/lib/hooks/use-generation-access";
+import { triggerAsk } from "@/lib/generate/trigger-ask";
 import { triggerGeneration } from "@/lib/generate/trigger-generation";
 
 export function ChatPanel({
   projectId,
   busy,
+  defaultMode = "build",
 }: {
   projectId: string;
   busy: boolean;
+  defaultMode?: ComposerMode;
 }) {
   const messages = useQuery((api as any).messages.list, { projectId }) as
     | ChatMessage[]
     | undefined;
   const project = useQuery((api as any).projects.get, { projectId }) as
-    | { modelId?: string }
+    | { modelId?: string; previewUrl?: string }
     | null
     | undefined;
   const send = useMutation((api as any).messages.send);
@@ -38,10 +44,17 @@ export function ChatPanel({
     useGenerationAccess();
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [mode, setMode] = useState<ComposerMode>(defaultMode);
 
   const defaultModelId = resolveAgentModelId(project?.modelId ?? null);
+  const streaming = (messages ?? []).some((m) => m.status === "streaming");
+  const pending = busy || streaming;
 
-  const handle = async (text: string, modelId: AgentModelId) => {
+  const handle = async (
+    text: string,
+    modelId: AgentModelId,
+    nextMode: ComposerMode
+  ) => {
     const reason = getDenyReason();
     if (reason === "no_plan") {
       setUpgradeOpen(true);
@@ -54,7 +67,11 @@ export function ChatPanel({
     try {
       await setModel({ projectId, modelId });
       await send({ projectId, content: text });
-      await triggerGeneration(projectId);
+      if (nextMode === "ask") {
+        await triggerAsk(projectId);
+      } else {
+        await triggerGeneration(projectId);
+      }
       await refetch();
     } catch (e) {
       const err = e as Error & { code?: string };
@@ -111,13 +128,13 @@ export function ChatPanel({
         <PromptComposer
           key={defaultModelId}
           onSubmit={handle}
-          pending={busy}
+          pending={pending}
+          mode={mode}
+          onModeChange={setMode}
+          defaultMode={defaultMode}
           defaultModelId={
             project === undefined ? DEFAULT_AGENT_MODEL_ID : defaultModelId
           }
-          placeholder="Ask for changes: copy, sections, colors, a blog…"
-          submitLabel="Send"
-          pendingLabel="Sending…"
         />
       </div>
       <UpgradeProModal

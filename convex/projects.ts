@@ -21,7 +21,7 @@ export const create = mutation({
       name,
       initialPrompt: args.prompt,
       modelId: args.modelId,
-      status: "draft",
+      status: "ready",
     });
 
     await ctx.db.insert("messages", {

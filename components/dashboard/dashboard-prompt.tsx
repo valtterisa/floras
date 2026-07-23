@@ -7,7 +7,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUp, Check, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelSelector } from "@/components/site/model-selector";
-import { MessageResponse } from "@/components/ai-elements/message";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
   DropdownMenu,
@@ -19,11 +18,13 @@ import { UpgradeProModal } from "@/components/billing/upgrade-pro-modal";
 import { TopUpModal } from "@/components/billing/top-up-modal";
 import { useCreateSite } from "@/lib/hooks/use-create-site";
 import { useGenerationAccess } from "@/lib/hooks/use-generation-access";
+import { triggerAsk } from "@/lib/generate/trigger-ask";
 import { triggerGeneration } from "@/lib/generate/trigger-generation";
 import {
   DEFAULT_AGENT_MODEL_ID,
   type AgentModelId,
 } from "@/lib/ai/models";
+import type { ComposerMode } from "@/components/site/prompt-composer";
 import { cn } from "@/lib/utils";
 
 const SUGGESTIONS = [
@@ -56,12 +57,6 @@ const ROLLING = [
 const TEXTAREA_MIN_PX = 88;
 const TEXTAREA_MAX_PX = 240;
 
-type AskTurn = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
-
 export function DashboardPrompt({
   resetKey = 0,
 }: {
@@ -74,7 +69,6 @@ export function DashboardPrompt({
     useGenerationAccess();
   const reduce = useReducedMotion();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const askScrollRef = useRef<HTMLDivElement>(null);
   const fromAuthPrompt = useRef(false);
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
@@ -83,13 +77,11 @@ export function DashboardPrompt({
   const [modKey, setModKey] = useState("Ctrl");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [topUpOpen, setTopUpOpen] = useState(false);
-  const [askMode, setAskMode] = useState(false);
-  const [askTurns, setAskTurns] = useState<AskTurn[]>([]);
+  const [mode, setMode] = useState<ComposerMode>("build");
 
   useEffect(() => {
     setText("");
-    setAskTurns([]);
-    setAskMode(false);
+    setMode("build");
     textareaRef.current?.focus();
   }, [resetKey]);
 
@@ -115,12 +107,12 @@ export function DashboardPrompt({
   }, []);
 
   useEffect(() => {
-    if (text || reduce || askMode) return;
+    if (text || reduce || mode === "ask") return;
     const id = window.setInterval(() => {
       setRollIndex((i) => (i + 1) % ROLLING.length);
     }, 2800);
     return () => window.clearInterval(id);
-  }, [text, reduce, askMode]);
+  }, [text, reduce, mode]);
 
   useLayoutEffect(() => {
     const el = textareaRef.current;
@@ -133,13 +125,7 @@ export function DashboardPrompt({
     el.style.height = `${next}px`;
   }, [text]);
 
-  useEffect(() => {
-    const el = askScrollRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [askTurns]);
-
-  const handleAsk = async (value: string) => {
+  const handle = async (value: string, nextMode: ComposerMode = mode) => {
     const trimmed = value.trim();
     if (!trimmed || pending) return;
 
@@ -153,101 +139,19 @@ export function DashboardPrompt({
       return;
     }
 
-    const userTurn: AskTurn = {
-      id: `u-${Date.now()}`,
-      role: "user",
-      content: trimmed,
-    };
-    const assistantId = `a-${Date.now()}`;
-    const history = askTurns.map((t) => ({
-      role: t.role,
-      content: t.content,
-    }));
-
-    setText("");
-    setAskTurns((prev) => [
-      ...prev,
-      userTurn,
-      { id: assistantId, role: "assistant", content: "" },
-    ]);
     setPending(true);
-
     try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: trimmed,
-          history,
-          modelId,
-        }),
+      const id = await createSite({
+        prompt: trimmed,
+        modelId,
       });
-
-      if (!res.ok) {
-        let code: string | undefined;
-        let message = "Could not ask Floras";
-        try {
-          const data = (await res.json()) as { error?: string; code?: string };
-          if (data.error) message = data.error;
-          code = data.code;
-        } catch {
-        }
-        if (code === "NO_PLAN") setUpgradeOpen(true);
-        else if (code === "NO_CREDITS") setTopUpOpen(true);
-        else toast.error(message);
-        setAskTurns((prev) => prev.filter((t) => t.id !== assistantId));
-        return;
-      }
-
-      const reader = res.body?.getReader();
-      if (!reader) {
-        toast.error("No response stream");
-        setAskTurns((prev) => prev.filter((t) => t.id !== assistantId));
-        return;
-      }
-
-      const decoder = new TextDecoder();
-      let full = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        full += decoder.decode(value, { stream: true });
-        const snapshot = full;
-        setAskTurns((prev) =>
-          prev.map((t) =>
-            t.id === assistantId ? { ...t, content: snapshot } : t
-          )
-        );
+      if (nextMode === "ask") {
+        await triggerAsk(id);
+      } else {
+        await triggerGeneration(id);
       }
       await refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not ask Floras");
-      setAskTurns((prev) => prev.filter((t) => t.id !== assistantId));
-    } finally {
-      setPending(false);
-    }
-  };
-
-  const handleBuild = async (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed || pending) return;
-
-    const reason = getDenyReason();
-    if (reason === "no_plan") {
-      setUpgradeOpen(true);
-      return;
-    }
-    if (reason === "no_credits") {
-      setTopUpOpen(true);
-      return;
-    }
-
-    setPending(true);
-    try {
-      const id = await createSite({ prompt: trimmed, modelId });
-      await triggerGeneration(id);
-      await refetch();
-      router.push(`/build/${id}`);
+      router.push(`/build/${id}?mode=${nextMode}`);
     } catch (e) {
       const err = e as Error & { code?: string };
       if (err.code === "NO_PLAN") {
@@ -255,19 +159,14 @@ export function DashboardPrompt({
       } else if (err.code === "NO_CREDITS") {
         setTopUpOpen(true);
       } else {
-        toast.error(err.message || "Could not start generation");
+        toast.error(err.message || "Could not start chat");
       }
       setPending(false);
     }
   };
 
-  const handle = async (value: string) => {
-    if (askMode) await handleAsk(value);
-    else await handleBuild(value);
-  };
-
-  const showRoll = !text && !pending && !askMode;
-  const suggestionList = askMode ? ASK_SUGGESTIONS : SUGGESTIONS;
+  const showRoll = !text && !pending && mode === "build";
+  const suggestionList = mode === "ask" ? ASK_SUGGESTIONS : SUGGESTIONS;
 
   return (
     <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 md:px-10">
@@ -276,18 +175,18 @@ export function DashboardPrompt({
           <h1
             className={cn(
               "col-start-1 row-start-1 text-3xl font-semibold tracking-tight md:text-4xl",
-              askMode && "invisible"
+              mode === "ask" && "invisible"
             )}
-            aria-hidden={askMode}
+            aria-hidden={mode === "ask"}
           >
             What do you want to create?
           </h1>
           <h1
             className={cn(
               "col-start-1 row-start-1 text-3xl font-semibold tracking-tight md:text-4xl",
-              !askMode && "invisible"
+              mode !== "ask" && "invisible"
             )}
-            aria-hidden={!askMode}
+            aria-hidden={mode !== "ask"}
           >
             Ask before you build.
           </h1>
@@ -296,75 +195,33 @@ export function DashboardPrompt({
           <p
             className={cn(
               "col-start-1 row-start-1 text-sm leading-relaxed text-muted-foreground",
-              askMode && "invisible"
+              mode === "ask" && "invisible"
             )}
-            aria-hidden={askMode}
+            aria-hidden={mode === "ask"}
           >
             Describe a site and Floras builds a live preview you can refine.
           </p>
           <p
             className={cn(
               "col-start-1 row-start-1 text-sm leading-relaxed text-muted-foreground",
-              !askMode && "invisible"
+              mode !== "ask" && "invisible"
             )}
-            aria-hidden={!askMode}
+            aria-hidden={mode !== "ask"}
           >
-            Clarify the brief, sections, and tone. Turn ASK off when you’re ready
-            to generate.
+            Clarify the brief, sections, and tone. Switch to Build when you’re
+            ready to generate.
           </p>
         </div>
-
-        {askMode && askTurns.length > 0 ? (
-          <div
-            ref={askScrollRef}
-            className="mt-8 max-h-[40vh] overflow-y-auto border border-border"
-          >
-            <ul className="flex flex-col">
-              {askTurns.map((turn) => (
-                <li
-                  key={turn.id}
-                  className={cn(
-                    "border-b border-border px-5 py-4 text-sm leading-relaxed last:border-b-0",
-                    turn.role === "user"
-                      ? "bg-card text-foreground"
-                      : "bg-background text-muted-foreground"
-                  )}
-                >
-                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {turn.role === "user" ? "You" : "Floras"}
-                  </p>
-                  {turn.role === "user" ? (
-                    <p className="whitespace-pre-wrap">{turn.content}</p>
-                  ) : turn.content ? (
-                    <MessageResponse
-                      isAnimating={
-                        pending &&
-                        turn.id === askTurns[askTurns.length - 1]?.id
-                      }
-                    >
-                      {turn.content}
-                    </MessageResponse>
-                  ) : pending ? (
-                    <p>…</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
             void handle(text);
           }}
-          className={cn(
-            "border border-border bg-card",
-            askMode && askTurns.length > 0 ? "mt-0 border-t-0" : "mt-10"
-          )}
+          className="mt-10 border border-border bg-card"
         >
           <label htmlFor="dashboard-prompt" className="sr-only">
-            {askMode ? "Ask Floras" : "Describe the site to build"}
+            {mode === "ask" ? "Ask Floras" : "Describe the site to build"}
           </label>
           <div className="relative">
             <textarea
@@ -376,7 +233,9 @@ export function DashboardPrompt({
               disabled={pending}
               rows={3}
               placeholder=""
-              aria-label={askMode ? "Ask Floras" : "Describe the site to build"}
+              aria-label={
+                mode === "ask" ? "Ask Floras" : "Describe the site to build"
+              }
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -408,7 +267,7 @@ export function DashboardPrompt({
                 </span>
               </div>
             ) : null}
-            {askMode && !text && !pending ? (
+            {mode === "ask" && !text && !pending ? (
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-x-5 top-4 text-sm leading-relaxed text-muted-foreground/45"
@@ -430,7 +289,7 @@ export function DashboardPrompt({
                   )}
                 >
                   <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-foreground">
-                    {askMode ? "Ask" : "Build"}
+                    {mode === "ask" ? "Ask" : "Build"}
                   </span>
                   <ChevronDown className="size-3.5 shrink-0" />
                 </DropdownMenuTrigger>
@@ -440,11 +299,11 @@ export function DashboardPrompt({
                   className="w-64 rounded-none border-border p-0 shadow-none"
                 >
                   <DropdownMenuItem
-                    onSelect={() => setAskMode(false)}
+                    onSelect={() => setMode("build")}
                     className={cn(
                       "cursor-pointer gap-3 rounded-none px-3 py-2.5 focus:bg-card",
                       "border-b border-border",
-                      !askMode && "bg-card"
+                      mode === "build" && "bg-card"
                     )}
                   >
                     <span className="min-w-0 flex-1">
@@ -455,17 +314,17 @@ export function DashboardPrompt({
                         Generate a site
                       </span>
                     </span>
-                    {!askMode ? (
+                    {mode === "build" ? (
                       <Check className="size-4 shrink-0 text-brand" />
                     ) : (
                       <span className="size-4 shrink-0" aria-hidden />
                     )}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onSelect={() => setAskMode(true)}
+                    onSelect={() => setMode("ask")}
                     className={cn(
                       "cursor-pointer gap-3 rounded-none px-3 py-2.5 focus:bg-card",
-                      askMode && "bg-card"
+                      mode === "ask" && "bg-card"
                     )}
                   >
                     <span className="min-w-0 flex-1">
@@ -476,7 +335,7 @@ export function DashboardPrompt({
                         Plan before you build
                       </span>
                     </span>
-                    {askMode ? (
+                    {mode === "ask" ? (
                       <Check className="size-4 shrink-0 text-brand" />
                     ) : (
                       <span className="size-4 shrink-0" aria-hidden />
@@ -494,7 +353,11 @@ export function DashboardPrompt({
               type="submit"
               disabled={pending || !text.trim()}
               aria-label={
-                pending ? "Working" : askMode ? "Ask Floras" : "Build site"
+                pending
+                  ? "Working"
+                  : mode === "ask"
+                    ? "Ask Floras"
+                    : "Build site"
               }
               className={cn(
                 "inline-flex size-9 cursor-pointer items-center justify-center gap-2 transition-[filter] active:scale-[0.98] sm:h-9 sm:w-auto sm:px-3",

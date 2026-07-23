@@ -8,15 +8,14 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  GENERATION_FEATURE,
+  AI_CREDITS_FEATURE,
   TOP_UP_PACKS,
   TOP_UP_PLAN_ID,
+  formatCredits,
   type TopUpPack,
 } from "@/lib/billing/constants";
 
@@ -35,11 +34,11 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
   const [selected, setSelected] = useState<TopUpPack>(TOP_UP_PACKS[1]!);
   const [pending, setPending] = useState(false);
 
-  const balance = data?.balances?.[GENERATION_FEATURE]?.remaining ?? null;
+  const balance = data?.balances?.[AI_CREDITS_FEATURE]?.remaining ?? null;
 
   const purchase = async () => {
     if (!isAuthenticated) {
-      toast.error("Sign in to top up generations.");
+      toast.error("Sign in to top up credit.");
       return;
     }
     setPending(true);
@@ -48,8 +47,8 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
         planId: TOP_UP_PLAN_ID,
         featureQuantities: [
           {
-            featureId: GENERATION_FEATURE,
-            quantity: selected.generations,
+            featureId: AI_CREDITS_FEATURE,
+            quantity: selected.credits,
           },
         ],
         redirectMode: "if_required",
@@ -63,7 +62,7 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
       await refetch();
       onPurchased?.();
       onOpenChange(false);
-      toast.success(`Added ${selected.generations} generations.`);
+      toast.success(`Added $${selected.credits} credit.`);
     } catch {
       toast.error("Could not start top-up. Make sure billing is configured.");
     } finally {
@@ -73,59 +72,87 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-6 sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Top up generations</DialogTitle>
-          <DialogDescription>
-            Buy extra site generations that never expire. They stack on top of
-            your monthly plan allowance.
+      <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
+        <div className="border-b border-border px-6 py-5 pr-14">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            AI credit
+          </p>
+          <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">
+            Top up
+          </DialogTitle>
+          <DialogDescription className="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
+            Extra credit never expires and stacks with your plan.
             {typeof balance === "number" ? (
               <>
                 {" "}
-                You have <span className="text-foreground">{balance}</span> left.
+                Balance{" "}
+                <span className="font-mono tabular-nums text-foreground">
+                  {formatCredits(balance)}
+                </span>
+                .
               </>
             ) : null}
           </DialogDescription>
-        </DialogHeader>
+        </div>
 
-        <div className="grid gap-2">
+        <div role="listbox" aria-label="Credit packs" className="divide-y divide-border">
           {TOP_UP_PACKS.map((pack) => {
             const active = pack.id === selected.id;
             return (
               <button
                 key={pack.id}
                 type="button"
+                role="option"
+                aria-selected={active}
                 onClick={() => setSelected(pack)}
                 className={cn(
-                  "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors",
-                  active
-                    ? "border-brand bg-brand/10"
-                    : "border-border/60 hover:border-border hover:bg-muted/40"
+                  "flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-4 text-left transition-colors active:scale-[0.99]",
+                  active ? "bg-brand-soft" : "hover:bg-background"
                 )}
               >
-                <div>
-                  <p className="text-sm font-medium">
-                    {pack.generations} generations
-                  </p>
-                  {pack.hint ? (
-                    <p className="text-xs text-muted-foreground">{pack.hint}</p>
-                  ) : null}
-                </div>
-                <span className="text-sm font-semibold">{pack.priceLabel}</span>
+                <span className="min-w-0">
+                  <span className="flex items-baseline gap-2">
+                    <span className="text-lg font-semibold tracking-tight tabular-nums text-foreground">
+                      ${pack.credits}
+                    </span>
+                    {pack.hint ? (
+                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {pack.hint}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-muted-foreground">
+                    Credit pack
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 font-mono text-sm tabular-nums",
+                    active ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {pack.priceLabel}
+                </span>
               </button>
             );
           })}
         </div>
 
-        <Button
-          onClick={purchase}
-          disabled={pending || !isAuthenticated}
-          className="w-full bg-brand text-brand-foreground hover:bg-brand/90 active:scale-[0.98]"
-        >
-          {pending
-            ? "Opening checkout…"
-            : `Buy ${selected.generations} for ${selected.priceLabel}`}
-        </Button>
+        <div className="border-t border-border p-0">
+          <button
+            type="button"
+            onClick={() => void purchase()}
+            disabled={pending || !isAuthenticated}
+            className={cn(
+              "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] active:scale-[0.99]",
+              "hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+            )}
+          >
+            {pending
+              ? "Opening checkout…"
+              : `Top up · ${selected.priceLabel}`}
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );

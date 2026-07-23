@@ -45,13 +45,15 @@ export function MessageList({ messages }: { messages: ChatMessage[] }) {
                     {isUser ? (
                       message.content
                     ) : (
-                      <MessageResponse>{message.content}</MessageResponse>
+                      <MessageResponse isAnimating={streaming}>
+                        {message.content}
+                      </MessageResponse>
                     )}
                   </MessageContent>
                 )}
                 {!isUser && !message.content && streaming && (
                   <p className="animate-pulse text-sm text-muted-foreground">
-                    Working on your site…
+                    Thinking…
                   </p>
                 )}
               </div>

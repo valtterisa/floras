@@ -25,7 +25,7 @@ export function PreviewPane({
   previewUrl?: string;
 }) {
   const label = STATUS_LABEL[status ?? "draft"] ?? status;
-  const busy = status === "provisioning" || status === "generating" || status === "draft";
+  const busy = status === "provisioning" || status === "generating";
 
   if (!previewUrl) {
     return (
@@ -40,7 +40,7 @@ export function PreviewPane({
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">
             {busy
               ? "Your live preview will appear here in a moment."
-              : "The preview is not available yet."}
+              : "Switch to Build and send a prompt to generate a live preview."}
           </p>
         </div>
       </div>

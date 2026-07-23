@@ -13,16 +13,15 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   feature modules in `landing/`, `dashboard/`, `workspace/`, `auth/`.
 - **Backend/DB:** Convex (`convex/`). Auth via Convex Auth (password provider).
   Reactive queries drive the chat + preview.
-- **Agent:** AI SDK 7 `ToolLoopAgent` (`lib/ai/agent.ts`) runs inside the
-  Convex Node action `convex/generate.ts`. Tool activity + summaries stream back
-  into Convex tables, so the UI updates reactively.
+- **Agent:** AI SDK 7 `ToolLoopAgent` (`lib/ai/agent.ts`) runs from Next.js API
+  routes (`app/api/generate`, `lib/generate/run-generation.ts`). Tool activity +
+  summaries stream back into Convex tables, so the UI updates reactively.
 - **Output schema:** `lib/schema/site.ts` (zod `SitePlan`) → `lib/astro/scaffold.ts`
   deterministically emits a complete Astro project. No brittle parsing of model text.
 - **Sandbox/preview:** `lib/box/client.ts` wraps `@asciidev/box-sdk`. Each project
   gets a Box VM running `astro dev` exposed on a public URL via the in-box `host` command.
-- **Billing:** `@useautumn/convex` component for backend gating (`convex/autumn.ts`,
-  fail-open) + `autumn.config.ts` plans. Frontend uses `autumn-js/react` via the
-  handler route `app/api/autumn/[...all]/route.ts`.
+- **Billing:** `autumn-js` via Next.js (`app/api/autumn/[...all]`, `lib/billing/get-access.ts`,
+  fail-open) + `autumn.config.ts` plans. Frontend uses `autumn-js/react`.
 
 ## Cursor Cloud specific instructions
 
@@ -36,10 +35,9 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   builds without a deployment. Running `convex dev` against a real deployment
   regenerates fully-typed versions; frontend Convex calls are intentionally
   cast to `any` where the generated types are the stub.
-- **Node action bundle is heavy.** `convex/generate.ts` (`"use node"`) bundles the
-  AI SDK + Box SDK. The local anonymous Convex backend (`CONVEX_AGENT_MODE=anonymous`)
-  can hit its 64MB module-load limit while pushing this action. Use a real Convex
-  cloud deployment (`npx convex dev` logged in) for end-to-end generation.
+- **Keep heavy SDKs out of Convex.** AI SDK, Box SDK, and `autumn-js` run in
+  Next.js API routes — not Convex actions — so pushes stay under the 64MB
+  module-load limit. Do not reintroduce those packages into `convex/`.
 - **Secrets live in the Convex deployment, not `.env.local`.** Set them with
   `npx convex env set KEY value`: `ANTHROPIC_API_KEY` (Anthropic),
   `BOX_API_KEY` (box.ascii.dev), `AUTUMN_SECRET_KEY` (Autumn). Also put
