@@ -2,6 +2,7 @@ import {
   BoxApi,
   BoxStateEnum,
   Configuration,
+  ResponseError,
   waitUntilReady,
 } from "@asciidev/box-sdk";
 import { AppError } from "@/lib/errors";
@@ -169,26 +170,80 @@ export interface CommandResult {
   success: boolean;
 }
 
+const recoveringBoxes = new Map<string, Promise<void>>();
+
+async function isBoxDirectFailed(error: unknown): Promise<boolean> {
+  if (error instanceof ResponseError) {
+    if (error.response.status === 502 || error.response.status === 503) {
+      return true;
+    }
+    return /box_direct_failed/i.test(error.message);
+  }
+  return /box_direct_failed|Response returned an error code/i.test(
+    error instanceof Error ? error.message : String(error)
+  );
+}
+
+async function recoverBoxCommandChannel(boxId: string): Promise<void> {
+  const existing = recoveringBoxes.get(boxId);
+  if (existing) return existing;
+
+  const run = (async () => {
+    const box = getBox();
+    console.warn("Box command channel failed; stop/resume to recover", {
+      boxId,
+    });
+    await box.stop({ boxId });
+    await waitUntilArchived(box, boxId);
+    await box.resume({ boxId, resumeRequest: { noEnv: true } });
+    await waitUntilReady(box, boxId);
+  })().finally(() => {
+    recoveringBoxes.delete(boxId);
+  });
+
+  recoveringBoxes.set(boxId, run);
+  return run;
+}
+
 export async function runCommand(
   boxId: string,
   command: string,
-  opts: { cwd?: string; timeoutSeconds?: number } = {}
+  opts: { cwd?: string; timeoutSeconds?: number; _retried?: boolean } = {}
 ): Promise<CommandResult> {
   const box = getBox();
-  const res = await box.command({
-    boxId,
-    commandRequest: {
-      command,
-      cwd: opts.cwd ?? SITE_DIR,
-      timeoutSeconds: opts.timeoutSeconds ?? 120,
-    },
-  });
-  return {
-    exitCode: res.exitCode,
-    stdout: res.stdout ?? "",
-    stderr: res.stderr ?? "",
-    success: Boolean(res.success),
-  };
+  try {
+    const res = await box.command({
+      boxId,
+      commandRequest: {
+        command,
+        cwd: opts.cwd ?? SITE_DIR,
+        timeoutSeconds: opts.timeoutSeconds ?? 120,
+      },
+    });
+    return {
+      exitCode: res.exitCode,
+      stdout: res.stdout ?? "",
+      stderr: res.stderr ?? "",
+      success: Boolean(res.success),
+    };
+  } catch (error) {
+    if (!opts._retried && (await isBoxDirectFailed(error))) {
+      await recoverBoxCommandChannel(boxId);
+      return runCommand(boxId, command, { ...opts, _retried: true });
+    }
+    if (await isBoxDirectFailed(error)) {
+      throw new AppError(
+        "preview",
+        "Sandbox is up but commands are failing. Try restart again in a moment.",
+        {
+          detail:
+            error instanceof Error ? error.message : "box_direct_failed",
+          cause: error,
+        }
+      );
+    }
+    throw error;
+  }
 }
 
 /**

@@ -50,13 +50,24 @@ type BoxStateScreen = {
   title: string;
   body: string;
   spinning: boolean;
+  showRestart: boolean;
 };
 
 function screenForBoxState(
   state: string | null | "loading",
   waking: boolean,
-  previewOk: boolean
+  previewOk: boolean,
+  previewError: string | null
 ): BoxStateScreen {
+  if (previewError && !waking) {
+    return {
+      title: "Preview failed",
+      body: previewError,
+      spinning: false,
+      showRestart: true,
+    };
+  }
+
   if (waking) {
     switch (state) {
       case "archiving":
@@ -64,12 +75,14 @@ function screenForBoxState(
           title: "Stopping sandbox",
           body: "Waiting for the previous stop to finish.",
           spinning: true,
+          showRestart: false,
         };
       case "archived":
         return {
           title: "Starting sandbox",
           body: "Resuming the machine from snapshot.",
           spinning: true,
+          showRestart: false,
         };
       case "init":
       case "provisioning":
@@ -79,6 +92,7 @@ function screenForBoxState(
           title: "Starting sandbox",
           body: "Bringing the machine online.",
           spinning: true,
+          showRestart: false,
         };
       case "ready":
       case "idle":
@@ -87,12 +101,14 @@ function screenForBoxState(
           title: "Starting preview",
           body: "Waiting until the public preview URL responds.",
           spinning: true,
+          showRestart: false,
         };
       default:
         return {
           title: "Starting sandbox",
           body: "This can take a minute. Hang tight.",
           spinning: true,
+          showRestart: false,
         };
     }
   }
@@ -106,6 +122,7 @@ function screenForBoxState(
       title: "Starting preview",
       body: "Sandbox is up. Waiting for the preview URL to come online.",
       spinning: true,
+      showRestart: false,
     };
   }
 
@@ -115,18 +132,21 @@ function screenForBoxState(
         title: "Checking sandbox",
         body: "Reading machine status.",
         spinning: true,
+        showRestart: false,
       };
     case "archived":
       return {
         title: "Sandbox stopped",
-        body: "Preview is offline. Restart the sandbox to wake it up.",
+        body: "Preview is offline. Restart the preview to wake it up.",
         spinning: false,
+        showRestart: true,
       };
     case "archiving":
       return {
         title: "Stopping sandbox",
         body: "The machine is snapshotting and going offline.",
         spinning: true,
+        showRestart: false,
       };
     case "init":
     case "provisioning":
@@ -136,24 +156,28 @@ function screenForBoxState(
         title: "Starting sandbox",
         body: "The machine is still coming online.",
         spinning: true,
+        showRestart: false,
       };
     case "error":
       return {
         title: "Sandbox error",
-        body: "Something went wrong with the machine. Try restarting.",
+        body: "Something went wrong with the machine. Try restarting the preview.",
         spinning: false,
+        showRestart: true,
       };
     case null:
       return {
         title: "No sandbox",
         body: "Generate a site to provision a preview machine.",
         spinning: false,
+        showRestart: false,
       };
     default:
       return {
         title: "Sandbox unavailable",
-        body: "Preview is not ready yet. Try restarting the sandbox.",
+        body: "Preview is not ready yet. Try restarting the preview.",
         spinning: false,
+        showRestart: true,
       };
   }
 }
@@ -178,6 +202,7 @@ export function PreviewPane({
     boxId ? "loading" : null
   );
   const [previewOk, setPreviewOk] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const waking = restarting || starting;
 
@@ -186,19 +211,22 @@ export function PreviewPane({
 
     let cancelled = false;
     setStarting(true);
+    setPreviewError(null);
 
     void ensurePreviewStarted(projectId)
       .then(() => {
         if (cancelled) return;
         setPreviewOk(true);
+        setPreviewError(null);
         setReloadKey((k) => k + 1);
       })
       .catch((error) => {
         if (cancelled) return;
         setPreviewOk(false);
-        toast.error(
-          error instanceof Error ? error.message : "Could not start sandbox."
-        );
+        const message =
+          error instanceof Error ? error.message : "Could not start sandbox.";
+        setPreviewError(message);
+        toast.error(message);
       })
       .finally(() => {
         if (!cancelled) setStarting(false);
@@ -213,6 +241,7 @@ export function PreviewPane({
     if (!boxId) {
       setBoxState(null);
       setPreviewOk(false);
+      setPreviewError(null);
       return;
     }
 
@@ -226,6 +255,7 @@ export function PreviewPane({
         const data = (await res.json().catch(() => ({}))) as {
           state?: string | null;
           previewOk?: boolean;
+          error?: string;
         };
         if (cancelled) return;
         if (!res.ok) {
@@ -234,7 +264,9 @@ export function PreviewPane({
         }
         setBoxState(data.state ?? null);
         if (!waking) {
-          setPreviewOk(Boolean(data.previewOk));
+          const ok = Boolean(data.previewOk);
+          setPreviewOk(ok);
+          if (ok) setPreviewError(null);
         }
       } catch {
         if (!cancelled) {
@@ -258,6 +290,7 @@ export function PreviewPane({
     if (!boxId || waking) return;
     setRestarting(true);
     setPreviewOk(false);
+    setPreviewError(null);
     try {
       const res = await fetch("/api/preview/restart", {
         method: "POST",
@@ -272,11 +305,13 @@ export function PreviewPane({
       }
       setReloadKey((k) => k + 1);
       setPreviewOk(true);
+      setPreviewError(null);
       toast.success("Sandbox restarted.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not restart sandbox."
-      );
+      const message =
+        error instanceof Error ? error.message : "Could not restart sandbox.";
+      setPreviewError(message);
+      toast.error(message);
     } finally {
       setRestarting(false);
     }
@@ -304,31 +339,33 @@ export function PreviewPane({
 
   const boxLive =
     typeof boxState === "string" && LIVE_BOX_STATES.has(boxState);
-  const showOwnUi = waking || !boxLive || !previewOk;
-  const screen = screenForBoxState(boxState, waking, previewOk);
+  const showOwnUi = waking || !boxLive || !previewOk || Boolean(previewError);
+  const screen = screenForBoxState(boxState, waking, previewOk, previewError);
   const badgeLabel =
-    boxState === "archiving"
-      ? "Stopping"
-      : boxState === "archived"
-        ? waking
-          ? "Starting"
-          : "Stopped"
-        : boxState === "loading"
-          ? "Checking"
-          : boxState === "error"
-            ? "Error"
-            : boxState === "init" ||
-                boxState === "provisioning" ||
-                boxState === "provisioned" ||
-                boxState === "cloning"
-              ? "Starting"
-              : boxLive && previewOk && !waking
-                ? (projectLabel ?? "Live")
-                : waking || (boxLive && !previewOk)
-                  ? restarting
-                    ? "Restarting"
-                    : "Starting"
-                  : "Offline";
+    previewError && !waking
+      ? "Error"
+      : boxState === "archiving"
+        ? "Stopping"
+        : boxState === "archived"
+          ? waking
+            ? "Starting"
+            : "Stopped"
+          : boxState === "loading"
+            ? "Checking"
+            : boxState === "error"
+              ? "Error"
+              : boxState === "init" ||
+                  boxState === "provisioning" ||
+                  boxState === "provisioned" ||
+                  boxState === "cloning"
+                ? "Starting"
+                : boxLive && previewOk && !waking
+                  ? (projectLabel ?? "Live")
+                  : waking || (boxLive && !previewOk)
+                    ? restarting
+                      ? "Restarting"
+                      : "Starting"
+                    : "Offline";
 
   return (
     <WebPreview
@@ -340,7 +377,7 @@ export function PreviewPane({
         <Badge
           variant="outline"
           className={
-            boxLive && previewOk && !waking
+            boxLive && previewOk && !waking && !previewError
               ? "border-brand/40 text-xs font-normal text-brand"
               : "border-border text-xs font-normal text-muted-foreground"
           }
@@ -387,6 +424,17 @@ export function PreviewPane({
                 {screen.body}
               </p>
             </div>
+            {screen.showRestart && boxId && !busy ? (
+              <button
+                type="button"
+                onClick={() => void onRestart()}
+                disabled={waking}
+                className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 border border-border bg-background px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <RotateCw className="size-3.5" />
+                Restart preview
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className="absolute inset-0">

@@ -73,7 +73,9 @@ const RULES: Array<{ code: AppErrorCode; test: (text: string) => boolean }> = [
   {
     code: "preview",
     test: (t) =>
-      /\b(preview url|host output|astro dev|on\.ascii\.dev)\b/.test(t),
+      /\b(preview url|host output|astro dev|on\.ascii\.dev|box_direct_failed|response returned an error code)\b/.test(
+        t
+      ),
   },
   {
     code: "publish",
