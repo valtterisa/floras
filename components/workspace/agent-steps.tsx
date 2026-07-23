@@ -93,6 +93,7 @@ export function AgentSteps({
     >
       <ChainOfThoughtHeader
         className={active && !hasBody ? "animate-pulse" : undefined}
+        showChevron={hasBody}
       >
         {header}
       </ChainOfThoughtHeader>

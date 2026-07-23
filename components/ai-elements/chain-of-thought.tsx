@@ -26,22 +26,33 @@ export const ChainOfThought = memo(
 
 export type ChainOfThoughtHeaderProps = ComponentProps<
   typeof CollapsibleTrigger
->;
+> & {
+  showChevron?: boolean;
+};
 
 export const ChainOfThoughtHeader = memo(
-  ({ className, children, ...props }: ChainOfThoughtHeaderProps) => (
+  ({
+    className,
+    children,
+    showChevron = true,
+    ...props
+  }: ChainOfThoughtHeaderProps) => (
     <CollapsibleTrigger
       className={cn(
         "group flex w-full items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground",
+        !showChevron && "pointer-events-none",
         className
       )}
+      disabled={!showChevron}
       {...props}
     >
       <BrainIcon className="size-4" />
       <span className="flex-1 text-left">
         {children ?? "Chain of Thought"}
       </span>
-      <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+      {showChevron ? (
+        <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+      ) : null}
     </CollapsibleTrigger>
   )
 );
