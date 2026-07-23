@@ -6,6 +6,7 @@ import { withAutumnModel } from "@/lib/billing/with-autumn-model";
 import { resolveAgentModelId } from "@/lib/ai/models";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
 import { anthropicThinkingOptions } from "@/lib/ai/anthropic-options";
+import { AppError } from "@/lib/errors";
 
 export const ASK_INSTRUCTIONS = `You are Floras — a sharp product partner that helps people figure out what website to build before they generate one.
 
@@ -137,12 +138,13 @@ export async function runAsk(projectId: string, token: string) {
       { token }
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const error = AppError.from(err);
+    console.error("Ask failed:", error.detail);
     await fetchMutation(
       (api as any).messages.finish,
       {
         messageId: assistantId,
-        content: `Something went wrong: ${message}`,
+        content: error.message,
         status: "error",
       },
       { token }

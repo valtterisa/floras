@@ -4,6 +4,7 @@ import { buildSiteAgent } from "@/lib/ai/agent";
 import { resolveAgentModelId } from "@/lib/ai/models";
 import * as box from "@/lib/box/client";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
+import { AppError } from "@/lib/errors";
 
 export async function runGeneration(projectId: string, token: string) {
   const project = await fetchQuery(
@@ -32,9 +33,7 @@ export async function runGeneration(projectId: string, token: string) {
 
   try {
     if (!box.boxConfigured()) {
-      throw new Error(
-        "BOX_API_KEY is not configured. Add it to .env.local to enable sandbox previews."
-      );
+      throw new AppError("config");
     }
 
     let boxId = project.boxId as string | undefined;
@@ -126,19 +125,20 @@ export async function runGeneration(projectId: string, token: string) {
       { token }
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const error = AppError.from(err);
+    console.error("Generation failed:", error.detail);
     await fetchMutation(
       (api as any).messages.finish,
       {
         messageId: assistantId,
-        content: `Something went wrong: ${message}`,
+        content: error.message,
         status: "error",
       },
       { token }
     );
     await fetchMutation(
       (api as any).projects.setError,
-      { projectId, error: message },
+      { projectId, error: error.message },
       { token }
     );
   }
