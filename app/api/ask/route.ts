@@ -3,7 +3,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { fetchAction, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
-import { trackAiTokenUsage } from "@/lib/billing/track-ai-usage";
+import { withAutumnModel } from "@/lib/billing/with-autumn-model";
 import {
   isAgentModelId,
   resolveAgentModelId,
@@ -53,10 +53,10 @@ export async function POST(req: Request) {
     return Response.json({ error: "message required" }, { status: 400 });
   }
 
-  const modelId: AgentModelId = isAgentModelId(
-    typeof payload.modelId === "string" ? payload.modelId : null
-  )
-    ? payload.modelId
+  const requestedModelId =
+    typeof payload.modelId === "string" ? payload.modelId : null;
+  const modelId: AgentModelId = isAgentModelId(requestedModelId)
+    ? requestedModelId
     : resolveAgentModelId(null);
 
   const history: AskMessage[] = Array.isArray(payload.history)
@@ -106,20 +106,9 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: anthropic(modelId),
+    model: withAutumnModel(anthropic(modelId), me.id),
     system: ASK_INSTRUCTIONS,
     messages: [...history, { role: "user" as const, content: message }],
-    onFinish: async ({ totalUsage }) => {
-      try {
-        await trackAiTokenUsage({
-          customerId: me.id,
-          usage: totalUsage,
-          modelId,
-        });
-      } catch (error) {
-        console.error("Failed to track ask usage", error);
-      }
-    },
   });
 
   return result.toTextStreamResponse();

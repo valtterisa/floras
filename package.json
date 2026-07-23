@@ -57,6 +57,7 @@
     "@streamdown/math": "^1.0.2",
     "@streamdown/mermaid": "^1.0.2",
     "@useautumn/convex": "^0.0.23",
+    "@useautumn/gateway": "^0.0.1",
     "ai": "^7.0.34",
     "autumn-js": "^1.2.43",
     "class-variance-authority": "^0.7.1",
