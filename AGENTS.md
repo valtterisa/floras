@@ -16,8 +16,9 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
 - **Agent:** AI SDK 7 `ToolLoopAgent` (`lib/ai/agent.ts`) runs from Next.js API
   routes (`app/api/generate`, `lib/generate/run-generation.ts`). Tool activity +
   summaries stream back into Convex tables, so the UI updates reactively.
-- **Template:** New Boxes clone `BOX_TEMPLATE_REPO_URL` into `site/`. The agent
-  stores a zod `SitePlan` (`lib/schema/site.ts`) then edits the template in place.
+- **Template:** New Boxes clone `https://github.com/valtterisa/astro-template.git`
+  into `site/`. The agent stores a zod `SitePlan` (`lib/schema/site.ts`) then edits
+  the template in place.
 - **Sandbox/preview:** `lib/box/client.ts` wraps `@asciidev/box-sdk`. Each project
   gets a Box VM running `astro dev` exposed on a public URL via the in-box `host` command.
   User Boxes are created with `noEnv: true`.
@@ -47,7 +48,7 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   `BOX_API_KEY` (box.ascii.dev), `AUTUMN_SECRET_KEY` (Autumn). Also put
   `AUTUMN_SECRET_KEY` in `.env.local` for the Next.js Autumn handler. Optional:
   `AGENT_MODEL` (defaults to `claude-sonnet-4-5`), `BOX_BASE_URL`.
-  Next.js also needs `BOX_TEMPLATE_REPO_URL` (public Astro template git URL).
+  New Boxes clone `https://github.com/valtterisa/astro-template.git` into `site/`.
 - **Cloudflare publish (Next.js `.env.local` / host secrets, not Box dashboard):**
   `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit) and
   `CLOUDFLARE_ACCOUNT_ID`. Do **not** put these in Box Dashboard → Secrets — user
@@ -57,6 +58,7 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   `JWKS`, and `SITE_URL` in the Convex deployment env.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).
 - **Preview iframes** load the sandbox Astro dev server over `*.on.ascii.dev`; the
-  template should set Vite `server.allowedHosts: true` so those hosts are not blocked.
+  template should set Vite `server.allowedHosts: true` and bind `0.0.0.0` so those
+  hosts are not blocked.
 - `next build` ignores type errors (see `next.config.mjs`); run `pnpm typecheck`
   for real type checking. Auth gating lives in `proxy.ts` (Next.js 16 network proxy).

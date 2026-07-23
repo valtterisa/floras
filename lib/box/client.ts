@@ -15,6 +15,7 @@ import { AppError } from "@/lib/errors";
 const SITE_DIR = "site";
 const CF_ENV_PATH = "floras-cf.env";
 const PREVIEW_PORT = 4321;
+const TEMPLATE_REPO_URL = "https://github.com/valtterisa/astro-template.git";
 
 export type BoxFile = {
   path: string;
@@ -29,18 +30,6 @@ export function getPreviewPort() {
 
 export function boxConfigured(): boolean {
   return Boolean(process.env.BOX_API_KEY);
-}
-
-function templateRepoUrl(): string {
-  const url = process.env.BOX_TEMPLATE_REPO_URL?.trim();
-  if (!url) {
-    throw new AppError(
-      "config",
-      "Astro template repo is not configured.",
-      { detail: "BOX_TEMPLATE_REPO_URL must be set" }
-    );
-  }
-  return url;
 }
 
 export function getBox(): BoxApi {
@@ -69,8 +58,7 @@ export async function createSandbox(name: string): Promise<string> {
 }
 
 export async function pullTemplate(boxId: string): Promise<void> {
-  const repo = templateRepoUrl();
-  const quoted = shellQuote(repo);
+  const quoted = shellQuote(TEMPLATE_REPO_URL);
   const res = await runCommand(
     boxId,
     `rm -rf ${SITE_DIR} && git clone --depth 1 ${quoted} ${SITE_DIR}`,
@@ -188,7 +176,7 @@ export async function startPreview(boxId: string): Promise<string> {
 
   await runCommand(
     boxId,
-    "pkill -f 'astro dev' || true; nohup npm run dev > /tmp/astro-dev.log 2>&1 &",
+    `pkill -f 'astro dev' || true; nohup npx astro dev --host 0.0.0.0 --port ${port} > /tmp/astro-dev.log 2>&1 &`,
     { timeoutSeconds: 30 }
   );
 
@@ -209,9 +197,10 @@ export async function startPreview(boxId: string): Promise<string> {
 }
 
 export async function restartPreview(boxId: string): Promise<void> {
+  const port = PREVIEW_PORT;
   await runCommand(
     boxId,
-    "pkill -f 'astro dev' || true; nohup npm run dev > /tmp/astro-dev.log 2>&1 &",
+    `pkill -f 'astro dev' || true; nohup npx astro dev --host 0.0.0.0 --port ${port} > /tmp/astro-dev.log 2>&1 &`,
     { timeoutSeconds: 30 }
   );
 }
