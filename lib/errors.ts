@@ -7,6 +7,8 @@ export type AppErrorCode =
   | "timeout"
   | "network"
   | "preview"
+  | "publish"
+  | "domain"
   | "config"
   | "unknown";
 
@@ -19,6 +21,8 @@ const FRIENDLY: Record<AppErrorCode, string> = {
   timeout: "That took too long. Please try again.",
   network: "Couldn't reach the server. Check your connection and try again.",
   preview: "Couldn't start the live preview. Please try again.",
+  publish: "Couldn't publish your site. Please try again.",
+  domain: "Couldn't update the custom domain. Please try again.",
   config: "This feature isn't available right now. Please try again later.",
   unknown: "Something went wrong. Please try again.",
 };
@@ -72,9 +76,23 @@ const RULES: Array<{ code: AppErrorCode; test: (text: string) => boolean }> = [
       /\b(preview url|host output|astro dev|on\.ascii\.dev)\b/.test(t),
   },
   {
+    code: "publish",
+    test: (t) =>
+      /\b(publish|wrangler|pages deploy|cloudflare project|build output|dist\/index)\b/.test(
+        t
+      ),
+  },
+  {
+    code: "domain",
+    test: (t) =>
+      /\b(custom domain|hostname|cname|domain verification|invalid domain)\b/.test(
+        t
+      ),
+  },
+  {
     code: "config",
     test: (t) =>
-      /\b(api.?key|box_api_key|\.env|not configured|environment secrets|missing secret)\b/.test(
+      /\b(api.?key|box_api_key|cloudflare_api_token|cloudflare_account_id|\.env|not configured|environment secrets|missing secret)\b/.test(
         t
       ),
   },
@@ -87,14 +105,14 @@ function extractMessage(error: unknown): string {
   if (typeof error === "string" && error.trim()) {
     return error.trim();
   }
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error &&
-    typeof (error as { message: unknown }).message === "string" &&
-    (error as { message: string }).message.trim()
-  ) {
-    return (error as { message: string }).message.trim();
+  if (typeof error === "object" && error !== null) {
+    const obj = error as { message?: unknown; error?: unknown };
+    if (typeof obj.message === "string" && obj.message.trim()) {
+      return obj.message.trim();
+    }
+    if (typeof obj.error === "string" && obj.error.trim()) {
+      return obj.error.trim();
+    }
   }
   return "Unknown error";
 }
@@ -115,6 +133,8 @@ function classify(detail: string, codeHint?: string): AppErrorCode {
   const hint = (codeHint ?? "").toLowerCase();
   if (hint === "no_plan") return "no_plan";
   if (hint === "no_credits") return "no_credits";
+  if (hint === "publish") return "publish";
+  if (hint === "domain") return "domain";
 
   const text = `${hint} ${detail}`.toLowerCase();
   for (const rule of RULES) {
@@ -159,7 +179,7 @@ export class AppError extends Error {
     const code = classify(detail, codeHint);
 
     if (
-      (code === "no_plan" || code === "no_credits") &&
+      (code === "no_plan" || code === "no_credits" || code === "domain") &&
       isSafeCustomerMessage(detail)
     ) {
       return new AppError(code, detail, { detail, cause: error });
@@ -175,4 +195,21 @@ export class AppError extends Error {
 
     return new AppError("unknown", FRIENDLY.unknown, { detail, cause: error });
   }
+
+  static async fromResponse(res: Response): Promise<AppError> {
+    let body: unknown;
+    try {
+      body = await res.json();
+    } catch {
+      return new AppError("network", FRIENDLY.network, {
+        detail: `HTTP ${res.status}`,
+      });
+    }
+    return AppError.from(body);
+  }
+}
+
+export async function assertOk(res: Response): Promise<void> {
+  if (res.ok) return;
+  throw await AppError.fromResponse(res);
 }

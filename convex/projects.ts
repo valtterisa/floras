@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import { projectStatus } from "./schema";
+import { projectStatus, publishStatus, domainStatus } from "./schema";
 
 export const create = mutation({
   args: {
@@ -22,6 +22,7 @@ export const create = mutation({
       initialPrompt: args.prompt,
       modelId: args.modelId,
       status: "ready",
+      publishStatus: "idle",
     });
 
     await ctx.db.insert("messages", {
@@ -154,6 +155,98 @@ export const setModel = mutation({
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
     await ctx.db.patch(args.projectId, { modelId: args.modelId });
+    return null;
+  },
+});
+
+export const setPublishStatus = mutation({
+  args: {
+    projectId: v.id("projects"),
+    status: publishStatus,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, {
+      publishStatus: args.status,
+      ...(args.status === "publishing" ? { publishError: undefined } : {}),
+    });
+    return null;
+  },
+});
+
+export const setPublished = mutation({
+  args: {
+    projectId: v.id("projects"),
+    cfProjectName: v.string(),
+    cfSubdomain: v.string(),
+    publishedUrl: v.string(),
+    publishedAt: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, {
+      publishStatus: "published",
+      cfProjectName: args.cfProjectName,
+      cfSubdomain: args.cfSubdomain,
+      publishedUrl: args.publishedUrl,
+      publishedAt: args.publishedAt,
+      publishError: undefined,
+    });
+    return null;
+  },
+});
+
+export const setPublishError = mutation({
+  args: {
+    projectId: v.id("projects"),
+    error: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { project } = await requireOwnedProject(ctx, args.projectId);
+    const wasPublished = project.publishStatus === "published";
+    await ctx.db.patch(args.projectId, {
+      publishStatus: wasPublished ? "published" : "error",
+      publishError: args.error,
+    });
+    return null;
+  },
+});
+
+export const setCustomDomain = mutation({
+  args: {
+    projectId: v.id("projects"),
+    domain: v.string(),
+    status: domainStatus,
+    error: v.optional(v.string()),
+    updatedAt: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, {
+      customDomain: args.domain,
+      customDomainStatus: args.status,
+      customDomainError: args.error,
+      customDomainUpdatedAt: args.updatedAt,
+    });
+    return null;
+  },
+});
+
+export const clearCustomDomain = mutation({
+  args: { projectId: v.id("projects") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, {
+      customDomain: undefined,
+      customDomainStatus: undefined,
+      customDomainError: undefined,
+      customDomainUpdatedAt: undefined,
+    });
     return null;
   },
 });

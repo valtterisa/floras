@@ -49,6 +49,7 @@ export function CustomInstructionsForm() {
 
   return (
     <AccountSection
+      id="instructions"
       title="Chat custom instructions"
       description="Applied to every generation. Prefer brand voice, visual direction, and hard constraints (e.g. always dark, never use purple)."
     >

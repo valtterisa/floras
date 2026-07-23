@@ -10,6 +10,22 @@ export const projectStatus = v.union(
   v.literal("error")
 );
 
+export const publishStatus = v.union(
+  v.literal("idle"),
+  v.literal("publishing"),
+  v.literal("published"),
+  v.literal("error")
+);
+
+export const domainStatus = v.union(
+  v.literal("initializing"),
+  v.literal("pending"),
+  v.literal("active"),
+  v.literal("deactivated"),
+  v.literal("blocked"),
+  v.literal("error")
+);
+
 export const messageRole = v.union(
   v.literal("user"),
   v.literal("assistant"),
@@ -54,6 +70,16 @@ export default defineSchema({
     previewUrl: v.optional(v.string()),
     plan: v.optional(v.any()),
     error: v.optional(v.string()),
+    publishStatus: v.optional(publishStatus),
+    cfProjectName: v.optional(v.string()),
+    cfSubdomain: v.optional(v.string()),
+    publishedUrl: v.optional(v.string()),
+    publishedAt: v.optional(v.number()),
+    publishError: v.optional(v.string()),
+    customDomain: v.optional(v.string()),
+    customDomainStatus: v.optional(domainStatus),
+    customDomainError: v.optional(v.string()),
+    customDomainUpdatedAt: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   messages: defineTable({

@@ -20,6 +20,10 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   deterministically emits a complete Astro project. No brittle parsing of model text.
 - **Sandbox/preview:** `lib/box/client.ts` wraps `@asciidev/box-sdk`. Each project
   gets a Box VM running `astro dev` exposed on a public URL via the in-box `host` command.
+  User Boxes are created with `noEnv: true`.
+- **Publish / domains:** Next.js routes `app/api/publish` and `app/api/domains`. Build +
+  Wrangler Direct Upload run **inside** the Box; Pages project/domain CRUD uses the
+  official `cloudflare` SDK. Live URL comes from Pages REST GET, not Wrangler stdout.
 - **Billing:** `autumn-js` via Next.js (`app/api/autumn/[...all]`, `lib/billing/get-access.ts`,
   fail-open) + `autumn.config.ts` plans. Frontend uses `autumn-js/react`.
 
@@ -43,6 +47,11 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   `BOX_API_KEY` (box.ascii.dev), `AUTUMN_SECRET_KEY` (Autumn). Also put
   `AUTUMN_SECRET_KEY` in `.env.local` for the Next.js Autumn handler. Optional:
   `AGENT_MODEL` (defaults to `claude-sonnet-4-5`), `BOX_BASE_URL`.
+- **Cloudflare publish (Next.js `.env.local` / host secrets, not Box dashboard):**
+  `CLOUDFLARE_API_TOKEN` (Account → Cloudflare Pages → Edit) and
+  `CLOUDFLARE_ACCOUNT_ID`. Do **not** put these in Box Dashboard → Secrets — user
+  Boxes are `noEnv` and must not receive Floras hosting credentials. Publish injects
+  them into the Box only for the Wrangler deploy command, then scrubs the temp file.
 - **Convex Auth keys:** run `npx @convex-dev/auth` once to provision `JWT_PRIVATE_KEY`,
   `JWKS`, and `SITE_URL` in the Convex deployment env.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).

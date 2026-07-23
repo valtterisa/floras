@@ -8,6 +8,12 @@ import { DESIGN_GUIDELINES } from "@/lib/ai/design-guidelines";
 import { resolveAgentModelId } from "@/lib/ai/model";
 import { anthropicThinkingOptions } from "@/lib/ai/anthropic-options";
 import { withAutumnModel } from "@/lib/billing/with-autumn-model";
+import { AppError } from "@/lib/errors";
+import {
+  connectCustomDomain,
+  disconnectCustomDomain,
+  getCustomDomain,
+} from "@/lib/publish/run-domain";
 
 export type AgentStepKind =
   | "plan"
@@ -15,6 +21,7 @@ export type AgentStepKind =
   | "read"
   | "command"
   | "preview"
+  | "domain"
   | "note";
 
 export interface AgentStep {
@@ -25,6 +32,8 @@ export interface AgentStep {
 
 export interface BuildAgentOptions {
   boxId: string;
+  projectId: string;
+  token: string;
   onStep: (step: AgentStep) => Promise<void> | void;
   onPlan: (plan: SitePlan) => Promise<void> | void;
   onPreview: (url: string) => Promise<void> | void;
@@ -59,12 +68,19 @@ PHASE 3 — DESIGN POLISH (required second pass)
 8. Do not call plan_site again in this phase unless the scaffold is broken. Improve UI in place with write_file.
 9. Only stop after Section 14 pre-flight can be honestly ticked (within Astro + CSS constraints). End with a one-paragraph summary of what you built and what the polish pass changed.
 
+CUSTOM DOMAINS
+- The site must be published (user clicks Publish in the workspace) before a custom domain can be connected.
+- When the user asks to connect, check, or remove a domain, use setup_domain / check_domain / remove_domain.
+- After setup_domain, clearly list the DNS records (type, name, value) and tell them to add those at their DNS provider. Do not invent DNS values.
+- Prefer www.example.com style hostnames; for apex domains explain ALIAS/ANAME or CNAME flattening when relevant.
+- Domains can also be managed under Account → Domains.
+
 Never dump large explanations between tool calls.
 
 ${DESIGN_GUIDELINES}`;
 
 export function buildSiteAgent(opts: BuildAgentOptions) {
-  const { boxId, onStep, onPlan, onPreview } = opts;
+  const { boxId, projectId, token, onStep, onPlan, onPreview } = opts;
 
   const tools = {
     plan_site: tool({
@@ -145,6 +161,84 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
           stdout: res.stdout.slice(0, 4000),
           stderr: res.stderr.slice(0, 2000),
         };
+      },
+    }),
+
+    setup_domain: tool({
+      description:
+        "Connect a custom domain to the published site and return DNS records the user must add. Requires the site to already be published.",
+      inputSchema: z.object({
+        domain: z
+          .string()
+          .describe("Hostname to connect, e.g. www.example.com"),
+      }),
+      execute: async ({ domain }) => {
+        try {
+          const result = await connectCustomDomain(projectId, domain, token);
+          await onStep({
+            kind: "domain",
+            label: `Connected ${result.domain?.name ?? domain}`,
+            detail: result.domain?.status,
+          });
+          return {
+            ok: true,
+            publishedUrl: result.publishedUrl,
+            domain: result.domain,
+          };
+        } catch (error) {
+          const appError = AppError.from(error);
+          await onStep({
+            kind: "domain",
+            label: "Domain setup failed",
+            detail: appError.message,
+          });
+          return { ok: false, error: appError.message, code: appError.code };
+        }
+      },
+    }),
+
+    check_domain: tool({
+      description:
+        "Refresh custom domain status and DNS records for this published site.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        try {
+          const result = await getCustomDomain(projectId, token);
+          await onStep({
+            kind: "domain",
+            label: result.domain
+              ? `Domain ${result.domain.name}: ${result.domain.status}`
+              : "No custom domain",
+          });
+          return {
+            ok: true,
+            publishedUrl: result.publishedUrl,
+            domain: result.domain,
+          };
+        } catch (error) {
+          const appError = AppError.from(error);
+          return { ok: false, error: appError.message, code: appError.code };
+        }
+      },
+    }),
+
+    remove_domain: tool({
+      description:
+        "Disconnect the custom domain from this site (does not change the user's DNS records).",
+      inputSchema: z.object({}),
+      execute: async () => {
+        try {
+          const result = await disconnectCustomDomain(projectId, token);
+          await onStep({ kind: "domain", label: "Removed custom domain" });
+          return {
+            ok: true,
+            publishedUrl: result.publishedUrl,
+            domain: null,
+          };
+        } catch (error) {
+          const appError = AppError.from(error);
+          return { ok: false, error: appError.message, code: appError.code };
+        }
       },
     }),
   };

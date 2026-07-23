@@ -64,6 +64,8 @@ export async function runGeneration(projectId: string, token: string) {
 
     const agent = buildSiteAgent({
       boxId,
+      projectId,
+      token,
       modelId,
       customerId: typeof me?.id === "string" ? me.id : undefined,
       hasPreview: Boolean(project.previewUrl),

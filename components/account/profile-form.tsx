@@ -42,6 +42,7 @@ export function ProfileForm() {
 
   return (
     <AccountSection
+      id="profile"
       title="Profile"
       description="Your display name appears in Floras. Email is tied to your sign-in."
     >

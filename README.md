@@ -136,6 +136,9 @@ Full reference: [`.env.example`](.env.example).
 | `NEXT_PUBLIC_CONVEX_URL` | Convex client URL (from `convex dev`) |
 | `CONVEX_DEPLOYMENT` | Deployment name (from `convex dev`) |
 | `AUTUMN_SECRET_KEY` | Autumn handler on the Next.js side |
+| `BOX_API_KEY` | Box sandboxes (generate + publish) |
+| `CLOUDFLARE_API_TOKEN` | Pages Edit token for publish/domains |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account for Pages projects |
 
 **Convex deployment** (`npx convex env set …`)
 

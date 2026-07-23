@@ -33,12 +33,16 @@ export function BillingSection() {
     );
     const active = data.subscriptions.find((s) => s.status === "active");
     planId = paid?.planId ?? active?.planId ?? null;
-    planName =
+    const rawName =
       paid?.plan?.name ??
       paid?.planId ??
       active?.plan?.name ??
       active?.planId ??
       "No plan";
+    planName =
+      rawName.length > 0
+        ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
+        : "No plan";
 
     try {
       const result = check({
@@ -68,6 +72,7 @@ export function BillingSection() {
 
   return (
     <AccountSection
+      id="billing"
       title="Billing"
       description="Plan, usage, and payment settings for creating sites."
     >

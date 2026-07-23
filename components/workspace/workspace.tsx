@@ -6,13 +6,20 @@ import { ChatPanel } from "@/components/workspace/chat-panel";
 import { PreviewPane } from "@/components/workspace/preview-pane";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { ComposerMode } from "@/components/site/prompt-composer";
+import type { DomainStatus, PublishStatus } from "@/lib/publish/types";
 
 interface Project {
   _id: string;
   name: string;
   status: string;
   previewUrl?: string;
+  boxId?: string;
   error?: string;
+  publishStatus?: PublishStatus;
+  publishedUrl?: string;
+  publishError?: string;
+  customDomain?: string;
+  customDomainStatus?: DomainStatus;
 }
 
 export function Workspace({
@@ -34,7 +41,17 @@ export function Workspace({
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden">
-      <WorkspaceHeader name={project?.name} previewUrl={project?.previewUrl} />
+      <WorkspaceHeader
+        projectId={projectId}
+        name={project?.name}
+        previewUrl={project?.previewUrl}
+        boxId={project?.boxId}
+        publishStatus={project?.publishStatus ?? "idle"}
+        publishedUrl={project?.publishedUrl}
+        publishError={project?.publishError}
+        customDomain={project?.customDomain}
+        customDomainStatus={project?.customDomainStatus}
+      />
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside className="flex min-h-0 w-full shrink-0 flex-col border-b border-border/60 lg:w-[440px] lg:border-b-0 lg:border-r">
           <ChatPanel

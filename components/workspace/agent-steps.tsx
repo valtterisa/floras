@@ -5,6 +5,7 @@ import {
   FileText,
   Globe,
   Info,
+  Link2,
   PencilLine,
   Sparkles,
   TerminalSquare,
@@ -28,6 +29,7 @@ const ICONS: Record<string, typeof Sparkles> = {
   read: FileText,
   command: TerminalSquare,
   preview: Globe,
+  domain: Link2,
   note: Info,
 };
 

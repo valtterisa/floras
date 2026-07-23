@@ -60,6 +60,7 @@
     "ai": "^7.0.34",
     "autumn-js": "^1.2.43",
     "class-variance-authority": "^0.7.1",
+    "cloudflare": "^7.0.0",
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
     "convex": "^1.42.3",
