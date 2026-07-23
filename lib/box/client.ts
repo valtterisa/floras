@@ -4,8 +4,6 @@ import {
   Configuration,
   waitUntilReady,
 } from "@asciidev/box-sdk";
-import type { ScaffoldFile } from "@/lib/astro/scaffold";
-import { getPreviewPort } from "@/lib/astro/scaffold";
 import { AppError } from "@/lib/errors";
 
 /**
@@ -16,11 +14,33 @@ import { AppError } from "@/lib/errors";
 
 const SITE_DIR = "site";
 const CF_ENV_PATH = "floras-cf.env";
+const PREVIEW_PORT = 4321;
+
+export type BoxFile = {
+  path: string;
+  content: string;
+};
 
 export type BoxState = (typeof BoxStateEnum)[keyof typeof BoxStateEnum];
 
+export function getPreviewPort() {
+  return PREVIEW_PORT;
+}
+
 export function boxConfigured(): boolean {
   return Boolean(process.env.BOX_API_KEY);
+}
+
+function templateRepoUrl(): string {
+  const url = process.env.BOX_TEMPLATE_REPO_URL?.trim();
+  if (!url) {
+    throw new AppError(
+      "config",
+      "Astro template repo is not configured.",
+      { detail: "BOX_TEMPLATE_REPO_URL must be set" }
+    );
+  }
+  return url;
 }
 
 export function getBox(): BoxApi {
@@ -44,7 +64,23 @@ export async function createSandbox(name: string): Promise<string> {
   const boxId = created.box.id;
   await box.update({ boxId, updateBoxRequest: { name } });
   await waitUntilReady(box, boxId);
+  await pullTemplate(boxId);
   return boxId;
+}
+
+export async function pullTemplate(boxId: string): Promise<void> {
+  const repo = templateRepoUrl();
+  const quoted = shellQuote(repo);
+  const res = await runCommand(
+    boxId,
+    `rm -rf ${SITE_DIR} && git clone --depth 1 ${quoted} ${SITE_DIR}`,
+    { cwd: ".", timeoutSeconds: 180 }
+  );
+  if (!res.success || res.exitCode !== 0) {
+    throw new AppError("preview", "Could not pull Astro template repo.", {
+      detail: res.stderr || res.stdout || `exit ${res.exitCode}`,
+    });
+  }
 }
 
 export async function getBoxState(boxId: string): Promise<BoxState> {
@@ -86,7 +122,7 @@ export async function ensureBoxReady(boxId: string): Promise<void> {
   }
 }
 
-export async function writeFiles(boxId: string, files: ScaffoldFile[]): Promise<void> {
+export async function writeFiles(boxId: string, files: BoxFile[]): Promise<void> {
   const box = getBox();
   for (const file of files) {
     await box.writeFile({
@@ -144,20 +180,18 @@ export async function runCommand(
  * public HTTPS URL. Returns the preview URL.
  */
 export async function startPreview(boxId: string): Promise<string> {
-  const port = getPreviewPort();
+  const port = PREVIEW_PORT;
 
   await runCommand(boxId, "npm install --no-audit --no-fund", {
     timeoutSeconds: 300,
   });
 
-  // Start the dev server detached so the command returns immediately.
   await runCommand(
     boxId,
     "pkill -f 'astro dev' || true; nohup npm run dev > /tmp/astro-dev.log 2>&1 &",
     { timeoutSeconds: 30 }
   );
 
-  // Give the dev server a moment to boot, then publish the port.
   await runCommand(boxId, "sleep 3", { cwd: ".", timeoutSeconds: 15 });
 
   const hosted = await runCommand(boxId, `host ${port} --public`, {
