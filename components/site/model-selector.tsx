@@ -32,10 +32,12 @@ export function ModelSelector({
   value,
   onChange,
   disabled = false,
+  className,
 }: {
   value: AgentModelId;
   onChange: (modelId: AgentModelId) => void;
   disabled?: boolean;
+  className?: string;
 }) {
   const selected = getAgentModel(value);
 
@@ -45,13 +47,14 @@ export function ModelSelector({
         disabled={disabled}
         aria-label="Model"
         className={cn(
-          "inline-flex h-9 max-w-full cursor-pointer items-center gap-2 border border-border bg-background px-2.5 text-left text-muted-foreground transition-colors",
+          "inline-flex h-9 min-w-0 max-w-full cursor-pointer items-center gap-2 border border-border bg-background px-2.5 text-left text-muted-foreground transition-colors",
           "hover:bg-card hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
-          "focus:outline-none data-[state=open]:bg-card data-[state=open]:text-foreground"
+          "focus:outline-none data-[state=open]:bg-card data-[state=open]:text-foreground",
+          className
         )}
       >
-        <ModelLogo provider={selected.provider} className="size-3.5" />
-        <span className="truncate text-xs font-medium text-foreground">
+        <ModelLogo provider={selected.provider} className="size-3.5 shrink-0" />
+        <span className="min-w-0 truncate text-xs font-medium text-foreground">
           {selected.name}
         </span>
         <ChevronDown className="size-3.5 shrink-0" />

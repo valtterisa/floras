@@ -25,6 +25,12 @@ export type TopUpModalProps = {
   onPurchased?: () => void;
 };
 
+const FACTS = [
+  "Credit never expires",
+  "Stacks on top of your plan balance",
+  "Used for ask, build, and refinements",
+];
+
 export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps) {
   const { isAuthenticated } = useConvexAuth();
   const { attach, data, refetch } = useCustomer({
@@ -74,69 +80,69 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
         <div className="border-b border-border px-6 py-5 pr-14">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            AI credit
-          </p>
-          <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">
+          <DialogTitle className="text-2xl font-semibold tracking-tight">
             Top up
           </DialogTitle>
           <DialogDescription className="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
-            Extra credit never expires and stacks with your plan.
-            {typeof balance === "number" ? (
-              <>
-                {" "}
-                Balance{" "}
-                <span className="font-mono tabular-nums text-foreground">
-                  {formatCredits(balance)}
-                </span>
-                .
-              </>
-            ) : null}
+            Add credit for ask, build, and chat refinements.
           </DialogDescription>
         </div>
 
-        <div role="listbox" aria-label="Credit packs" className="divide-y divide-border">
-          {TOP_UP_PACKS.map((pack) => {
+        <div
+          role="group"
+          aria-label="Credit pack"
+          className="grid grid-cols-3 border-b border-border"
+        >
+          {TOP_UP_PACKS.map((pack, index) => {
             const active = pack.id === selected.id;
             return (
               <button
                 key={pack.id}
                 type="button"
-                role="option"
-                aria-selected={active}
+                aria-pressed={active}
                 onClick={() => setSelected(pack)}
                 className={cn(
-                  "flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-4 text-left transition-colors active:scale-[0.99]",
+                  "cursor-pointer px-4 py-4 text-left transition-colors",
+                  index > 0 && "border-l border-border",
                   active ? "bg-brand-soft" : "hover:bg-background"
                 )}
               >
-                <span className="min-w-0">
-                  <span className="flex items-baseline gap-2">
-                    <span className="text-lg font-semibold tracking-tight tabular-nums text-foreground">
-                      ${pack.credits}
-                    </span>
-                    {pack.hint ? (
-                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                        {pack.hint}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="mt-0.5 block text-sm text-muted-foreground">
-                    Credit pack
+                <span className="flex items-center justify-between gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {pack.hint ?? "Pack"}
                   </span>
                 </span>
-                <span
-                  className={cn(
-                    "shrink-0 font-mono text-sm tabular-nums",
-                    active ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
+                <span className="mt-1 flex items-baseline gap-1">
+                  <span className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+                    ${pack.credits}
+                  </span>
+                </span>
+                <span className="mt-1 block font-mono text-[11px] tabular-nums text-muted-foreground">
                   {pack.priceLabel}
                 </span>
               </button>
             );
           })}
         </div>
+
+        <ul>
+          {typeof balance === "number" ? (
+            <li className="border-b border-border px-6 py-3 text-sm text-muted-foreground">
+              Current balance{" "}
+              <span className="font-mono tabular-nums text-foreground">
+                {formatCredits(balance)}
+              </span>
+            </li>
+          ) : null}
+          {FACTS.map((item) => (
+            <li
+              key={item}
+              className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
 
         <div className="border-t border-border p-0">
           <button

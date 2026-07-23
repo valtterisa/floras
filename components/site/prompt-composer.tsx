@@ -118,8 +118,8 @@ export function PromptComposer({
           }}
           className="min-h-[148px] w-full resize-none bg-transparent px-5 pt-5 pb-4 text-sm leading-relaxed text-foreground placeholder:text-sm placeholder:text-muted-foreground/45 focus:outline-none disabled:opacity-50"
         />
-        <div className="flex items-center justify-between gap-4 border-t border-border px-4 py-3">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className="flex flex-nowrap items-center gap-2 border-t border-border px-3 py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             {showModeToggle ? (
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -191,13 +191,14 @@ export function PromptComposer({
               value={modelId}
               onChange={setModelId}
               disabled={pending}
+              className="min-w-0 max-w-[7.5rem] shrink"
             />
           </div>
           <button
             type="submit"
             disabled={pending || !text.trim()}
             className={cn(
-              "inline-flex h-9 min-w-[7.5rem] cursor-pointer items-center justify-center gap-2 px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-[filter] active:scale-[0.98]",
+              "inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-[filter] active:scale-[0.98]",
               "bg-brand text-brand-foreground hover:brightness-110",
               "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
             )}
@@ -206,12 +207,12 @@ export function PromptComposer({
               resolvedPendingLabel
             ) : (
               <>
-                <span>{resolvedSubmitLabel}</span>
-                <KbdGroup className="hidden gap-1 sm:inline-flex">
-                  <Kbd className="h-6 min-w-6 border-brand-foreground/30 bg-brand-foreground/15 px-1.5 text-[11px] text-brand-foreground normal-case">
+                <span className="whitespace-nowrap">{resolvedSubmitLabel}</span>
+                <KbdGroup className="inline-flex gap-0.5">
+                  <Kbd className="h-5 min-w-5 border-brand-foreground/30 bg-brand-foreground/15 px-1 text-[10px] text-brand-foreground normal-case">
                     {modKey}
                   </Kbd>
-                  <Kbd className="h-6 border-brand-foreground/30 bg-brand-foreground/15 px-1.5 text-[11px] text-brand-foreground">
+                  <Kbd className="h-5 border-brand-foreground/30 bg-brand-foreground/15 px-1 text-[10px] text-brand-foreground">
                     Enter
                   </Kbd>
                 </KbdGroup>
