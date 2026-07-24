@@ -246,7 +246,14 @@ export async function runCommand(
           timeoutSeconds,
         },
       });
-      const result = {
+
+      if (res.timedOut) {
+        throw new AppError("timeout", "Box command timed out.", {
+          detail: `timeoutSeconds=${timeoutSeconds}`,
+        });
+      }
+
+      const result: CommandResult = {
         exitCode: res.exitCode,
         stdout: res.stdout ?? "",
         stderr: res.stderr ?? "",
@@ -257,7 +264,6 @@ export async function runCommand(
         cwd,
         exit: result.exitCode,
         success: result.success,
-        timedOut: Boolean(res.timedOut),
         stdout: result.stdout.trim().slice(0, 240),
         stderr: result.stderr.trim().slice(0, 240),
       });
@@ -275,8 +281,11 @@ export async function runCommand(
         rawBody: info.body ?? null,
       });
 
-      const retryable = isRetryableBoxCommandError(info);
+      const isTimeout =
+        error instanceof AppError ? error.code === "timeout" : false;
+      const retryable = isTimeout || isRetryableBoxCommandError(info);
       if (!retryable || attempt >= retries) {
+        if (error instanceof AppError) throw error;
         if (isBoxDirectFailed(info) || info.status === 502) {
           throw new AppError(
             "preview",
@@ -296,7 +305,7 @@ export async function runCommand(
         throw error;
       }
 
-      if (attempt === 1) {
+      if (attempt === 1 && !isTimeout) {
         await ensureBoxReady(boxId).catch(() => { });
       }
       await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
@@ -337,7 +346,7 @@ async function ensureSiteDeps(boxId: string): Promise<void> {
   boxLog(boxId, "deps", "pnpm install");
   const install = await runCommand(
     boxId,
-    "corepack enable >/dev/null 2>&1 || true; pnpm install --frozen-lockfile",
+    "corepack enable >/dev/null 2>&1 || true; COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm install --frozen-lockfile",
     { timeoutSeconds: 300 }
   );
   if (!install.success || install.exitCode !== 0) {
@@ -375,28 +384,63 @@ async function startAstroDev(boxId: string): Promise<void> {
     cwd: ".",
     timeoutSeconds: 15,
   });
-  await runCommand(
+  const launch = await runCommand(
     boxId,
-    `pnpm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} >>/tmp/astro-dev.log 2>&1 &`,
+    `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 nohup pnpm run dev >>/tmp/astro-dev.log 2>&1 & echo $!`,
     { timeoutSeconds: 30 }
   );
+  if (!launch.success || launch.exitCode !== 0) {
+    throw new AppError("preview", "Could not start Astro dev server.", {
+      detail: launch.stderr || launch.stdout || `exit ${launch.exitCode}`,
+    });
+  }
+  await waitForAstroListening(boxId);
+}
+
+async function waitForAstroListening(boxId: string): Promise<void> {
+  const deadline = Date.now() + 90_000;
+  while (Date.now() < deadline) {
+    const check = await runCommand(
+      boxId,
+      `ss -ltn 2>/dev/null | grep -q ':${PREVIEW_PORT} ' || curl -sf -o /dev/null --max-time 2 http://127.0.0.1:${PREVIEW_PORT}/`,
+      { cwd: ".", timeoutSeconds: 15, retries: 0 }
+    );
+    if (check.success && check.exitCode === 0) {
+      boxLog(boxId, "astro", "listening", { port: PREVIEW_PORT });
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 1_500));
+  }
+
+  const log = await runCommand(boxId, "tail -n 60 /tmp/astro-dev.log || true", {
+    cwd: ".",
+    timeoutSeconds: 15,
+    retries: 0,
+  });
+  throw new AppError("preview", "Astro dev server did not become ready.", {
+    detail: log.stdout.trim() || log.stderr.trim() || "no astro-dev.log",
+  });
 }
 
 async function publishHost(boxId: string, port: number): Promise<string> {
-  const hosted = await runCommand(
-    boxId,
-    `host ${port} --public --title Floras`,
-    { cwd: ".", timeoutSeconds: 60 }
-  );
+  const hosted = await runCommand(boxId, `host ${port} --public`, {
+    cwd: ".",
+    timeoutSeconds: 60,
+  });
   if (!hosted.success || hosted.exitCode !== 0) {
     throw new AppError("preview", "Could not expose public preview URL.", {
       detail: hosted.stderr || hosted.stdout || `exit ${hosted.exitCode}`,
     });
   }
 
-  const subdomain = await getBoxSubdomain(boxId);
-  const url = `https://${subdomain}-${port}.on.ascii.dev`;
-  await waitForPublicPreview(url);
+  const url =
+    hosted.stdout.trim().match(/https:\/\/\S+/i)?.[0]?.replace(/[.,;]+$/, "") ??
+    "";
+  if (!/^https:\/\//i.test(url)) {
+    throw new AppError("preview", "Could not resolve public preview URL.", {
+      detail: hosted.stdout || hosted.stderr || "host returned no URL",
+    });
+  }
   return url;
 }
 
@@ -416,17 +460,6 @@ export async function probePublicPreview(url: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-async function waitForPublicPreview(url: string): Promise<void> {
-  const deadline = Date.now() + 90_000;
-  while (Date.now() < deadline) {
-    if (await probePublicPreview(url)) return;
-    await new Promise((r) => setTimeout(r, 2_000));
-  }
-  throw new AppError("preview", "Preview URL did not become ready.", {
-    detail: url,
-  });
 }
 
 async function waitUntilArchived(

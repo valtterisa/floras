@@ -2,11 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "convex/react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/convex/_generated/api";
-import { asProjectId } from "@/lib/convex/ids";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +17,13 @@ import { cn } from "@/lib/utils";
 import type { DomainStatus, PublishStatus } from "@/lib/publish/types";
 import type { WorkspaceProject } from "@/lib/types/user";
 
-export function WorkspaceHeader({ projectId }: { projectId: string }) {
-  const project = useQuery(api.projects.get, {
-    projectId: asProjectId(projectId),
-  }) as WorkspaceProject | null | undefined;
-
+export function WorkspaceHeader({
+  projectId,
+  project,
+}: {
+  projectId: string;
+  project: WorkspaceProject | null;
+}) {
   const gates = useBillingGates();
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -34,7 +33,8 @@ export function WorkspaceHeader({ projectId }: { projectId: string }) {
 
   const name = project?.name;
   const boxId = project?.boxId;
-  const publishStatus = (project?.publishStatus as PublishStatus | undefined) ?? "idle";
+  const publishStatus =
+    (project?.publishStatus as PublishStatus | undefined) ?? "idle";
   const publishedUrl = project?.publishedUrl;
   const publishError = project?.publishError;
   const cfSubdomain = project?.cfSubdomain;
