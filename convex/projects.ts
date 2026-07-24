@@ -119,7 +119,7 @@ export const claimGeneration = authedMutation({
     const { project } = await requireOwnedProject(ctx, args.projectId);
     if (isGenerationBusy(project)) return false;
     await ctx.db.patch(args.projectId, {
-      status: project.boxId ? "generating" : "provisioning",
+      status: "generating",
       busyAt: Date.now(),
       error: undefined,
     });

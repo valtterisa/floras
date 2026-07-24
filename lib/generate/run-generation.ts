@@ -4,6 +4,7 @@ import { asMessageId, asProjectId } from "@/lib/convex/ids";
 import { buildSiteAgent } from "@/lib/ai/agent";
 import { resolveAgentModelId } from "@/lib/ai/models";
 import * as box from "@/lib/box/client";
+import { createSandboxSession } from "@/lib/box/sandbox-session";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
 import { AppError } from "@/lib/errors";
 import type { SitePlan } from "@/lib/schema/site";
@@ -46,38 +47,10 @@ export async function runGeneration(projectId: string, token: string) {
       throw new AppError("config");
     }
 
-    let boxId = project.boxId as string | undefined;
-    if (!boxId) {
-      await fetchMutation(
-        api.projects.setStatus,
-        { projectId: pid, status: "provisioning" },
-        { token }
-      );
-      const created = await box.createSandbox(project.name);
-      boxId = created.boxId;
-      await fetchMutation(
-        api.projects.setBox,
-        {
-          projectId: pid,
-          boxId: created.boxId,
-          boxSubdomain: created.subdomain,
-        },
-        { token }
-      );
-    } else {
-      await box.ensureBoxReady(boxId);
-      if (
-        typeof project.boxSubdomain !== "string" ||
-        !project.boxSubdomain.trim()
-      ) {
-        const subdomain = await box.getBoxSubdomain(boxId);
-        await fetchMutation(
-          api.projects.setBox,
-          { projectId: pid, boxId, boxSubdomain: subdomain },
-          { token }
-        );
-      }
-    }
+    const initialBoxId =
+      typeof project.boxId === "string" ? project.boxId : undefined;
+    const previewUrl =
+      typeof project.previewUrl === "string" ? project.previewUrl : null;
 
     await fetchMutation(
       api.projects.setStatus,
@@ -85,19 +58,48 @@ export async function runGeneration(projectId: string, token: string) {
       { token }
     );
 
+    const sandbox = createSandboxSession({
+      projectName: typeof project.name === "string" ? project.name : "site",
+      initialBoxId,
+      initialSubdomain:
+        typeof project.boxSubdomain === "string"
+          ? project.boxSubdomain
+          : undefined,
+      initialPreviewUrl: previewUrl,
+      onBox: async (boxId, subdomain) => {
+        await fetchMutation(
+          api.projects.setBox,
+          { projectId: pid, boxId, boxSubdomain: subdomain },
+          { token }
+        );
+      },
+      onPreview: async (url) => {
+        await fetchMutation(
+          api.projects.setPreview,
+          { projectId: pid, previewUrl: url },
+          { token }
+        );
+      },
+      onStatus: async (status) => {
+        await fetchMutation(
+          api.projects.setStatus,
+          { projectId: pid, status },
+          { token }
+        );
+      },
+    });
+
     const me = await fetchQuery(api.users.me, {}, { token });
     const modelId = resolveAgentModelId(
       typeof project.modelId === "string" ? project.modelId : null
     );
-    const previewUrl =
-      typeof project.previewUrl === "string" ? project.previewUrl : null;
     const sitePlan =
       project.plan && typeof project.plan === "object"
         ? (project.plan as SitePlan)
         : null;
 
     const agent = buildSiteAgent({
-      boxId,
+      sandbox,
       projectId,
       token,
       modelId,
@@ -121,13 +123,6 @@ export async function runGeneration(projectId: string, token: string) {
         await fetchMutation(
           api.projects.setPlan,
           { projectId: pid, plan },
-          { token }
-        );
-      },
-      onPreview: async (url) => {
-        await fetchMutation(
-          api.projects.setPreview,
-          { projectId: pid, previewUrl: url },
           { token }
         );
       },

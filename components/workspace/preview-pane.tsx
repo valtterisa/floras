@@ -193,9 +193,10 @@ export function PreviewPane({
   };
 
   if (!previewUrl) {
+    const waiting = busy || starting;
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 bg-background text-center">
-        {busy ? (
+        {waiting ? (
           <Loader2 className="size-7 animate-spin text-brand" />
         ) : (
           <MonitorSmartphone className="size-7 text-muted-foreground" />
@@ -203,8 +204,10 @@ export function PreviewPane({
         <div>
           <p className="text-sm font-medium">{projectLabel}</p>
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-            {busy
-              ? "Your live preview will appear here in a moment."
+            {waiting
+              ? boxId
+                ? "Starting sandbox…"
+                : "Your live preview will appear here in a moment."
               : "Switch to Build and send a prompt to generate a live preview."}
           </p>
         </div>

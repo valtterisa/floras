@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  Box,
   FileText,
   FolderSearch,
   Globe,
@@ -33,6 +34,7 @@ const ICONS: Record<string, typeof Info> = {
   domain: Link2,
   note: Info,
   inspect: FolderSearch,
+  sandbox: Box,
 };
 
 function formatThoughtDuration(ms: number): string {

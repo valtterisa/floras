@@ -3,6 +3,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { sitePlanSchema, type SitePlan } from "@/lib/schema/site";
 import * as box from "@/lib/box/client";
+import type { SandboxSession } from "@/lib/box/sandbox-session";
 import { DESIGN_SKILL } from "@/lib/ai/design-skill";
 import { resolveAgentModelId } from "@/lib/ai/models";
 import { anthropicThinkingOptions } from "@/lib/ai/anthropic-options";
@@ -22,7 +23,8 @@ export type AgentStepKind =
   | "preview"
   | "domain"
   | "note"
-  | "inspect";
+  | "inspect"
+  | "sandbox";
 
 export interface AgentStep {
   kind: AgentStepKind;
@@ -31,12 +33,11 @@ export interface AgentStep {
 }
 
 export interface BuildAgentOptions {
-  boxId: string;
+  sandbox: SandboxSession;
   projectId: string;
   token: string;
   onStep: (step: AgentStep) => Promise<void> | void;
   onPlan: (plan: SitePlan) => Promise<void> | void;
-  onPreview: (url: string) => Promise<void> | void;
   hasPreview: boolean;
   sitePlan?: SitePlan | null;
   previewUrl?: string | null;
@@ -115,24 +116,32 @@ function assertAllowedCommand(command: string): string {
   return trimmed;
 }
 
-const INSTRUCTIONS = `You are an expert Astro web engineer inside a Linux sandbox. Sites live in site/. Edit in place. Do not recreate package.json or reinstall the framework unless something is broken. Never restart the Astro dev server manually.
+const INSTRUCTIONS = `You are an expert Astro web engineer. Sites live in site/ inside a Linux sandbox. Edit in place. Do not recreate package.json or reinstall the framework unless something is broken. Never restart the Astro dev server manually.
 
 FIRST TOOL CALL (mandatory)
 Call inspect_site before any other tool. Follow the returned mode exactly:
 - mode "edit": the site already exists. Make the user's requested changes with read_file / write_file. Do not ask to build. Do not claim there is no live project.
-- mode "new": this is a first build. Call plan_site once, then implement and polish.
+- mode "new": this is a first build. Call plan_site once, then ensure_sandbox, then implement and polish.
 
 NEW SITE (mode "new")
 1. Design Read + variance settings from the design skill.
-2. plan_site exactly once.
-3. Implement with write_file / read_file / list_files.
-4. Design polish pass, then a short markdown summary.
+2. plan_site exactly once (stores the plan only — no sandbox required).
+3. Call ensure_sandbox once. Wait for it to return ready, then write files.
+4. Implement with write_file / read_file / list_files.
+5. Design polish pass, then a short markdown summary.
 
 EDIT SITE (mode "edit")
-1. Read the files you need.
-2. Apply targeted write_file changes (complete file contents).
-3. Keep scope tight unless the user asks for a redesign.
-4. Short markdown summary of what changed.
+1. If inspect_site says sandboxReady is false, call ensure_sandbox first.
+2. Read the files you need.
+3. Apply targeted write_file changes (complete file contents).
+4. Keep scope tight unless the user asks for a redesign.
+5. Short markdown summary of what changed.
+
+SANDBOX
+ensure_sandbox creates or resumes the Box VM and starts the live preview.
+- New sites: call after plan_site, before the first write_file.
+- If the user asks to start, resume, wake, or spin up the sandbox/preview/box (dev convenience), call ensure_sandbox after inspect_site and confirm briefly. Do not redesign or edit files unless they also asked for that.
+- Do not call it more than once per turn unless it failed.
 
 CUSTOM DOMAINS
 Use setup_domain / check_domain / remove_domain when asked. Site must already be published. List real DNS records only.
@@ -156,17 +165,54 @@ ${custom}`
 }
 
 export function buildSiteAgent(opts: BuildAgentOptions) {
-  const { boxId, projectId, token, onStep, onPlan, onPreview, hasPreview } =
-    opts;
+  const { sandbox, projectId, token, onStep, onPlan } = opts;
   const knownExisting = siteAlreadyKnown(opts);
+
+  const requireBox = async (): Promise<string> => {
+    if (sandbox.isProvisioned()) {
+      return sandbox.ensureReady();
+    }
+    throw new AppError(
+      "preview",
+      "Sandbox is not ready. Call ensure_sandbox before reading or writing files."
+    );
+  };
 
   const inspect_site = tool({
     description:
-      "Call first on every turn. Inspects site/ on disk and returns whether this is an edit or a new-site session.",
+      "Call first on every turn. Inspects site/ when a sandbox exists, otherwise reports a new-site session.",
     inputSchema: z.object({}),
     execute: async () => {
-      const files = await listSiteFiles(boxId);
-      const generatedOnDisk = detectGeneratedSite(files);
+      const boxId = sandbox.currentBoxId();
+      if (!boxId) {
+        await onStep({
+          kind: "inspect",
+          label: "New site session",
+          detail: "Sandbox not provisioned yet",
+        });
+        return {
+          mode: "new" as const,
+          sandboxReady: false,
+          projectName: opts.projectName?.trim() || null,
+          siteName: opts.sitePlan?.siteName ?? null,
+          previewUrl: opts.previewUrl ?? null,
+          hasStoredPlan: Boolean(opts.sitePlan),
+          fileCount: 0,
+          files: [] as string[],
+          next: "Call plan_site once, then ensure_sandbox, then build and polish.",
+        };
+      }
+
+      let files: string[] = [];
+      let generatedOnDisk = false;
+      try {
+        await sandbox.ensureReady();
+        files = await listSiteFiles(boxId);
+        generatedOnDisk = detectGeneratedSite(files);
+      } catch {
+        files = [];
+      }
+
       const mode =
         knownExisting || generatedOnDisk ? ("edit" as const) : ("new" as const);
 
@@ -179,6 +225,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
 
       return {
         mode,
+        sandboxReady: true,
         projectName: opts.projectName?.trim() || null,
         siteName: opts.sitePlan?.siteName ?? null,
         previewUrl: opts.previewUrl ?? null,
@@ -188,15 +235,53 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         next:
           mode === "edit"
             ? "Edit site/ in place for the user request. Do not call plan_site."
-            : "Call plan_site once, then build and polish.",
+            : "Call plan_site once, then ensure_sandbox, then build and polish.",
+      };
+    },
+  });
+
+  const ensure_sandbox = tool({
+    description:
+      "Create or resume the sandbox VM and start the live preview. Call after plan_site on new builds, or whenever the user asks to start/resume/wake the sandbox. Returns when ready for write_file.",
+    inputSchema: z.object({}),
+    execute: async () => {
+      await onStep({
+        kind: "sandbox",
+        label: sandbox.isProvisioned()
+          ? "Resuming sandbox"
+          : "Creating sandbox",
+      });
+
+      const boxId = await sandbox.ensureReady();
+      const previewUrl = await sandbox.ensurePreview({ force: true });
+      if (previewUrl) {
+        await onStep({
+          kind: "preview",
+          label: "Preview URL live",
+          detail: previewUrl,
+        });
+      }
+
+      await onStep({
+        kind: "sandbox",
+        label: "Sandbox ready",
+        detail: boxId,
+      });
+
+      return {
+        status: "ready" as const,
+        boxId,
+        previewUrl,
+        next: "Sandbox is running. Continue with write_file if building, or stop if the user only asked to start it.",
       };
     },
   });
 
   const sharedTools = {
     inspect_site,
+    ensure_sandbox,
     write_file: tool({
-      description: "Create or overwrite one file in the site project.",
+      description: "Create or overwrite one file in the site project. Requires ensure_sandbox first on new sites.",
       inputSchema: z.object({
         path: z
           .string()
@@ -204,6 +289,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         content: z.string(),
       }),
       execute: async ({ path, content }) => {
+        const boxId = await requireBox();
         const safePath = assertSafeSitePath(path);
         await box.writeFiles(boxId, [{ path: safePath, content }]);
         await onStep({ kind: "write", label: `Edited ${safePath}` });
@@ -211,9 +297,10 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       },
     }),
     read_file: tool({
-      description: "Read one file from the site project.",
+      description: "Read one file from the site project. Requires ensure_sandbox first on new sites.",
       inputSchema: z.object({ path: z.string() }),
       execute: async ({ path }) => {
+        const boxId = await requireBox();
         const safePath = assertSafeSitePath(path);
         const content = await box.readFile(boxId, safePath);
         await onStep({ kind: "read", label: `Read ${safePath}` });
@@ -221,9 +308,10 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       },
     }),
     list_files: tool({
-      description: "List the files in the site project.",
+      description: "List the files in the site project. Requires ensure_sandbox first on new sites.",
       inputSchema: z.object({}),
       execute: async () => {
+        const boxId = await requireBox();
         const files = await listSiteFiles(boxId);
         await onStep({ kind: "command", label: "Listed project files" });
         return { files };
@@ -234,6 +322,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         "Run an allowlisted shell command in the site project (pnpm add/exec, ls, cat, etc.).",
       inputSchema: z.object({ command: z.string() }),
       execute: async ({ command }) => {
+        const boxId = await requireBox();
         const safe = assertAllowedCommand(command);
         const res = await box.runCommand(boxId, safe, { timeoutSeconds: 120 });
         await onStep({
@@ -307,7 +396,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
 
   const plan_site = tool({
     description:
-      "Store the structured site plan and start the live preview. Only after inspect_site returns mode \"new\". Call once.",
+      "Store the structured site plan. Only after inspect_site returns mode \"new\". Call once. Does not create the sandbox — call ensure_sandbox next.",
     inputSchema: sitePlanSchema,
     execute: async (plan) => {
       await onStep({
@@ -316,19 +405,10 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         detail: `${plan.pages.length} page(s)`,
       });
       await onPlan(plan);
-
-      let previewUrl: string | null = null;
-      if (!hasPreview) {
-        previewUrl = await box.startPreview(boxId);
-        await onPreview(previewUrl);
-        await onStep({
-          kind: "preview",
-          label: "Preview URL live",
-          detail: previewUrl,
-        });
-      }
-
-      return { ok: true, previewUrl };
+      return {
+        ok: true,
+        next: "Call ensure_sandbox, then implement with write_file.",
+      };
     },
   });
 

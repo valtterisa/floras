@@ -47,7 +47,8 @@ export const agentStep = v.object({
     v.literal("preview"),
     v.literal("domain"),
     v.literal("note"),
-    v.literal("inspect")
+    v.literal("inspect"),
+    v.literal("sandbox")
   ),
   label: v.string(),
   detail: v.optional(v.string()),
