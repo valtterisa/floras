@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  BrainIcon,
+  CircleIcon,
+} from "@hugeicons/core-free-icons";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -7,8 +14,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
-import { BrainIcon, ChevronDownIcon, DotIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { memo } from "react";
 
@@ -48,19 +53,18 @@ export const ChainOfThoughtHeader = memo(
       disabled={!showChevron}
       {...props}
     >
-      <BrainIcon
-        className={cn("size-4", active && "animate-pulse text-foreground")}
-      />
+      <HugeiconsIcon icon={BrainIcon}
+        className={cn("size-4", active && "animate-pulse text-foreground")} />
       <span className="flex-1 text-left">{children ?? "Chain of Thought"}</span>
       {showChevron ? (
-        <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+        <HugeiconsIcon icon={ArrowDown01Icon} className="size-4 transition-transform group-data-[state=open]:rotate-180" />
       ) : null}
     </CollapsibleTrigger>
   )
 );
 
 export type ChainOfThoughtStepProps = ComponentProps<"div"> & {
-  icon?: LucideIcon;
+  icon?: IconSvgElement;
   label: ReactNode;
   description?: ReactNode;
   status?: "complete" | "active" | "pending";
@@ -75,7 +79,7 @@ const stepStatusStyles = {
 export const ChainOfThoughtStep = memo(
   ({
     className,
-    icon: Icon = DotIcon,
+    icon: Icon = CircleIcon,
     label,
     description,
     status = "complete",
@@ -92,9 +96,8 @@ export const ChainOfThoughtStep = memo(
       {...props}
     >
       <div className="relative mt-0.5">
-        <Icon
-          className={cn("size-4", status === "active" && "animate-pulse")}
-        />
+        <HugeiconsIcon icon={Icon}
+          className={cn("size-4", status === "active" && "animate-pulse")} />
         <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-border" />
       </div>
       <div className="flex-1 space-y-2 overflow-hidden">

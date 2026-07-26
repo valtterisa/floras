@@ -1,8 +1,16 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Copy01Icon,
+  Download01Icon,
+  LinkSquare02Icon,
+  Loading03Icon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
+
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Copy, Download, ExternalLink, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -125,9 +133,9 @@ export function PublishModal({
                   aria-label="Copy URL"
                 >
                   {copied ? (
-                    <Check className="size-3.5" />
+                    <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
                   ) : (
-                    <Copy className="size-3.5" />
+                    <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
                   )}
                 </button>
                 <a
@@ -137,7 +145,7 @@ export function PublishModal({
                   className="inline-flex size-8 items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                   aria-label="Open live site"
                 >
-                  <ExternalLink className="size-3.5" />
+                  <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
                 </a>
               </div>
             </div>
@@ -197,7 +205,7 @@ export function PublishModal({
                     rel="noreferrer"
                     className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
                   >
-                    <ExternalLink className="size-3.5" />
+                    <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
                     Open site
                   </a>
                   <button
@@ -211,7 +219,7 @@ export function PublishModal({
                   >
                     {publishing ? (
                       <>
-                        <Loader2 className="size-3.5 animate-spin" />
+                        <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                         Publishing…
                       </>
                     ) : (
@@ -231,7 +239,7 @@ export function PublishModal({
                 >
                   {publishing ? (
                     <>
-                      <Loader2 className="size-3.5 animate-spin" />
+                      <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                       Publishing…
                     </>
                   ) : (
@@ -251,7 +259,7 @@ export function PublishModal({
                 >
                   {unpublishing ? (
                     <>
-                      <Loader2 className="size-3.5 animate-spin" />
+                      <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                       Unpublishing…
                     </>
                   ) : (
@@ -272,7 +280,7 @@ export function PublishModal({
             >
               {publishing ? (
                 <>
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                   Publishing…
                 </>
               ) : (
@@ -292,12 +300,12 @@ export function PublishModal({
             >
               {exporting ? (
                 <>
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                   Exporting…
                 </>
               ) : (
                 <>
-                  <Download className="size-3.5" />
+                  <HugeiconsIcon icon={Download01Icon} className="size-3.5" />
                   Export as ZIP
                 </>
               )}

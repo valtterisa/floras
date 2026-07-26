@@ -1,6 +1,11 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
+
 import { ClaudeLogo } from "@/components/icons/anthropic-logo";
 import {
   DropdownMenu,
@@ -57,7 +62,7 @@ export function ModelSelector({
         <span className="min-w-0 truncate text-xs font-medium text-foreground">
           {selected.name}
         </span>
-        <ChevronDown className="size-3.5 shrink-0" />
+        <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
@@ -87,7 +92,7 @@ export function ModelSelector({
                 </span>
               </span>
               {active ? (
-                <Check className="size-4 shrink-0 text-brand" />
+                <HugeiconsIcon icon={Tick02Icon} className="size-4 shrink-0 text-brand" />
               ) : (
                 <span className="size-4 shrink-0" aria-hidden />
               )}

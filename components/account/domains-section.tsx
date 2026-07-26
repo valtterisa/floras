@@ -1,9 +1,15 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Copy01Icon,
+  Loading03Icon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
+
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { Check, Copy, Loader2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { AccountSection } from "@/components/account/account-section";
 import { Button } from "@/components/ui/button";
@@ -168,7 +174,7 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
             >
               {loading ? (
                 <>
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                   Connecting…
                 </>
               ) : (
@@ -206,7 +212,7 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
                 }
               >
                 {loading ? (
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                 ) : (
                   "Check status"
                 )}
@@ -252,9 +258,9 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
                     aria-label="Copy CNAME record"
                   >
                     {copied ? (
-                      <Check className="size-3.5" />
+                      <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
                     ) : (
-                      <Copy className="size-3.5" />
+                      <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
                     )}
                   </button>
                 </div>

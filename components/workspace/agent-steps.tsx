@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
-  Box,
-  FileText,
-  FolderSearch,
-  Globe,
-  Info,
-  Link2,
-  PencilLine,
-  TerminalSquare,
-} from "lucide-react";
+  ComputerTerminal01Icon,
+  File01Icon,
+  FolderSearchIcon,
+  Globe02Icon,
+  InformationCircleIcon,
+  Link02Icon,
+  Package01Icon,
+  PencilEdit02Icon,
+} from "@hugeicons/core-free-icons";
+
+import { useEffect, useState } from "react";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -25,16 +27,16 @@ export interface Step {
   detail?: string;
 }
 
-const ICONS: Record<string, typeof Info> = {
-  plan: Info,
-  write: PencilLine,
-  read: FileText,
-  command: TerminalSquare,
-  preview: Globe,
-  domain: Link2,
-  note: Info,
-  inspect: FolderSearch,
-  sandbox: Box,
+const ICONS: Record<string, IconSvgElement> = {
+  plan: InformationCircleIcon,
+  write: PencilEdit02Icon,
+  read: File01Icon,
+  command: ComputerTerminal01Icon,
+  preview: Globe02Icon,
+  domain: Link02Icon,
+  note: InformationCircleIcon,
+  inspect: FolderSearchIcon,
+  sandbox: Package01Icon,
 };
 
 function formatThoughtDuration(ms: number): string {
@@ -117,7 +119,7 @@ export function AgentSteps({
             </p>
           ) : null}
           {steps.map((step, i) => {
-            const Icon = ICONS[step.kind] ?? Info;
+            const Icon = ICONS[step.kind] ?? InformationCircleIcon;
             const status = active && i === lastIndex ? "active" : "complete";
             const label =
               status === "active" ? (

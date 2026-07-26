@@ -1,8 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+} from "@hugeicons/core-free-icons";
+
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -45,7 +49,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close className="absolute right-0 top-0 inline-flex h-10 w-10 cursor-pointer items-center justify-center border-b border-l border-border text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus:outline-none disabled:pointer-events-none">
-        <X className="h-4 w-4" />
+        <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>

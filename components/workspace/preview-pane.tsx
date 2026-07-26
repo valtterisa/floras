@@ -1,7 +1,14 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  LinkSquare02Icon,
+  Loading03Icon,
+  ReloadIcon,
+  SmartPhone01Icon,
+} from "@hugeicons/core-free-icons";
+
 import { useEffect, useRef, useState } from "react";
-import { Loader2, MonitorSmartphone, RotateCw, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import {
   WebPreview,
@@ -197,9 +204,9 @@ export function PreviewPane({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 bg-background text-center">
         {waiting ? (
-          <Loader2 className="size-7 animate-spin text-brand" />
+          <HugeiconsIcon icon={Loading03Icon} className="size-7 animate-spin text-brand" />
         ) : (
-          <MonitorSmartphone className="size-7 text-muted-foreground" />
+          <HugeiconsIcon icon={SmartPhone01Icon} className="size-7 text-muted-foreground" />
         )}
         <div>
           <p className="text-sm font-medium">{projectLabel}</p>
@@ -255,7 +262,7 @@ export function PreviewPane({
           }}
           aria-label="Open preview in new tab"
         >
-          <ExternalLink className="size-4" />
+          <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" />
         </WebPreviewNavigationButton>
         <WebPreviewNavigationButton
           tooltip={waking ? "Starting sandbox…" : "Restart sandbox"}
@@ -264,9 +271,9 @@ export function PreviewPane({
           aria-label="Restart sandbox"
         >
           {waking ? (
-            <Loader2 className="size-4 animate-spin" />
+            <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
           ) : (
-            <RotateCw className="size-4" />
+            <HugeiconsIcon icon={ReloadIcon} className="size-4" />
           )}
         </WebPreviewNavigationButton>
       </WebPreviewNavigation>
@@ -274,9 +281,9 @@ export function PreviewPane({
         {showOwnUi ? (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background px-6 text-center">
             {screen.spinning ? (
-              <Loader2 className="size-7 animate-spin text-brand" />
+              <HugeiconsIcon icon={Loading03Icon} className="size-7 animate-spin text-brand" />
             ) : (
-              <MonitorSmartphone className="size-7 text-muted-foreground" />
+              <HugeiconsIcon icon={SmartPhone01Icon} className="size-7 text-muted-foreground" />
             )}
             <div>
               <p className="text-sm font-medium">{screen.title}</p>
@@ -291,7 +298,7 @@ export function PreviewPane({
                 disabled={waking}
                 className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 border border-border bg-background px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <RotateCw className="size-3.5" />
+                <HugeiconsIcon icon={ReloadIcon} className="size-3.5" />
                 Restart preview
               </button>
             ) : null}

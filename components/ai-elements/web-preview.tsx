@@ -1,5 +1,10 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+} from "@hugeicons/core-free-icons";
+
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -14,7 +19,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   createContext,
@@ -238,12 +242,11 @@ export const WebPreviewConsole = ({
           variant="ghost"
         >
           Console
-          <ChevronDownIcon
+          <HugeiconsIcon icon={ArrowDown01Icon}
             className={cn(
               "h-4 w-4 transition-transform duration-200",
               consoleOpen && "rotate-180"
-            )}
-          />
+            )} />
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent

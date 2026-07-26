@@ -1,10 +1,15 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  Menu01Icon,
+} from "@hugeicons/core-free-icons";
+
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -111,9 +116,9 @@ export function SiteNav() {
             className="inline-flex cursor-pointer items-center justify-center px-4 text-muted-foreground transition-colors hover:bg-card hover:text-foreground active:scale-[0.98] sm:hidden"
           >
             {open ? (
-              <X className="size-5" strokeWidth={1.5} aria-hidden />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-5" strokeWidth={1.5} aria-hidden />
             ) : (
-              <Menu className="size-5" strokeWidth={1.5} aria-hidden />
+              <HugeiconsIcon icon={Menu01Icon} className="size-5" strokeWidth={1.5} aria-hidden />
             )}
           </button>
         </div>

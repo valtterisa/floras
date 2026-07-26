@@ -39,13 +39,10 @@ export function HowItWorks() {
           >
             <Reveal
               delay={i * 0.06}
-              className="flex items-center gap-4 border-b border-border px-4 py-8 md:border-b-0 md:border-r md:gap-5 md:px-8 md:py-10"
+              className="flex items-center border-b border-border px-4 py-8 md:border-b-0 md:border-r md:px-8 md:py-10"
             >
-              <span className="font-mono text-sm tabular-nums text-muted-foreground md:text-base">
-                {String(i + 1).padStart(2, "0")}
-              </span>
               <h3 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                {step.title}
+                {i + 1}. {step.title}
               </h3>
             </Reveal>
             <Reveal

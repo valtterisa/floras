@@ -1,24 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
-  CreditCard,
-  Globe,
-  MessageSquareText,
-  User,
-  type LucideIcon,
-} from "lucide-react";
+  CreditCardIcon,
+  Globe02Icon,
+  Message02Icon,
+  UserIcon,
+} from "@hugeicons/core-free-icons";
+
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const SETTINGS_SECTIONS = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "billing", label: "Billing", icon: CreditCard },
-  { id: "domains", label: "Domains", icon: Globe },
-  { id: "instructions", label: "Instructions", icon: MessageSquareText },
+  { id: "profile", label: "Profile", icon: UserIcon },
+  { id: "billing", label: "Billing", icon: CreditCardIcon },
+  { id: "domains", label: "Domains", icon: Globe02Icon },
+  { id: "instructions", label: "Instructions", icon: Message02Icon },
 ] as const satisfies ReadonlyArray<{
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconSvgElement;
 }>;
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number]["id"];
@@ -117,7 +118,7 @@ export function SettingsNav() {
                 )}
                 aria-current={active === id ? "true" : undefined}
               >
-                <Icon className="size-4 shrink-0" strokeWidth={1.5} />
+                <HugeiconsIcon icon={Icon} className="size-4 shrink-0" strokeWidth={1.5} />
                 {label}
               </button>
             </li>

@@ -1,8 +1,13 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon,
+  Loading03Icon,
+} from "@hugeicons/core-free-icons";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -166,7 +171,7 @@ export function WorkspaceHeader({
         <div className="flex min-w-0 items-center gap-3">
           <Button asChild variant="ghost" size="icon-sm" className="shrink-0">
             <Link href="/dashboard">
-              <ArrowLeft className="size-4" />
+              <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
               <span className="sr-only">Back to dashboard</span>
             </Link>
           </Button>
@@ -210,17 +215,17 @@ export function WorkspaceHeader({
           >
             {isPublishing ? (
               <>
-                <Loader2 className="size-3.5 animate-spin" />
+                <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                 <span className="hidden sm:inline">Publishing</span>
               </>
             ) : unpublishing ? (
               <>
-                <Loader2 className="size-3.5 animate-spin" />
+                <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                 <span className="hidden sm:inline">Unpublishing</span>
               </>
             ) : exporting ? (
               <>
-                <Loader2 className="size-3.5 animate-spin" />
+                <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                 <span className="hidden sm:inline">Exporting</span>
               </>
             ) : isPublished ? (

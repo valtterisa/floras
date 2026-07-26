@@ -1,8 +1,13 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Moon02Icon,
+  Sun03Icon,
+} from "@hugeicons/core-free-icons";
+
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setThemeCookie, type AppTheme } from "@/lib/theme";
 
@@ -41,7 +46,7 @@ export function ThemeToggle() {
               : "bg-card text-muted-foreground hover:bg-brand-soft hover:text-brand"
           )}
         >
-          <Sun className="size-3.5 shrink-0" aria-hidden />
+          <HugeiconsIcon icon={Sun03Icon} className="size-3.5 shrink-0" aria-hidden />
           <span className="hidden sm:inline">Light</span>
         </button>
         <button
@@ -56,7 +61,7 @@ export function ThemeToggle() {
               : "bg-card text-muted-foreground hover:bg-brand-soft hover:text-brand"
           )}
         >
-          <Moon className="size-3.5 shrink-0" aria-hidden />
+          <HugeiconsIcon icon={Moon02Icon} className="size-3.5 shrink-0" aria-hidden />
           <span className="hidden sm:inline">Dark</span>
         </button>
       </div>

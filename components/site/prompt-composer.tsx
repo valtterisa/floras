@@ -1,7 +1,13 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  Loading03Icon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
+
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { ModelSelector } from "@/components/site/model-selector";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
@@ -161,7 +167,7 @@ export function PromptComposer({
                       Tab
                     </Kbd>
                   </KbdGroup>
-                  <ChevronDown className="size-3.5 shrink-0" />
+                  <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 shrink-0" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
@@ -185,7 +191,7 @@ export function PromptComposer({
                       </span>
                     </span>
                     {mode === "build" ? (
-                      <Check className="size-4 shrink-0 text-brand" />
+                      <HugeiconsIcon icon={Tick02Icon} className="size-4 shrink-0 text-brand" />
                     ) : (
                       <span className="size-4 shrink-0" aria-hidden />
                     )}
@@ -207,7 +213,7 @@ export function PromptComposer({
                       </span>
                     </span>
                     {mode === "ask" ? (
-                      <Check className="size-4 shrink-0 text-brand" />
+                      <HugeiconsIcon icon={Tick02Icon} className="size-4 shrink-0 text-brand" />
                     ) : (
                       <span className="size-4 shrink-0" aria-hidden />
                     )}
@@ -246,7 +252,7 @@ export function PromptComposer({
           >
             {pending ? (
               <>
-                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" aria-hidden />
                 <span className="whitespace-nowrap">{resolvedPendingLabel}</span>
               </>
             ) : (

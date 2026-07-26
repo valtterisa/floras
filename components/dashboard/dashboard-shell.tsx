@@ -1,5 +1,10 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+} from "@hugeicons/core-free-icons";
+
 import {
   createContext,
   useCallback,
@@ -10,7 +15,6 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
-import { Menu } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import type { DashboardProject } from "@/components/dashboard/types";
@@ -96,7 +100,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               className="inline-flex size-9 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Open menu"
             >
-              <Menu className="size-5" />
+              <HugeiconsIcon icon={Menu01Icon} className="size-5" />
             </button>
             <span className="ml-2 text-sm font-medium">Floras</span>
           </div>

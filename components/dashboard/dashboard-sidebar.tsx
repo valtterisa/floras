@@ -1,18 +1,20 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Logout01Icon,
+  Message01Icon,
+  SidebarLeft01Icon,
+  PanelLeftCloseIcon,
+  Search01Icon,
+  Settings01Icon,
+  PencilEdit02Icon,
+} from "@hugeicons/core-free-icons";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import {
-  LogOut,
-  MessageSquare,
-  PanelLeftClose,
-  PanelLeft,
-  Search,
-  Settings,
-  SquarePen,
-} from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Logo } from "@/components/brand/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -78,9 +80,9 @@ export function DashboardSidebar({
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
-            <PanelLeft className="size-4" />
+            <HugeiconsIcon icon={SidebarLeft01Icon} className="size-4" />
           ) : (
-            <PanelLeftClose className="size-4" />
+            <HugeiconsIcon icon={PanelLeftCloseIcon} className="size-4" />
           )}
         </button>
       </div>
@@ -95,7 +97,7 @@ export function DashboardSidebar({
           )}
           aria-label="New chat"
         >
-          <SquarePen className="size-4 shrink-0" />
+          <HugeiconsIcon icon={PencilEdit02Icon} className="size-4 shrink-0" />
           {!collapsed ? <span>New chat</span> : null}
         </button>
       </div>
@@ -110,7 +112,7 @@ export function DashboardSidebar({
               Search chats
             </label>
             <div className="relative mt-2">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
                 id="dashboard-chat-search"
                 value={query}
@@ -153,7 +155,7 @@ export function DashboardSidebar({
                       collapsed && "justify-center px-0"
                     )}
                   >
-                    <MessageSquare className="size-3.5 shrink-0 opacity-60" />
+                    <HugeiconsIcon icon={Message01Icon} className="size-3.5 shrink-0 opacity-60" />
                     {!collapsed ? (
                       <span className="truncate">{project.name}</span>
                     ) : (
@@ -216,7 +218,7 @@ export function DashboardSidebar({
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/dashboard/account" className="cursor-pointer gap-2">
-                <Settings className="size-4" />
+                <HugeiconsIcon icon={Settings01Icon} className="size-4" />
                 Account
               </Link>
             </DropdownMenuItem>
@@ -225,7 +227,7 @@ export function DashboardSidebar({
               className="cursor-pointer gap-2"
               onClick={() => void signOut()}
             >
-              <LogOut className="size-4" />
+              <HugeiconsIcon icon={Logout01Icon} className="size-4" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
