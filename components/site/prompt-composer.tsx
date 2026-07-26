@@ -228,7 +228,11 @@ export function PromptComposer({
               value={modelId}
               onChange={setModelId}
               disabled={pending}
-              className="min-w-0 max-w-[7.5rem] shrink"
+              className={
+                showModeToggle
+                  ? "min-w-0 max-w-[7.5rem] shrink"
+                  : "shrink-0"
+              }
             />
           </div>
           <button

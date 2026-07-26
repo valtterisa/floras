@@ -42,9 +42,7 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Hero />
-      <SectionGutter />
       <LogoWall />
-      <SectionGutter />
       <Features />
       <SectionGutter />
       <HowItWorks />
