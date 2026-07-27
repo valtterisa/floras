@@ -15,7 +15,6 @@ import {
 import { cn } from "@/lib/utils";
 
 export type AuthFlow = "signIn" | "signUp";
-type AuthMethod = "password" | "magic";
 
 export type AuthFormProps = {
   flow: AuthFlow;
@@ -42,21 +41,6 @@ function buildAuthHref(
   return qs ? `${path}?${qs}` : path;
 }
 
-function buildMagicRedirectTo(opts: {
-  prompt?: string | null;
-  nextPath?: string | null;
-  modelId?: AgentModelId | null;
-}) {
-  if (opts.prompt || opts.nextPath || opts.modelId) {
-    const params = new URLSearchParams();
-    if (opts.prompt) params.set("prompt", opts.prompt);
-    if (opts.nextPath) params.set("next", opts.nextPath);
-    if (opts.modelId) params.set("modelId", opts.modelId);
-    return `/auth/continue?${params.toString()}`;
-  }
-  return "/dashboard";
-}
-
 export function AuthForm({
   flow,
   pendingPrompt = null,
@@ -67,9 +51,7 @@ export function AuthForm({
 }: AuthFormProps) {
   const { signIn } = useAuthActions();
   const router = useRouter();
-  const [method, setMethod] = useState<AuthMethod>("password");
   const [loading, setLoading] = useState(false);
-  const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
   const [prompt] = useState(pendingPrompt);
 
   async function finishAuthenticated() {
@@ -94,39 +76,6 @@ export function AuthForm({
       await finishAuthenticated();
     } catch {
       toast.error("Authentication failed. Check your email and password.");
-      setLoading(false);
-    }
-  }
-
-  async function onMagicSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const email = String(formData.get("email") ?? "").trim();
-    if (!email) {
-      toast.error("Enter your email address.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      formData.set(
-        "redirectTo",
-        buildMagicRedirectTo({
-          prompt,
-          nextPath,
-          modelId: pendingModelId,
-        })
-      );
-      const result = await signIn("resend", formData);
-      if (result.signingIn) {
-        await finishAuthenticated();
-        return;
-      }
-      setMagicSentTo(email);
-      toast.success("Magic link sent. Check your email.");
-    } catch {
-      toast.error("Could not send magic link. Try again.");
-    } finally {
       setLoading(false);
     }
   }
@@ -158,161 +107,67 @@ export function AuthForm({
             isModal ? "text-xl" : "text-2xl md:text-3xl"
           )}
         >
-          {magicSentTo
-            ? "Check your email"
-            : isSignUp
-              ? "Create your account"
-              : "Welcome back"}
+          {isSignUp ? "Create your account" : "Welcome back"}
         </h1>
         <p className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
-          {magicSentTo
-            ? `We sent a sign-in link to ${magicSentTo}. Open it to continue.`
-            : prompt
-              ? "Sign in to start creating your site."
-              : "Create websites with a live preview — no coding needed."}
+          {prompt
+            ? "Sign in to start creating your site."
+            : "Create websites with a live preview — no coding needed."}
         </p>
       </div>
 
-      {magicSentTo ? (
-        <div className="mt-8 flex flex-col gap-4">
-          <Button
-            type="button"
-            variant="brand"
-            size="lg"
-            className="w-full"
-            onClick={() => {
-              setMagicSentTo(null);
-              setMethod("magic");
-            }}
-          >
-            Use a different email
-          </Button>
-          <button
-            type="button"
-            onClick={() => {
-              setMagicSentTo(null);
-              setMethod("password");
-            }}
-            className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
-          >
-            Use password instead
-          </button>
+      <form
+        onSubmit={onPasswordSubmit}
+        className="mt-8 flex flex-col gap-5"
+      >
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@studio.com"
+          />
         </div>
-      ) : (
-        <>
-          <div className="mt-8 grid grid-cols-2 border border-border">
-            <button
-              type="button"
-              onClick={() => setMethod("password")}
-              className={cn(
-                "cursor-pointer px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
-                method === "password"
-                  ? "bg-foreground text-background"
-                  : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground"
-              )}
-            >
-              Password
-            </button>
-            <button
-              type="button"
-              onClick={() => setMethod("magic")}
-              className={cn(
-                "cursor-pointer border-l border-border px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
-                method === "magic"
-                  ? "bg-foreground text-background"
-                  : "bg-transparent text-muted-foreground hover:bg-card hover:text-foreground"
-              )}
-            >
-              Magic link
-            </button>
-          </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autoComplete={isSignUp ? "new-password" : "current-password"}
+            placeholder="••••••••"
+          />
+        </div>
+        <Button
+          type="submit"
+          variant="brand"
+          size="lg"
+          disabled={loading}
+          className="mt-1 w-full"
+        >
+          {loading
+            ? prompt
+              ? "Starting…"
+              : "Please wait…"
+            : isSignUp
+              ? "Create account"
+              : "Sign in"}
+        </Button>
+      </form>
 
-          {method === "password" ? (
-            <form
-              onSubmit={onPasswordSubmit}
-              className="mt-6 flex flex-col gap-5"
-            >
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="you@studio.com"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  autoComplete={
-                    isSignUp ? "new-password" : "current-password"
-                  }
-                  placeholder="••••••••"
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="brand"
-                size="lg"
-                disabled={loading}
-                className="mt-1 w-full"
-              >
-                {loading
-                  ? prompt
-                    ? "Starting…"
-                    : "Please wait…"
-                  : isSignUp
-                    ? "Create account"
-                    : "Sign in"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={onMagicSubmit} className="mt-6 flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="magic-email">Email</Label>
-                <Input
-                  id="magic-email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="you@studio.com"
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="brand"
-                size="lg"
-                disabled={loading}
-                className="mt-1 w-full"
-              >
-                {loading ? "Sending…" : "Email magic link"}
-              </Button>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                We’ll email you a one-click link. No password needed.
-              </p>
-            </form>
-          )}
-        </>
-      )}
-
-      {!magicSentTo ? (
-        <p className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "New to Floras?"}{" "}
-          <Link
-            href={switchHref}
-            className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground underline underline-offset-4 transition-colors hover:text-brand"
-          >
-            {isSignUp ? "Sign in" : "Create one"}
-          </Link>
-        </p>
-      ) : null}
+      <p className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
+        {isSignUp ? "Already have an account?" : "New to Floras?"}{" "}
+        <Link
+          href={switchHref}
+          className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground underline underline-offset-4 transition-colors hover:text-brand"
+        >
+          {isSignUp ? "Sign in" : "Create one"}
+        </Link>
+      </p>
     </div>
   );
 }

@@ -57,8 +57,8 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   must not receive Floras hosting credentials. Publish injects them into the Box
   only for the Wrangler deploy command, then scrubs the temp file.
 - **Convex deployment env** (set with `npx convex env set`): Convex Auth keys via
-  `npx @convex-dev/auth` (`JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`), plus optional
-  `AUTH_RESEND_KEY` / `AUTH_EMAIL_FROM` for magic links. Not the Anthropic/Box/CF keys.
+  `npx @convex-dev/auth` (`JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`). Not the
+  Anthropic/Box/CF keys.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).
 - **Preview iframes** load the sandbox Astro dev server over `*.on.ascii.dev`; the
   template should set Vite `server.allowedHosts: true` and bind `0.0.0.0` so those
