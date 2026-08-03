@@ -1,25 +1,44 @@
 export const AI_CREDITS_FEATURE = "ai_credits";
-/** @deprecated Use AI_CREDITS_FEATURE */
-export const GENERATION_FEATURE = AI_CREDITS_FEATURE;
+export const HOSTING_FEATURE = "hosting";
 
 export const TOP_UP_PLAN_ID = "credit_top_up";
 
+export const BYOK_PLAN_ID = "byok";
 export const PRO_MONTHLY_PLAN_ID = "pro";
 export const PRO_YEARLY_PLAN_ID = "pro_yearly";
 export const ENTERPRISE_PLAN_ID = "enterprise";
 
-export const PAID_PLAN_IDS = [PRO_MONTHLY_PLAN_ID, PRO_YEARLY_PLAN_ID] as const;
+export const PRO_PLAN_IDS = [PRO_MONTHLY_PLAN_ID, PRO_YEARLY_PLAN_ID] as const;
+export const BYOK_PLAN_IDS = [BYOK_PLAN_ID] as const;
+export const SUBSCRIBED_PLAN_IDS = [
+  ...PRO_PLAN_IDS,
+  ...BYOK_PLAN_IDS,
+] as const;
 
-export type PaidPlanId = (typeof PAID_PLAN_IDS)[number];
+export type ProPlanId = (typeof PRO_PLAN_IDS)[number];
+export type ByokPlanId = (typeof BYOK_PLAN_IDS)[number];
+export type SubscribedPlanId = (typeof SUBSCRIBED_PLAN_IDS)[number];
 
-export function isPaidPlanId(planId: string | undefined | null): boolean {
-  return Boolean(planId && PAID_PLAN_IDS.includes(planId as PaidPlanId));
+export function isProPlanId(planId: string | undefined | null): boolean {
+  return Boolean(planId && PRO_PLAN_IDS.includes(planId as ProPlanId));
+}
+
+export function isByokPlanId(planId: string | undefined | null): boolean {
+  return Boolean(planId && BYOK_PLAN_IDS.includes(planId as ByokPlanId));
+}
+
+export function isSubscribedPlanId(
+  planId: string | undefined | null
+): boolean {
+  return Boolean(
+    planId && SUBSCRIBED_PLAN_IDS.includes(planId as SubscribedPlanId)
+  );
 }
 
 export const ENTERPRISE_CONTACT_HREF = "https://cal.com/valtterisa/15min";
 
-/** Minimum dollar balance required to start a generation. */
 export const MIN_CREDIT_BALANCE = 0.05;
+export const LOW_CREDIT_WARNING = 1;
 
 export type TopUpPack = {
   id: string;

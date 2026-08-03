@@ -2,6 +2,7 @@
 
 import { ProfileForm } from "@/components/account/profile-form";
 import { BillingSection } from "@/components/account/billing-section";
+import { ApiKeySection } from "@/components/account/api-key-section";
 import { CustomInstructionsForm } from "@/components/account/custom-instructions-form";
 import { DomainsSection } from "@/components/account/domains-section";
 import { SettingsNav } from "@/components/account/settings-nav";
@@ -14,7 +15,7 @@ export function AccountPage() {
       <PageHeader
         className="border-b border-border py-8"
         title="Account"
-        description="Manage your profile, billing, domains, and how Floras writes your sites."
+        description="Manage your profile, billing, API key, domains, and how Floras writes your sites."
       />
 
       <div className="mt-0 flex flex-col lg:mt-8 lg:flex-row lg:gap-10">
@@ -22,6 +23,7 @@ export function AccountPage() {
         <div className="mt-6 flex min-w-0 flex-1 flex-col gap-6 lg:mt-0">
           <ProfileForm />
           <BillingSection />
+          <ApiKeySection />
           <DomainsSection />
           <CustomInstructionsForm />
         </div>

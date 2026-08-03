@@ -1,4 +1,7 @@
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+import { getAccess } from "@/lib/billing/get-access";
 import { AppError, appErrorResponse } from "@/lib/errors";
 import {
   connectCustomDomain,
@@ -13,11 +16,32 @@ import {
 
 export const runtime = "nodejs";
 
+async function requirePublishAccess(token: string): Promise<Response | null> {
+  const me = await fetchQuery(api.users.me, {}, { token });
+  if (!me?.id) {
+    return appErrorResponse(new AppError("auth"), 401);
+  }
+  const access = await getAccess(me.id);
+  if (!access.canPublish) {
+    return Response.json(
+      {
+        error: "Pro plan required for custom domains.",
+        code: "NO_PLAN",
+      },
+      { status: 402 }
+    );
+  }
+  return null;
+}
+
 export async function GET(req: Request) {
   const token = await convexAuthNextjsToken();
   if (!token) {
     return appErrorResponse(new AppError("auth"), 401);
   }
+
+  const denied = await requirePublishAccess(token);
+  if (denied) return denied;
 
   const url = new URL(req.url);
   const parsed = domainGetQuerySchema.safeParse({
@@ -43,6 +67,9 @@ export async function POST(req: Request) {
   if (!token) {
     return Response.json({ error: "Not authenticated", code: "auth" }, { status: 401 });
   }
+
+  const denied = await requirePublishAccess(token);
+  if (denied) return denied;
 
   let body: unknown;
   try {
@@ -76,6 +103,9 @@ export async function DELETE(req: Request) {
   if (!token) {
     return Response.json({ error: "Not authenticated", code: "auth" }, { status: 401 });
   }
+
+  const denied = await requirePublishAccess(token);
+  if (denied) return denied;
 
   let body: unknown;
   try {

@@ -185,21 +185,42 @@ export function WorkspaceHeader({
             <button
               type="button"
               onClick={() => {
-                if (!gates.hasPaidPlan) gates.openUpgrade();
-                else gates.openTopUp();
+                if (!gates.hasSubscription) {
+                  gates.openUpgrade();
+                  return;
+                }
+                if (gates.hasByokPlan && !gates.hasProPlan) {
+                  window.location.href = "/dashboard/account#api-key";
+                  return;
+                }
+                gates.openTopUp();
               }}
               className="inline-flex h-8 cursor-pointer items-center gap-2 border border-border bg-background px-2.5 transition-colors hover:bg-card"
               aria-label={
-                !gates.hasPaidPlan
-                  ? "Get Pro plan"
-                  : `AI credit ${creditLabel}. Top up`
+                !gates.hasSubscription
+                  ? "Choose a plan"
+                  : gates.hasByokPlan && !gates.hasProPlan
+                    ? gates.hasApiKey
+                      ? "Manage Anthropic API key"
+                      : "Add Anthropic API key"
+                    : `AI credit ${creditLabel}. Top up`
               }
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                Credit
+                {!gates.hasSubscription
+                  ? "Plan"
+                  : gates.hasByokPlan && !gates.hasProPlan
+                    ? "BYOK"
+                    : "Credit"}
               </span>
               <span className="font-mono text-[11px] tabular-nums text-foreground">
-                {!gates.hasPaidPlan ? "—" : creditLabel}
+                {!gates.hasSubscription
+                  ? "—"
+                  : gates.hasByokPlan && !gates.hasProPlan
+                    ? gates.hasApiKey
+                      ? "Key"
+                      : "Add key"
+                    : creditLabel}
               </span>
             </button>
           ) : null}
@@ -228,6 +249,8 @@ export function WorkspaceHeader({
                 <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                 <span className="hidden sm:inline">Exporting</span>
               </>
+            ) : gates.billingReady && !gates.canPublish ? (
+              "Export"
             ) : isPublished ? (
               "Live"
             ) : (
@@ -241,12 +264,14 @@ export function WorkspaceHeader({
         open={publishOpen}
         onOpenChange={setPublishOpen}
         onConfirm={() => void handlePublish()}
-        onUnpublish={() => void handleUnpublish()}
+        onUnpublish={gates.canPublish ? () => void handleUnpublish() : undefined}
         onExport={() => void handleExport()}
+        onUpgrade={gates.openUpgrade}
         publishing={isPublishing}
         unpublishing={unpublishing}
         exporting={exporting}
         isPublished={isPublished}
+        canPublish={!gates.billingReady || gates.canPublish}
         publishedUrl={publishedUrl}
         cfSubdomain={cfSubdomain}
         customDomain={customDomain}
@@ -258,6 +283,9 @@ export function WorkspaceHeader({
         onUpgradeOpenChange={gates.setUpgradeOpen}
         onTopUpOpenChange={gates.setTopUpOpen}
         onPurchased={() => void gates.refetch()}
+        defaultTier={
+          gates.hasByokPlan && !gates.hasProPlan ? "pro" : "byok"
+        }
       />
     </>
   );

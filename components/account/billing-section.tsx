@@ -5,9 +5,11 @@ import { useConvexAuth } from "convex/react";
 import { useCustomer } from "autumn-js/react";
 import { toast } from "sonner";
 import {
-  GENERATION_FEATURE,
+  AI_CREDITS_FEATURE,
   formatCredits,
-  isPaidPlanId,
+  isByokPlanId,
+  isProPlanId,
+  isSubscribedPlanId,
 } from "@/lib/billing/constants";
 import { Button } from "@/components/ui/button";
 import { AccountSection } from "@/components/account/account-section";
@@ -28,14 +30,15 @@ export function BillingSection() {
   let granted: number | null = null;
 
   if (data) {
-    const paid = data.subscriptions.find(
-      (s) => s.status === "active" && isPaidPlanId(s.planId) && !s.autoEnable
+    const subscribed = data.subscriptions.find(
+      (s) =>
+        s.status === "active" && isSubscribedPlanId(s.planId) && !s.autoEnable
     );
     const active = data.subscriptions.find((s) => s.status === "active");
-    planId = paid?.planId ?? active?.planId ?? null;
+    planId = subscribed?.planId ?? active?.planId ?? null;
     const rawName =
-      paid?.plan?.name ??
-      paid?.planId ??
+      subscribed?.plan?.name ??
+      subscribed?.planId ??
       active?.plan?.name ??
       active?.planId ??
       "No plan";
@@ -46,19 +49,20 @@ export function BillingSection() {
 
     try {
       const result = check({
-        featureId: GENERATION_FEATURE,
+        featureId: AI_CREDITS_FEATURE,
         requiredBalance: 1,
       });
       remaining = result.balance?.remaining ?? null;
       granted = result.balance?.granted ?? null;
     } catch {
-      const balance = data.balances[GENERATION_FEATURE];
+      const balance = data.balances[AI_CREDITS_FEATURE];
       remaining = balance?.remaining ?? null;
       granted = balance?.granted ?? null;
     }
   }
 
-  const isPro = isPaidPlanId(planId);
+  const isPro = isProPlanId(planId);
+  const isByok = isByokPlanId(planId);
 
   const onManage = async () => {
     try {
@@ -101,15 +105,21 @@ export function BillingSection() {
                   Credits left
                 </p>
                 <p className="mt-1 text-xl font-semibold tracking-tight">
-                  {!isPro
-                    ? "$0"
-                    : remaining === null
-                      ? "—"
-                      : formatCredits(remaining)}
+                  {isByok
+                    ? "Your key"
+                    : !isPro
+                      ? "$0"
+                      : remaining === null
+                        ? "—"
+                        : formatCredits(remaining)}
                 </p>
                 {isPro && granted != null ? (
                   <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     of {formatCredits(granted)} included
+                  </p>
+                ) : isByok ? (
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    Billed by Anthropic
                   </p>
                 ) : null}
               </div>

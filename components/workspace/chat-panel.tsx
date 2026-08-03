@@ -15,7 +15,7 @@ import {
   useBillingGates,
 } from "@/components/billing/billing-gates";
 import { Button } from "@/components/ui/button";
-import { formatCredits } from "@/lib/billing/constants";
+import { formatCredits, LOW_CREDIT_WARNING, MIN_CREDIT_BALANCE } from "@/lib/billing/constants";
 import {
   DEFAULT_AGENT_MODEL_ID,
   resolveAgentModelId,
@@ -26,21 +26,29 @@ import { errorCode, userFacingError } from "@/lib/errors";
 
 function ChatBillingBanner({
   billingReady,
-  hasPaidPlan,
+  hasSubscription,
+  hasByokPlan,
+  hasProPlan,
+  hasApiKey,
   balance,
   onUpgrade,
   onTopUp,
+  onAddKey,
 }: {
   billingReady: boolean;
-  hasPaidPlan: boolean;
+  hasSubscription: boolean;
+  hasByokPlan: boolean;
+  hasProPlan: boolean;
+  hasApiKey: boolean;
   balance: number | null;
   onUpgrade: () => void;
   onTopUp: () => void;
+  onAddKey: () => void;
 }) {
-  if (billingReady && !hasPaidPlan) {
+  if (billingReady && !hasSubscription) {
     return (
       <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
-        <span>Pro plan required to chat with the AI.</span>
+        <span>A plan is required to chat with the AI.</span>
         <Button
           type="button"
           variant="outline"
@@ -48,16 +56,32 @@ function ChatBillingBanner({
           className="h-7 rounded-none font-mono text-[10px] uppercase tracking-[0.14em]"
           onClick={onUpgrade}
         >
-          Get Pro
+          Choose plan
         </Button>
       </div>
     );
   }
-  if (typeof balance === "number" && balance <= 1) {
+  if (billingReady && hasByokPlan && !hasProPlan && !hasApiKey) {
+    return (
+      <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
+        <span>Add your Anthropic API key to generate on BYOK.</span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 rounded-none font-mono text-[10px] uppercase tracking-[0.14em]"
+          onClick={onAddKey}
+        >
+          Add key
+        </Button>
+      </div>
+    );
+  }
+  if (hasProPlan && typeof balance === "number" && balance <= LOW_CREDIT_WARNING) {
     return (
       <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
         <span>
-          {balance < 0.05
+          {balance < MIN_CREDIT_BALANCE
             ? "Out of credit."
             : `${formatCredits(balance)} credit left.`}
         </span>
@@ -182,10 +206,16 @@ export function ChatPanel({
         ) : null}
         <ChatBillingBanner
           billingReady={gates.billingReady}
-          hasPaidPlan={gates.hasPaidPlan}
+          hasSubscription={gates.hasSubscription}
+          hasByokPlan={gates.hasByokPlan}
+          hasProPlan={gates.hasProPlan}
+          hasApiKey={gates.hasApiKey}
           balance={gates.balance}
           onUpgrade={gates.openUpgrade}
           onTopUp={gates.openTopUp}
+          onAddKey={() => {
+            window.location.href = "/dashboard/account#api-key";
+          }}
         />
         <PromptComposer
           key={defaultModelId}

@@ -2,7 +2,7 @@ import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { asMessageId, asProjectId } from "@/lib/convex/ids";
 import { buildSiteAgent } from "@/lib/ai/agent";
-import { resolveAgentModelId } from "@/lib/ai/models";
+import { resolveGenerationModel } from "@/lib/billing/resolve-generation-model";
 import * as box from "@/lib/box/client";
 import { createSandboxSession } from "@/lib/box/sandbox-session";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
@@ -90,9 +90,14 @@ export async function runGeneration(projectId: string, token: string) {
     });
 
     const me = await fetchQuery(api.users.me, {}, { token });
-    const modelId = resolveAgentModelId(
-      typeof project.modelId === "string" ? project.modelId : null
-    );
+    if (!me?.id) {
+      throw new AppError("auth");
+    }
+    const { model } = await resolveGenerationModel({
+      customerId: me.id,
+      token,
+      modelId: typeof project.modelId === "string" ? project.modelId : null,
+    });
     const sitePlan =
       project.plan && typeof project.plan === "object"
         ? (project.plan as SitePlan)
@@ -102,14 +107,13 @@ export async function runGeneration(projectId: string, token: string) {
       sandbox,
       projectId,
       token,
-      modelId,
-      customerId: typeof me?.id === "string" ? me.id : undefined,
+      model,
       hasPreview: Boolean(previewUrl),
       previewUrl,
       sitePlan,
       projectName: typeof project.name === "string" ? project.name : undefined,
       customInstructions:
-        typeof me?.customInstructions === "string"
+        typeof me.customInstructions === "string"
           ? me.customInstructions
           : undefined,
       onStep: async (step) => {

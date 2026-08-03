@@ -3,6 +3,7 @@ export type UserMe = {
   name: string;
   email: string;
   customInstructions: string;
+  hasAnthropicKey: boolean;
 };
 
 export type WorkspaceProject = {

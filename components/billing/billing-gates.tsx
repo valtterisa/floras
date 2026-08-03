@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { TopUpModal } from "@/components/billing/top-up-modal";
 import { UpgradeProModal } from "@/components/billing/upgrade-pro-modal";
 import { useGenerationAccess } from "@/lib/hooks/use-generation-access";
 
 export function useBillingGates() {
   const access = useGenerationAccess();
+  const router = useRouter();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [topUpOpen, setTopUpOpen] = useState(false);
 
@@ -16,24 +18,35 @@ export function useBillingGates() {
       setUpgradeOpen(true);
       return false;
     }
+    if (reason === "no_api_key") {
+      router.push("/dashboard/account#api-key");
+      return false;
+    }
     if (reason === "no_credits") {
       setTopUpOpen(true);
       return false;
     }
     return true;
-  }, [access]);
+  }, [access, router]);
 
-  const handleDenyCode = useCallback((code: string | null | undefined): boolean => {
-    if (code === "NO_PLAN") {
-      setUpgradeOpen(true);
-      return true;
-    }
-    if (code === "NO_CREDITS") {
-      setTopUpOpen(true);
-      return true;
-    }
-    return false;
-  }, []);
+  const handleDenyCode = useCallback(
+    (code: string | null | undefined): boolean => {
+      if (code === "NO_PLAN") {
+        setUpgradeOpen(true);
+        return true;
+      }
+      if (code === "NO_API_KEY") {
+        router.push("/dashboard/account#api-key");
+        return true;
+      }
+      if (code === "NO_CREDITS") {
+        setTopUpOpen(true);
+        return true;
+      }
+      return false;
+    },
+    [router]
+  );
 
   const openUpgrade = useCallback(() => setUpgradeOpen(true), []);
   const openTopUp = useCallback(() => setTopUpOpen(true), []);
@@ -57,12 +70,14 @@ export function BillingGateModals({
   onUpgradeOpenChange,
   onTopUpOpenChange,
   onPurchased,
+  defaultTier = "byok",
 }: {
   upgradeOpen: boolean;
   topUpOpen: boolean;
   onUpgradeOpenChange: (open: boolean) => void;
   onTopUpOpenChange: (open: boolean) => void;
   onPurchased?: () => void;
+  defaultTier?: "byok" | "pro";
 }) {
   return (
     <>
@@ -70,6 +85,7 @@ export function BillingGateModals({
         open={upgradeOpen}
         onOpenChange={onUpgradeOpenChange}
         onPurchased={onPurchased}
+        defaultTier={defaultTier}
       />
       <TopUpModal
         open={topUpOpen}

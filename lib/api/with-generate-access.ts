@@ -60,12 +60,27 @@ export async function withGenerateAccess(
   }
 
   const access = await getAccess(me.id);
-  if (!access.hasPaidPlan) {
+  if (!access.hasSubscription) {
     return Response.json(
       { error: opts.noPlanMessage, code: "NO_PLAN" },
       { status: 402 }
     );
   }
+
+  if (access.hasByokPlan && !access.hasProPlan) {
+    if (!me.hasAnthropicKey) {
+      return Response.json(
+        {
+          error:
+            "Add your Anthropic API key in Account settings to use the BYOK plan.",
+          code: "NO_API_KEY",
+        },
+        { status: 402 }
+      );
+    }
+    return { projectId, token };
+  }
+
   if (!access.creditAllowed) {
     return Response.json(
       {

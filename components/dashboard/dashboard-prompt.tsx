@@ -59,8 +59,8 @@ export function DashboardPrompt({ resetKey = 0 }: { resetKey?: number }) {
   useEffect(() => {
     if (!fromAuthPrompt.current || !gates.billingReady) return;
     fromAuthPrompt.current = false;
-    if (!gates.hasPaidPlan) gates.openUpgrade();
-  }, [gates.billingReady, gates.hasPaidPlan, gates.openUpgrade]);
+    if (!gates.hasSubscription) gates.openUpgrade();
+  }, [gates.billingReady, gates.hasSubscription, gates.openUpgrade]);
 
   const handle = async (
     text: string,

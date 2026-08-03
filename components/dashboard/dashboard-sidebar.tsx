@@ -45,7 +45,8 @@ export function DashboardSidebar({
 }) {
   const { signOut } = useAuthActions();
   const me = useQuery(api.users.me, {}) as UserMe | null | undefined;
-  const { balance, hasPaidPlan, billingReady } = useGenerationAccess();
+  const { balance, hasProPlan, hasByokPlan, hasSubscription, billingReady } =
+    useGenerationAccess();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -58,6 +59,13 @@ export function DashboardSidebar({
   const displayName = me?.name?.trim() || me?.email?.split("@")[0] || "Account";
   const initials = displayName.slice(0, 2).toUpperCase();
   const creditLabel = formatCredits(balance);
+  const planLabel = !billingReady
+    ? "…"
+    : !hasSubscription
+      ? "No plan"
+      : hasByokPlan && !hasProPlan
+        ? "BYOK"
+        : `${creditLabel} credit`;
 
   return (
     <aside
@@ -189,9 +197,13 @@ export function DashboardSidebar({
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">
                     {displayName}
                   </span>
-                  {hasPaidPlan && balance != null ? (
+                  {hasProPlan && balance != null ? (
                     <span className="shrink-0 border border-border px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
                       {creditLabel}
+                    </span>
+                  ) : hasByokPlan ? (
+                    <span className="shrink-0 border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                      BYOK
                     </span>
                   ) : null}
                 </>
@@ -208,11 +220,7 @@ export function DashboardSidebar({
                 {displayName}
               </p>
               <p className="mt-1 font-mono text-[11px] tabular-nums text-muted-foreground">
-                {!billingReady
-                  ? "…"
-                  : !hasPaidPlan
-                    ? "No Pro plan"
-                    : `${creditLabel} credit`}
+                {planLabel}
               </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

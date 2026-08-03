@@ -30,9 +30,29 @@ export const aiCredits = feature({
 	},
 });
 
+export const hosting = feature({
+	id: "hosting",
+	name: "Hosting",
+	type: "boolean",
+});
+
+export const byok = plan({
+	id: "byok",
+	name: "BYOK",
+	group: "main",
+	addOn: false,
+	autoEnable: false,
+	price: {
+		amount: 5,
+		interval: "month",
+	},
+	items: [],
+});
+
 export const pro = plan({
 	id: "pro",
 	name: "Pro",
+	group: "main",
 	addOn: false,
 	autoEnable: false,
 	price: {
@@ -47,12 +67,16 @@ export const pro = plan({
 				interval: "month",
 			},
 		}),
+		item({
+			featureId: hosting.id,
+		}),
 	],
 });
 
 export const proYearly = plan({
 	id: "pro_yearly",
 	name: "Pro Yearly",
+	group: "main",
 	addOn: false,
 	autoEnable: false,
 	price: {
@@ -66,6 +90,9 @@ export const proYearly = plan({
 			reset: {
 				interval: "month",
 			},
+		}),
+		item({
+			featureId: hosting.id,
 		}),
 	],
 });

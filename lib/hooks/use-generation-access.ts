@@ -1,17 +1,19 @@
 "use client";
 
+import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { useCustomer } from "autumn-js/react";
+import { api } from "@/convex/_generated/api";
 import {
   AI_CREDITS_FEATURE,
   MIN_CREDIT_BALANCE,
 } from "@/lib/billing/constants";
 import {
-  hasActivePaidPlan,
+  hasActiveByokPlan,
+  hasActiveProPlan,
+  hasActiveSubscription,
   type GenerationDenyReason,
 } from "@/lib/billing/plan";
-
-export { AI_CREDITS_FEATURE, GENERATION_FEATURE } from "@/lib/billing/constants";
 
 export function useGenerationAccess() {
   const { isAuthenticated } = useConvexAuth();
@@ -19,14 +21,27 @@ export function useGenerationAccess() {
     errorOnNotFound: false,
     queryOptions: { enabled: isAuthenticated },
   });
+  const keyMeta = useQuery(
+    api.users.getAnthropicKeyMeta,
+    isAuthenticated ? {} : "skip"
+  );
 
   const balance = data?.balances?.[AI_CREDITS_FEATURE]?.remaining ?? null;
   const billingReady = Boolean(isAuthenticated && data);
-  const hasPaidPlan = billingReady ? hasActivePaidPlan(data) : false;
+  const hasProPlan = billingReady ? hasActiveProPlan(data) : false;
+  const hasByokPlan = billingReady ? hasActiveByokPlan(data) : false;
+  const hasSubscription = billingReady ? hasActiveSubscription(data) : false;
+  const hasApiKey = Boolean(keyMeta?.configured);
+  const canPublish = hasProPlan;
 
   const getDenyReason = (): GenerationDenyReason | null => {
     if (!isAuthenticated || !data) return null;
-    if (!hasActivePaidPlan(data)) return "no_plan";
+    if (!hasActiveSubscription(data)) return "no_plan";
+    if (hasActiveByokPlan(data) && !hasActiveProPlan(data)) {
+      if (keyMeta === undefined) return null;
+      if (!keyMeta?.configured) return "no_api_key";
+      return null;
+    }
     try {
       const { allowed } = check({
         featureId: AI_CREDITS_FEATURE,
@@ -39,12 +54,14 @@ export function useGenerationAccess() {
     return null;
   };
 
-  const assertCanGenerate = (): boolean => getDenyReason() === null;
-
   return {
-    assertCanGenerate,
+    assertCanGenerate: () => getDenyReason() === null,
     getDenyReason,
-    hasPaidPlan,
+    hasProPlan,
+    hasByokPlan,
+    hasSubscription,
+    hasApiKey,
+    canPublish,
     billingReady,
     refetch,
     balance,

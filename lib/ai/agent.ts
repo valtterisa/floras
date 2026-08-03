@@ -1,13 +1,10 @@
-import { ToolLoopAgent, isStepCount, tool } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { ToolLoopAgent, isStepCount, tool, type LanguageModel } from "ai";
 import { z } from "zod";
 import { sitePlanSchema, type SitePlan } from "@/lib/schema/site";
 import * as box from "@/lib/box/client";
 import type { SandboxSession } from "@/lib/box/sandbox-session";
 import { DESIGN_SKILL } from "@/lib/ai/design-skill";
-import { resolveAgentModelId } from "@/lib/ai/models";
 import { anthropicThinkingOptions } from "@/lib/ai/anthropic-options";
-import { withAutumnModel } from "@/lib/billing/with-autumn-model";
 import { AppError } from "@/lib/errors";
 import {
   connectCustomDomain,
@@ -43,14 +40,7 @@ export interface BuildAgentOptions {
   previewUrl?: string | null;
   projectName?: string;
   customInstructions?: string;
-  modelId?: string;
-  customerId?: string;
-}
-
-function getModel(modelId?: string, customerId?: string) {
-  const model = anthropic(resolveAgentModelId(modelId));
-  if (!customerId) return model;
-  return withAutumnModel(model, customerId);
+  model: LanguageModel;
 }
 
 function siteAlreadyKnown(opts: BuildAgentOptions): boolean {
@@ -417,7 +407,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
     : { ...sharedTools, plan_site };
 
   return new ToolLoopAgent({
-    model: getModel(opts.modelId, opts.customerId),
+    model: opts.model,
     instructions: buildInstructions(opts),
     tools,
     providerOptions: anthropicThinkingOptions("low"),

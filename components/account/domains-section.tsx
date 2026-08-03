@@ -7,12 +7,16 @@ import {
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AccountSection } from "@/components/account/account-section";
 import { Button } from "@/components/ui/button";
+import {
+  BillingGateModals,
+  useBillingGates,
+} from "@/components/billing/billing-gates";
 import { AppError, assertOk } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import type { DomainStatus, PublishStatus } from "@/lib/publish/types";
@@ -285,12 +289,63 @@ export function DomainsSection() {
   const projects = useQuery(api.projects.list, {}) as
     | ProjectRow[]
     | undefined;
+  const {
+    canPublish,
+    billingReady,
+    hasByokPlan,
+    hasSubscription,
+    openUpgrade,
+    upgradeOpen,
+    setUpgradeOpen,
+    topUpOpen,
+    setTopUpOpen,
+  } = useBillingGates();
 
-  const published = projects?.filter(
-    (p) =>
-      p.publishStatus === "published" &&
-      Boolean(p.cfSubdomain || p.publishedUrl)
-  );
+  const published =
+    projects?.filter(
+      (p) =>
+        p.publishStatus === "published" &&
+        Boolean(p.cfSubdomain || p.publishedUrl)
+    ) ?? [];
+
+  let body: ReactNode;
+  if (!billingReady || projects === undefined) {
+    body = <p className="text-sm text-muted-foreground">Loading…</p>;
+  } else if (!canPublish) {
+    body = (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">
+          {!hasSubscription
+            ? "Custom domains require Pro."
+            : hasByokPlan
+              ? "Custom domains require Pro. BYOK includes export only."
+              : "Custom domains require Pro."}
+        </p>
+        <Button
+          variant="outline"
+          className="w-fit rounded-none"
+          onClick={openUpgrade}
+        >
+          Upgrade to Pro
+        </Button>
+      </div>
+    );
+  } else if (published.length === 0) {
+    body = (
+      <p className="text-sm text-muted-foreground">
+        No published sites yet. Publish a site from the workspace, then connect
+        a domain here.
+      </p>
+    );
+  } else {
+    body = (
+      <div className="flex max-w-2xl flex-col gap-3">
+        {published.map((project) => (
+          <ProjectDomainCard key={project._id} project={project} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <AccountSection
@@ -298,20 +353,14 @@ export function DomainsSection() {
       title="Domains"
       description="Connect custom hostnames to sites published on Cloudflare Pages."
     >
-      {projects === undefined ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      ) : published && published.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No published sites yet. Publish a site from the workspace, then
-          connect a domain here.
-        </p>
-      ) : (
-        <div className="flex max-w-2xl flex-col gap-3">
-          {published?.map((project) => (
-            <ProjectDomainCard key={project._id} project={project} />
-          ))}
-        </div>
-      )}
+      {body}
+      <BillingGateModals
+        upgradeOpen={upgradeOpen}
+        topUpOpen={topUpOpen}
+        onUpgradeOpenChange={setUpgradeOpen}
+        onTopUpOpenChange={setTopUpOpen}
+        defaultTier="pro"
+      />
     </AccountSection>
   );
 }

@@ -3,11 +3,19 @@ import {
   AI_CREDITS_FEATURE,
   MIN_CREDIT_BALANCE,
 } from "@/lib/billing/constants";
-import { hasActivePaidPlan } from "@/lib/billing/plan";
+import {
+  hasActiveByokPlan,
+  hasActiveProPlan,
+  hasActiveSubscription,
+} from "@/lib/billing/plan";
 
 export type AccessResult = {
-  hasPaidPlan: boolean;
+  hasProPlan: boolean;
+  hasByokPlan: boolean;
+  hasSubscription: boolean;
   creditAllowed: boolean;
+  canGenerate: boolean;
+  canPublish: boolean;
 };
 
 function billingFailOpen(): boolean {
@@ -16,7 +24,25 @@ function billingFailOpen(): boolean {
 }
 
 function denyAll(): AccessResult {
-  return { hasPaidPlan: false, creditAllowed: false };
+  return {
+    hasProPlan: false,
+    hasByokPlan: false,
+    hasSubscription: false,
+    creditAllowed: false,
+    canGenerate: false,
+    canPublish: false,
+  };
+}
+
+function allowAll(): AccessResult {
+  return {
+    hasProPlan: true,
+    hasByokPlan: false,
+    hasSubscription: true,
+    creditAllowed: true,
+    canGenerate: true,
+    canPublish: true,
+  };
 }
 
 export async function getAccess(customerId: string): Promise<AccessResult> {
@@ -24,7 +50,7 @@ export async function getAccess(customerId: string): Promise<AccessResult> {
   if (!secretKey) {
     if (billingFailOpen()) {
       console.warn("[billing] AUTUMN_SECRET_KEY missing — fail-open");
-      return { hasPaidPlan: true, creditAllowed: true };
+      return allowAll();
     }
     console.error("[billing] AUTUMN_SECRET_KEY missing — fail-closed");
     return denyAll();
@@ -33,10 +59,30 @@ export async function getAccess(customerId: string): Promise<AccessResult> {
   try {
     const autumn = new Autumn({ secretKey });
     const customer = await autumn.customers.get({ customerId });
-    const hasPaidPlan = hasActivePaidPlan(customer);
+    const hasProPlan = hasActiveProPlan(customer);
+    const hasByokPlan = hasActiveByokPlan(customer);
+    const hasSubscription = hasActiveSubscription(customer);
 
-    if (!hasPaidPlan) {
-      return { hasPaidPlan: false, creditAllowed: false };
+    if (!hasSubscription) {
+      return {
+        hasProPlan: false,
+        hasByokPlan: false,
+        hasSubscription: false,
+        creditAllowed: false,
+        canGenerate: false,
+        canPublish: false,
+      };
+    }
+
+    if (hasByokPlan && !hasProPlan) {
+      return {
+        hasProPlan: false,
+        hasByokPlan: true,
+        hasSubscription: true,
+        creditAllowed: false,
+        canGenerate: true,
+        canPublish: false,
+      };
     }
 
     try {
@@ -45,22 +91,34 @@ export async function getAccess(customerId: string): Promise<AccessResult> {
         featureId: AI_CREDITS_FEATURE,
         requiredBalance: MIN_CREDIT_BALANCE,
       });
+      const creditAllowed = check.allowed !== false;
       return {
-        hasPaidPlan: true,
-        creditAllowed: check.allowed !== false,
+        hasProPlan: true,
+        hasByokPlan: false,
+        hasSubscription: true,
+        creditAllowed,
+        canGenerate: creditAllowed,
+        canPublish: true,
       };
     } catch (error) {
       if (billingFailOpen()) {
         console.warn("[billing] credit check failed — fail-open", error);
-        return { hasPaidPlan: true, creditAllowed: true };
+        return allowAll();
       }
       console.error("[billing] credit check failed — fail-closed", error);
-      return { hasPaidPlan: true, creditAllowed: false };
+      return {
+        hasProPlan: true,
+        hasByokPlan: false,
+        hasSubscription: true,
+        creditAllowed: false,
+        canGenerate: false,
+        canPublish: true,
+      };
     }
   } catch (error) {
     if (billingFailOpen()) {
       console.warn("[billing] customer fetch failed — fail-open", error);
-      return { hasPaidPlan: true, creditAllowed: true };
+      return allowAll();
     }
     console.error("[billing] customer fetch failed — fail-closed", error);
     return denyAll();

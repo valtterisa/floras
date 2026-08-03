@@ -26,10 +26,12 @@ export type PublishModalProps = {
   onConfirm: () => void;
   onUnpublish?: () => void;
   onExport?: () => void;
+  onUpgrade?: () => void;
   publishing: boolean;
   unpublishing?: boolean;
   exporting?: boolean;
   isPublished: boolean;
+  canPublish?: boolean;
   publishedUrl?: string | null;
   cfSubdomain?: string | null;
   customDomain?: string | null;
@@ -46,10 +48,12 @@ export function PublishModal({
   onConfirm,
   onUnpublish,
   onExport,
+  onUpgrade,
   publishing,
   unpublishing = false,
   exporting = false,
   isPublished,
+  canPublish = true,
   publishedUrl,
   cfSubdomain,
   customDomain,
@@ -80,37 +84,50 @@ export function PublishModal({
     window.setTimeout(() => setCopied(false), 1500);
   }
 
-  const facts = isPublished
+  const facts = !canPublish
     ? [
-        "Anyone with the link can open this site",
-        "Update live to replace the current build",
-        "Unpublish removes the Cloudflare project and floras.app DNS",
-        "Export as ZIP to host the Astro project elsewhere",
+        "Export as ZIP to host the Astro project yourself",
+        "Floras hosting and custom domains require Pro",
+        "Live preview still works in the workspace",
       ]
-    : [
-        "Builds the site and puts it on the public web",
-        `Includes a unique ${FLORAS_SITES_DOMAIN} address`,
-        "Custom domains can be connected after publish",
-        "Export as ZIP to host the Astro project elsewhere",
-      ];
+    : isPublished
+      ? [
+          "Anyone with the link can open this site",
+          "Update live to replace the current build",
+          "Unpublish removes the Cloudflare project and floras.app DNS",
+          "Export as ZIP to host the Astro project elsewhere",
+        ]
+      : [
+          "Builds the site and puts it on the public web",
+          `Includes a unique ${FLORAS_SITES_DOMAIN} address`,
+          "Custom domains can be connected after publish",
+          "Export as ZIP to host the Astro project elsewhere",
+        ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
         <div className="border-b border-border px-6 py-5 pr-14">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            {isPublished ? "Live site" : "Go live"}
+            {!canPublish ? "Export" : isPublished ? "Live site" : "Go live"}
           </p>
           <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">
-            {isPublished ? "Your site is live" : "Publish"}
+            {!canPublish
+              ? "Export your site"
+              : isPublished
+                ? "Your site is live"
+                : "Publish"}
           </DialogTitle>
           <DialogDescription className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
-            {isPublished
-              ? "Open the public URL, update the live build, or take it down."
-              : "Confirm where this site will live, then publish."}
+            {!canPublish
+              ? "BYOK includes export. Upgrade to Pro for floras.app hosting."
+              : isPublished
+                ? "Open the public URL, update the live build, or take it down."
+                : "Confirm where this site will live, then publish."}
           </DialogDescription>
         </div>
 
+        {canPublish ? (
         <div className="border-b border-border px-6 py-5">
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             {liveUrl ? "Live URL" : "Your URL"}
@@ -172,6 +189,7 @@ export function PublishModal({
             </p>
           ) : null}
         </div>
+        ) : null}
 
         <ul>
           {facts.map((item) => (
@@ -182,6 +200,7 @@ export function PublishModal({
               {item}
             </li>
           ))}
+          {canPublish ? (
           <li className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0">
             Manage domains in{" "}
             <Link
@@ -192,10 +211,11 @@ export function PublishModal({
               Account → Domains
             </Link>
           </li>
+          ) : null}
         </ul>
 
         <div className="border-t border-border p-0">
-          {isPublished ? (
+          {canPublish && isPublished ? (
             <>
               {liveUrl ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2">
@@ -268,7 +288,7 @@ export function PublishModal({
                 </button>
               ) : null}
             </>
-          ) : (
+          ) : canPublish ? (
             <button
               type="button"
               onClick={onConfirm}
@@ -287,7 +307,15 @@ export function PublishModal({
                 "Publish site"
               )}
             </button>
-          )}
+          ) : onUpgrade ? (
+            <button
+              type="button"
+              onClick={onUpgrade}
+              className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
+            >
+              Upgrade to Pro for hosting
+            </button>
+          ) : null}
           {onExport ? (
             <button
               type="button"

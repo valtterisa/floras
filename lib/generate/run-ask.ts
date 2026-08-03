@@ -1,10 +1,8 @@
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { streamText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
 import { api } from "@/convex/_generated/api";
 import { asMessageId, asProjectId } from "@/lib/convex/ids";
-import { withAutumnModel } from "@/lib/billing/with-autumn-model";
-import { resolveAgentModelId } from "@/lib/ai/models";
+import { resolveGenerationModel } from "@/lib/billing/resolve-generation-model";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
 import { anthropicThinkingOptions } from "@/lib/ai/anthropic-options";
 import { AppError } from "@/lib/errors";
@@ -77,13 +75,15 @@ export async function runAsk(projectId: string, token: string) {
       { token }
     ));
 
-  const modelId = resolveAgentModelId(
-    typeof project.modelId === "string" ? project.modelId : null
-  );
-
   try {
+    const { model } = await resolveGenerationModel({
+      customerId: me.id,
+      token,
+      modelId: typeof project.modelId === "string" ? project.modelId : null,
+    });
+
     const result = streamText({
-      model: withAutumnModel(anthropic(modelId), me.id),
+      model,
       system: buildAskSystem(
         typeof me.customInstructions === "string"
           ? me.customInstructions

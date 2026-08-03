@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   }
 
   const access = await getAccess(me.id);
-  if (!access.hasPaidPlan) {
+  if (!access.canPublish) {
     return Response.json(
       { error: "Pro plan required to publish sites.", code: "NO_PLAN" },
       { status: 402 }

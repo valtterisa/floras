@@ -4,6 +4,7 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   CreditCardIcon,
   Globe02Icon,
+  Key01Icon,
   Message02Icon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 export const SETTINGS_SECTIONS = [
   { id: "profile", label: "Profile", icon: UserIcon },
   { id: "billing", label: "Billing", icon: CreditCardIcon },
+  { id: "api-key", label: "API key", icon: Key01Icon },
   { id: "domains", label: "Domains", icon: Globe02Icon },
   { id: "instructions", label: "Instructions", icon: Message02Icon },
 ] as const satisfies ReadonlyArray<{

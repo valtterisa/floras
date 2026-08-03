@@ -6,12 +6,17 @@ import { useCustomer } from "autumn-js/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  BYOK_PLAN_ID,
   ENTERPRISE_CONTACT_HREF,
   ENTERPRISE_PLAN_ID,
   PRO_MONTHLY_PLAN_ID,
   PRO_YEARLY_PLAN_ID,
-  isPaidPlanId,
+  isSubscribedPlanId,
 } from "@/lib/billing/constants";
+import {
+  BYOK_FEATURES,
+  PRO_FEATURES_EXTENDED,
+} from "@/lib/billing/plan-copy";
 import { checkoutSuccessUrl, redirectToCheckout } from "@/lib/billing/checkout";
 
 type BillingInterval = "month" | "year";
@@ -22,18 +27,10 @@ type PlanCard = {
   price: string;
   cadence?: string;
   note?: string;
-  features: string[];
+  features: readonly string[];
   highlight?: boolean;
   cta: string;
 };
-
-const PRO_FEATURES = [
-  "$13 of AI tokens every month",
-  "Hosting included",
-  "Top up credits to keep editing",
-  "SEO-ready Astro that ranks",
-  "Sites that slap — end to end",
-];
 
 const ENTERPRISE_FEATURES = [
   "Self-hosted Floras on your infra",
@@ -41,17 +38,25 @@ const ENTERPRISE_FEATURES = [
   "Custom models, limits, and SSO",
   "Dedicated support & onboarding",
   "Team seats and admin controls",
-];
+] as const;
 
 const PLANS: Record<BillingInterval, PlanCard[]> = {
   month: [
+    {
+      id: BYOK_PLAN_ID,
+      name: "BYOK",
+      price: "$5",
+      cadence: "/mo",
+      features: BYOK_FEATURES,
+      cta: "Get BYOK",
+    },
     {
       id: PRO_MONTHLY_PLAN_ID,
       name: "Pro",
       price: "$20",
       cadence: "/mo",
       highlight: true,
-      features: PRO_FEATURES,
+      features: PRO_FEATURES_EXTENDED,
       cta: "Get Pro",
     },
     {
@@ -64,13 +69,22 @@ const PLANS: Record<BillingInterval, PlanCard[]> = {
   ],
   year: [
     {
+      id: BYOK_PLAN_ID,
+      name: "BYOK",
+      price: "$5",
+      cadence: "/mo",
+      note: "Billed monthly",
+      features: BYOK_FEATURES,
+      cta: "Get BYOK",
+    },
+    {
       id: PRO_YEARLY_PLAN_ID,
       name: "Pro",
       price: "$192",
       cadence: "/yr",
       note: "Save 20% vs monthly",
       highlight: true,
-      features: PRO_FEATURES,
+      features: PRO_FEATURES_EXTENDED,
       cta: "Get Pro yearly",
     },
     {
@@ -93,7 +107,8 @@ export function PricingTableClient() {
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   const activePaid = data?.subscriptions?.find(
-    (s) => s.status === "active" && isPaidPlanId(s.planId) && !s.autoEnable
+    (s) =>
+      s.status === "active" && isSubscribedPlanId(s.planId) && !s.autoEnable
   );
   const currentPlanId = activePaid?.planId ?? null;
   const plans = PLANS[interval];
@@ -120,7 +135,11 @@ export function PricingTableClient() {
       const result = await attach({
         planId,
         redirectMode: "always",
-        successUrl: checkoutSuccessUrl("/dashboard/account"),
+        successUrl: checkoutSuccessUrl(
+          planId === BYOK_PLAN_ID
+            ? "/dashboard/account#api-key"
+            : "/dashboard/account"
+        ),
       });
 
       if (await redirectToCheckout(result)) return;
@@ -186,7 +205,7 @@ export function PricingTableClient() {
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2">
+      <div className="grid md:grid-cols-3">
         {plans.map((plan, i) => {
           const isCurrent = plan.id === currentPlanId;
           const pending = pendingPlan === plan.id;
@@ -195,8 +214,8 @@ export function PricingTableClient() {
             <div
               key={`${interval}-${plan.id}`}
               className={cn(
-                "flex flex-col border-border p-8",
-                i === 0 ? "border-b sm:border-b-0 sm:border-r" : "",
+                "flex flex-col border-border p-6 md:p-8",
+                i < plans.length - 1 ? "border-b md:border-b-0 md:border-r" : "",
                 plan.highlight ? "bg-brand-soft" : "bg-card/40"
               )}
             >

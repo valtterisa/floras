@@ -93,6 +93,8 @@ export default defineSchema({
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
     customInstructions: v.optional(v.string()),
+    anthropicKeyCiphertext: v.optional(v.string()),
+    anthropicKeyLast4: v.optional(v.string()),
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),

@@ -12,12 +12,14 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   `components/site/*` (`PageHeader`, `Section`, `EmptyState`, `Container`), and
   feature modules in `landing/`, `dashboard/`, `workspace/`, `auth/`. Billing gates
   around composers share `useBillingGates` / `BillingGateModals`.
-- **Backend/DB:** Convex (`convex/`). Auth via Convex Auth (password provider).
-  Reactive queries drive the chat + preview. Mutations use `authedMutation`
+- **Backend/DB:** Convex (`convex/`). Auth via Convex Auth (Password + Google
+  OAuth). Reactive queries drive the chat + preview. Mutations use `authedMutation`
   (`convex/lib/customFunctions.ts`) so only signed-in owners can write.
 - **Agent:** AI SDK 7 `ToolLoopAgent` (`lib/ai/agent.ts`) runs from Next.js API
   routes (`app/api/generate`, `lib/generate/run-generation.ts`). Tool activity +
   summaries stream back into Convex tables, so the UI updates reactively.
+  Pro uses the platform Anthropic key + Autumn metering; BYOK uses the user's
+  encrypted Anthropic key (no Autumn credit metering).
 - **Template:** New Boxes fork the golden Box from `BOX_GOLDEN_BOX_ID` via
   `box.fork({ noEnv: true })` (template + deps already on the golden snapshot).
   The agent stores a zod `SitePlan` (`lib/schema/site.ts`) then edits the site in place.
@@ -29,8 +31,11 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   official `cloudflare` SDK. Because Pages has no wildcard custom domains, publish
   also upserts a DNS CNAME for `{id}.floras.app` → the project `*.pages.dev` host.
   Live URL is the floras.app hostname (custom domains optional afterward).
+  **Pro only** — BYOK is export-only (no Floras hosting).
 - **Billing:** `autumn-js` via Next.js (`app/api/autumn/[...all]`, `lib/billing/get-access.ts`,
-  fail-closed in production; fail-open only when `BILLING_FAIL_OPEN=1` or non-prod) + `autumn.config.ts` plans. Frontend uses `autumn-js/react`.
+  fail-closed in production; fail-open only when `BILLING_FAIL_OPEN=1` or non-prod) + `autumn.config.ts` plans.
+  Plans: **BYOK** ($5/mo, user Anthropic key, preview + export) and **Pro** (credits + hosting).
+  Frontend uses `autumn-js/react`.
 
 ## Cursor Cloud specific instructions
 
@@ -44,10 +49,10 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   Next.js API routes — not Convex actions — so pushes stay under the 64MB
   module-load limit. Do not reintroduce those packages into `convex/`.
 - **Secrets for generation/Box/billing/CF live in Next.js `.env.local`:**
-  `ANTHROPIC_API_KEY`, `BOX_API_KEY`, `BOX_GOLDEN_BOX_ID`, `AUTUMN_SECRET_KEY`,
-  Cloudflare publish vars below. Optional: `AGENT_MODEL` (defaults to
-  `claude-sonnet-5`), `BOX_BASE_URL`. New Boxes always fork `BOX_GOLDEN_BOX_ID`
-  (required).
+  `ANTHROPIC_API_KEY`, `BYOK_ENCRYPTION_SECRET`, `BOX_API_KEY`, `BOX_GOLDEN_BOX_ID`,
+  `AUTUMN_SECRET_KEY`, Cloudflare publish vars below. Optional: `AGENT_MODEL`
+  (defaults to `claude-sonnet-5`), `BOX_BASE_URL`. New Boxes always fork
+  `BOX_GOLDEN_BOX_ID` (required).
 - **Cloudflare publish (Next.js `.env.local` / host secrets, not Box dashboard):**
   `CLOUDFLARE_API_TOKEN` (User token: Account → Cloudflare Pages → Edit **and**
   Zone → DNS → Edit on `floras.app`), `CLOUDFLARE_ACCOUNT_ID`, and
@@ -57,9 +62,11 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   must not receive Floras hosting credentials. Publish injects them into the Box
   only for the Wrangler deploy command, then scrubs the temp file.
 - **Convex deployment env** (set with `npx convex env set`): Convex Auth keys via
-  `npx @convex-dev/auth` (`JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`). Not the
-  Anthropic/Box/CF keys.
+  `npx @convex-dev/auth` (`JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`), plus Google OAuth
+  `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`. Redirect URI:
+  `{CONVEX_SITE_URL}/api/auth/callback/google`. Not the Anthropic/Box/CF keys.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).
+  Includes `byok` ($5/mo), `pro`, `pro_yearly`, and `credit_top_up`.
 - **Preview iframes** load the sandbox Astro dev server over `*.on.ascii.dev`; the
   template should set Vite `server.allowedHosts: true` and bind `0.0.0.0` so those
   hosts are not blocked.
