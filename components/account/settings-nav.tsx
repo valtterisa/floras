@@ -10,21 +10,29 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export const SETTINGS_SECTIONS = [
-  { id: "profile", label: "Profile", icon: UserIcon },
-  { id: "billing", label: "Billing", icon: CreditCardIcon },
-  { id: "api-key", label: "API key", icon: Key01Icon },
-  { id: "domains", label: "Domains", icon: Globe02Icon },
-  { id: "instructions", label: "Instructions", icon: Message02Icon },
+  { id: "profile", icon: UserIcon },
+  { id: "billing", icon: CreditCardIcon },
+  { id: "api-key", icon: Key01Icon },
+  { id: "domains", icon: Globe02Icon },
+  { id: "instructions", icon: Message02Icon },
 ] as const satisfies ReadonlyArray<{
   id: string;
-  label: string;
   icon: IconSvgElement;
 }>;
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number]["id"];
+
+const NAV_KEY: Record<SettingsSectionId, "profile" | "billing" | "apiKey" | "domains" | "instructions"> = {
+  profile: "profile",
+  billing: "billing",
+  "api-key": "apiKey",
+  domains: "domains",
+  instructions: "instructions",
+};
 
 function scrollToSection(id: SettingsSectionId) {
   const el = document.getElementById(id);
@@ -34,6 +42,7 @@ function scrollToSection(id: SettingsSectionId) {
 }
 
 export function SettingsNav() {
+  const t = useTranslations("account");
   const [active, setActive] = useState<SettingsSectionId>("profile");
 
   useEffect(() => {
@@ -71,11 +80,11 @@ export function SettingsNav() {
   return (
     <>
       <nav
-        aria-label="Settings"
+        aria-label={t("nav.settings")}
         className="sticky top-0 z-10 -mx-6 border-b border-border bg-background/90 px-6 backdrop-blur-sm md:-mx-8 md:px-8 lg:hidden"
       >
         <ul className="flex gap-1 overflow-x-auto py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {SETTINGS_SECTIONS.map(({ id, label }) => (
+          {SETTINGS_SECTIONS.map(({ id }) => (
             <li key={id} className="shrink-0">
               <button
                 type="button"
@@ -91,7 +100,7 @@ export function SettingsNav() {
                 )}
                 aria-current={active === id ? "true" : undefined}
               >
-                {label}
+                {t(`nav.${NAV_KEY[id]}`)}
               </button>
             </li>
           ))}
@@ -99,12 +108,14 @@ export function SettingsNav() {
       </nav>
 
       <nav
-        aria-label="Settings"
+        aria-label={t("nav.settings")}
         className="sticky top-8 hidden w-44 shrink-0 self-start lg:block"
       >
-        <p className="text-xs font-medium text-muted-foreground">Settings</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("nav.settings")}
+        </p>
         <ul className="mt-3 flex flex-col gap-0.5">
-          {SETTINGS_SECTIONS.map(({ id, label, icon: Icon }) => (
+          {SETTINGS_SECTIONS.map(({ id, icon: Icon }) => (
             <li key={id}>
               <button
                 type="button"
@@ -121,7 +132,7 @@ export function SettingsNav() {
                 aria-current={active === id ? "true" : undefined}
               >
                 <HugeiconsIcon icon={Icon} className="size-4 shrink-0" strokeWidth={1.5} />
-                {label}
+                {t(`nav.${NAV_KEY[id]}`)}
               </button>
             </li>
           ))}

@@ -9,6 +9,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   WebPreview,
@@ -23,18 +24,21 @@ import {
   LIVE_SANDBOX_STATES,
 } from "@/lib/workspace/derive-preview-ui";
 
-const PROJECT_STATUS_LABEL: Record<string, string> = {
-  draft: "Queued",
-  provisioning: "Getting ready",
-  generating: "Building",
-  ready: "Live",
-  error: "Error",
-};
+const PROJECT_STATUS_KEYS = [
+  "draft",
+  "provisioning",
+  "generating",
+  "ready",
+  "error",
+] as const;
 
 const pendingStarts = new Map<string, Promise<void>>();
 const PREVIEW_OK_GRACE_MS = 20_000;
 
-function ensurePreviewStarted(projectId: string): Promise<void> {
+function ensurePreviewStarted(
+  projectId: string,
+  couldNotStart: string
+): Promise<void> {
   const existing = pendingStarts.get(projectId);
   if (existing) return existing;
 
@@ -46,7 +50,7 @@ function ensurePreviewStarted(projectId: string): Promise<void> {
     });
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error || "Could not start sandbox.");
+      throw new Error(data.error || couldNotStart);
     }
   })().finally(() => {
     pendingStarts.delete(projectId);
@@ -67,7 +71,13 @@ export function PreviewPane({
   previewUrl?: string;
   sandboxName?: string;
 }) {
-  const projectLabel = PROJECT_STATUS_LABEL[status ?? "draft"] ?? status;
+  const t = useTranslations("preview");
+  const statusKey = PROJECT_STATUS_KEYS.includes(
+    status as (typeof PROJECT_STATUS_KEYS)[number]
+  )
+    ? (status as (typeof PROJECT_STATUS_KEYS)[number])
+    : "draft";
+  const projectLabel = t(`status.${statusKey}`);
   const busy = status === "provisioning" || status === "generating";
   const [restarting, setRestarting] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -88,7 +98,7 @@ export function PreviewPane({
     setStarting(true);
     setPreviewError(null);
 
-    void ensurePreviewStarted(projectId)
+    void ensurePreviewStarted(projectId, t("couldNotStart"))
       .then(() => {
         if (cancelled) return;
         graceUntilRef.current = Date.now() + PREVIEW_OK_GRACE_MS;
@@ -100,7 +110,7 @@ export function PreviewPane({
         if (cancelled) return;
         setPreviewOk(false);
         const message =
-          error instanceof Error ? error.message : "Could not start sandbox.";
+          error instanceof Error ? error.message : t("couldNotStart");
         setPreviewError(message);
         toast.error(message);
       })
@@ -111,7 +121,7 @@ export function PreviewPane({
     return () => {
       cancelled = true;
     };
-  }, [projectId, sandboxName, busy]);
+  }, [projectId, sandboxName, busy, t]);
 
   useEffect(() => {
     if (!sandboxName) {
@@ -181,16 +191,16 @@ export function PreviewPane({
         error?: string;
       };
       if (!res.ok) {
-        throw new Error(data.error || "Could not restart sandbox.");
+        throw new Error(data.error || t("couldNotRestart"));
       }
       graceUntilRef.current = Date.now() + PREVIEW_OK_GRACE_MS;
       setReloadKey((k) => k + 1);
       setPreviewOk(true);
       setPreviewError(null);
-      toast.success("Sandbox restarted.");
+      toast.success(t("restarted"));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Could not restart sandbox.";
+        error instanceof Error ? error.message : t("couldNotRestart");
       setPreviewError(message);
       toast.error(message);
     } finally {
@@ -212,9 +222,9 @@ export function PreviewPane({
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">
             {waiting
               ? sandboxName
-                ? "Starting sandbox…"
-                : "Your live preview will appear here in a moment."
-              : "Switch to Build and send a prompt to generate a live preview."}
+                ? t("starting")
+                : t("willAppear")
+              : t("switchToBuild")}
           </p>
         </div>
       </div>
@@ -224,7 +234,7 @@ export function PreviewPane({
   const sandboxLive =
     typeof sandboxState === "string" && LIVE_SANDBOX_STATES.has(sandboxState);
   const showOwnUi = waking || !sandboxLive || !previewOk || Boolean(previewError);
-  const { screen, badge: badgeLabel } = derivePreviewUi({
+  const { screen, badge, badgeOverride } = derivePreviewUi({
     state: sandboxState,
     waking,
     restarting,
@@ -232,6 +242,9 @@ export function PreviewPane({
     previewError,
     projectLabel,
   });
+  const badgeLabel = badgeOverride ?? t(`badge.${badge}`);
+  const screenTitle = t(screen.titleKey);
+  const screenBody = screen.bodyOverride ?? (screen.bodyKey ? t(screen.bodyKey) : "");
 
   return (
     <WebPreview
@@ -252,22 +265,22 @@ export function PreviewPane({
         </Badge>
         <WebPreviewUrl readOnly />
         <WebPreviewNavigationButton
-          tooltip="Open preview in new tab"
+          tooltip={t("openInNewTab")}
           disabled={!previewUrl || waking}
           onClick={() => {
             if (previewUrl) {
               window.open(previewUrl, "_blank", "noopener,noreferrer");
             }
           }}
-          aria-label="Open preview in new tab"
+          aria-label={t("openInNewTab")}
         >
           <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" />
         </WebPreviewNavigationButton>
         <WebPreviewNavigationButton
-          tooltip={waking ? "Starting sandbox…" : "Restart sandbox"}
+          tooltip={waking ? t("starting") : t("restart")}
           disabled={!sandboxName || waking || busy}
           onClick={() => void onRestart()}
-          aria-label="Restart sandbox"
+          aria-label={t("restart")}
         >
           {waking ? (
             <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
@@ -285,9 +298,9 @@ export function PreviewPane({
               <HugeiconsIcon icon={SmartPhone01Icon} className="size-7 text-muted-foreground" />
             )}
             <div>
-              <p className="text-sm font-medium">{screen.title}</p>
+              <p className="text-sm font-medium">{screenTitle}</p>
               <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                {screen.body}
+                {screenBody}
               </p>
             </div>
             {screen.showRestart && sandboxName && !busy ? (
@@ -298,7 +311,7 @@ export function PreviewPane({
                 className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 border border-border bg-background px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <HugeiconsIcon icon={ReloadIcon} className="size-3.5" />
-                Restart preview
+                {t("restartPreview")}
               </button>
             ) : null}
           </div>

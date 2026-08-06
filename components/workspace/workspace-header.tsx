@@ -7,6 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
@@ -29,6 +30,7 @@ export function WorkspaceHeader({
   projectId: string;
   project: WorkspaceProject | null;
 }) {
+  const t = useTranslations("workspace");
   const gates = useBillingGates();
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -157,7 +159,7 @@ export function WorkspaceHeader({
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      toast.success("Project exported");
+      toast.success(t("exported"));
     } catch (error) {
       toast.error(AppError.from(error).message);
     } finally {
@@ -172,7 +174,7 @@ export function WorkspaceHeader({
           <Button asChild variant="ghost" size="icon-sm" className="shrink-0">
             <Link href="/dashboard">
               <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-              <span className="sr-only">Back to dashboard</span>
+              <span className="sr-only">{t("backToDashboard")}</span>
             </Link>
           </Button>
           <Logo />
@@ -198,28 +200,28 @@ export function WorkspaceHeader({
               className="inline-flex h-8 cursor-pointer items-center gap-2 border border-border bg-background px-2.5 transition-colors hover:bg-card"
               aria-label={
                 !gates.hasSubscription
-                  ? "Choose a plan"
+                  ? t("choosePlan")
                   : gates.hasByokPlan && !gates.hasProPlan
                     ? gates.hasApiKey
-                      ? "Manage Anthropic API key"
-                      : "Add Anthropic API key"
-                    : `AI credit ${creditLabel}. Top up`
+                      ? t("manageApiKey")
+                      : t("addApiKey")
+                    : t("creditAria", { credit: creditLabel })
               }
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                 {!gates.hasSubscription
-                  ? "Plan"
+                  ? t("plan")
                   : gates.hasByokPlan && !gates.hasProPlan
-                    ? "BYOK"
-                    : "Credit"}
+                    ? t("byok")
+                    : t("credit")}
               </span>
               <span className="font-mono text-[11px] tabular-nums text-foreground">
                 {!gates.hasSubscription
                   ? "—"
                   : gates.hasByokPlan && !gates.hasProPlan
                     ? gates.hasApiKey
-                      ? "Key"
-                      : "Add key"
+                      ? t("key")
+                      : t("addKey")
                     : creditLabel}
               </span>
             </button>
@@ -237,24 +239,24 @@ export function WorkspaceHeader({
             {isPublishing ? (
               <>
                 <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                <span className="hidden sm:inline">Publishing</span>
+                <span className="hidden sm:inline">{t("publishing")}</span>
               </>
             ) : unpublishing ? (
               <>
                 <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                <span className="hidden sm:inline">Unpublishing</span>
+                <span className="hidden sm:inline">{t("unpublishing")}</span>
               </>
             ) : exporting ? (
               <>
                 <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                <span className="hidden sm:inline">Exporting</span>
+                <span className="hidden sm:inline">{t("exporting")}</span>
               </>
             ) : gates.billingReady && !gates.canPublish ? (
-              "Export"
+              t("export")
             ) : isPublished ? (
-              "Live"
+              t("live")
             ) : (
-              "Publish"
+              t("publish")
             )}
           </button>
         </div>

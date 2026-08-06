@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ProfileForm } from "@/components/account/profile-form";
 import { BillingSection } from "@/components/account/billing-section";
 import { ApiKeySection } from "@/components/account/api-key-section";
@@ -10,12 +11,14 @@ import { Container } from "@/components/site/container";
 import { PageHeader } from "@/components/site/page-header";
 
 export function AccountPage() {
+  const t = useTranslations("account");
+
   return (
     <Container className="max-w-5xl pb-16 md:px-8">
       <PageHeader
         className="border-b border-border py-8"
-        title="Account"
-        description="Manage your profile, billing, API key, domains, and how Floras writes your sites."
+        title={t("title")}
+        description={t("description")}
       />
 
       <div className="mt-0 flex flex-col lg:mt-8 lg:flex-row lg:gap-10">

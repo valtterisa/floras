@@ -55,7 +55,11 @@ function buildRedirectTo(opts: {
   return "/dashboard";
 }
 
-function passwordAuthErrorMessage(error: unknown, flow: AuthFlow): string {
+function passwordAuthErrorMessage(
+  error: unknown,
+  flow: AuthFlow,
+  messages: { emailExists: string; signUpFailed: string; authFailed: string }
+): string {
   const parts: string[] = [];
   if (error instanceof ConvexError) {
     parts.push(
@@ -72,12 +76,12 @@ function passwordAuthErrorMessage(error: unknown, flow: AuthFlow): string {
     raw.includes("EMAIL_ALREADY_REGISTERED") ||
     /Account .+ already exists/i.test(raw)
   ) {
-    return "An account with this email already exists. Sign in with Google or use the method you signed up with.";
+    return messages.emailExists;
   }
   if (flow === "signUp") {
-    return "Could not create account. Check your email and password.";
+    return messages.signUpFailed;
   }
-  return "Authentication failed. Check your email and password.";
+  return messages.authFailed;
 }
 
 function GoogleMark({ className }: { className?: string }) {
@@ -135,7 +139,13 @@ export function AuthForm({
       await signIn("password", formData);
       await finishAuthenticated();
     } catch (error) {
-      toast.error(passwordAuthErrorMessage(error, flow));
+      toast.error(
+        passwordAuthErrorMessage(error, flow, {
+          emailExists: t("emailExists"),
+          signUpFailed: t("signUpFailed"),
+          authFailed: t("authFailed"),
+        })
+      );
       setLoading(false);
     }
   }
@@ -147,7 +157,7 @@ export function AuthForm({
         redirectTo: buildRedirectTo({ prompt: pendingPrompt, nextPath }),
       });
     } catch {
-      toast.error("Google sign-in failed. Try again.");
+      toast.error(t("googleFailed"));
       setGoogleLoading(false);
     }
   }
@@ -183,9 +193,7 @@ export function AuthForm({
           {isSignUp ? t("signUpTitle") : t("loginTitle")}
         </h1>
         <p className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
-          {pendingPrompt
-            ? "Sign in to start creating your site."
-            : "Create websites with a live preview — no coding needed."}
+          {pendingPrompt ? t("subtitlePrompt") : t("subtitleDefault")}
         </p>
       </div>
 
@@ -244,31 +252,31 @@ export function AuthForm({
           >
             {loading
               ? pendingPrompt
-                ? "Starting…"
-                : "Please wait…"
+                ? t("starting")
+                : t("pleaseWait")
               : isSignUp
-                ? "Create account"
-                : "Sign in"}
+                ? t("signUpTitle")
+                : t("loginTitle")}
           </Button>
         </form>
       </div>
 
       <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-        By continuing, you agree to our{" "}
+        {t("agreeBefore")}{" "}
         <Link
           href="/terms"
           className="underline underline-offset-4 hover:text-foreground"
         >
-          Terms
+          {t("agreeTerms")}
         </Link>{" "}
-        and{" "}
+        {t("agreeAnd")}{" "}
         <Link
           href="/privacy"
           className="underline underline-offset-4 hover:text-foreground"
         >
-          Privacy Policy
+          {t("agreePrivacy")}
         </Link>
-        .
+        {t("agreeAfter")}
       </p>
 
       <p className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">

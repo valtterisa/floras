@@ -10,6 +10,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Dialog,
@@ -59,6 +60,7 @@ export function PublishModal({
   customDomain,
   customDomainStatus,
 }: PublishModalProps) {
+  const t = useTranslations("publish");
   const [copied, setCopied] = useState(false);
   const busy = publishing || unpublishing || exporting;
 
@@ -85,52 +87,46 @@ export function PublishModal({
   }
 
   const facts = !canPublish
-    ? [
-        "Export as ZIP to host the Astro project yourself",
-        "Floras hosting and custom domains require Pro",
-        "Live preview still works in the workspace",
-      ]
+    ? ([0, 1, 2] as const).map((i) => t(`factsExport.${i}`))
     : isPublished
-      ? [
-          "Anyone with the link can open this site",
-          "Update live to replace the current build",
-          "Unpublish removes the Cloudflare project and floras.app DNS",
-          "Export as ZIP to host the Astro project elsewhere",
-        ]
-      : [
-          "Builds the site and puts it on the public web",
-          `Includes a unique ${FLORAS_SITES_DOMAIN} address`,
-          "Custom domains can be connected after publish",
-          "Export as ZIP to host the Astro project elsewhere",
-        ];
+      ? ([0, 1, 2, 3] as const).map((i) => t(`factsPublished.${i}`))
+      : ([0, 1, 2, 3] as const).map((i) =>
+          i === 1
+            ? t(`factsPublish.1`, { domain: FLORAS_SITES_DOMAIN })
+            : t(`factsPublish.${i}`)
+        );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
         <div className="border-b border-border px-6 py-5 pr-14">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            {!canPublish ? "Export" : isPublished ? "Live site" : "Go live"}
+            {!canPublish
+              ? t("eyebrowExport")
+              : isPublished
+                ? t("eyebrowLive")
+                : t("eyebrowGoLive")}
           </p>
           <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">
             {!canPublish
-              ? "Export your site"
+              ? t("titleExport")
               : isPublished
-                ? "Your site is live"
-                : "Publish"}
+                ? t("titleLive")
+                : t("titlePublish")}
           </DialogTitle>
           <DialogDescription className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
             {!canPublish
-              ? "BYOK includes export. Upgrade to Pro for floras.app hosting."
+              ? t("descByok")
               : isPublished
-                ? "Open the public URL, update the live build, or take it down."
-                : "Confirm where this site will live, then publish."}
+                ? t("descLive")
+                : t("descConfirm")}
           </DialogDescription>
         </div>
 
         {canPublish ? (
         <div className="border-b border-border px-6 py-5">
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            {liveUrl ? "Live URL" : "Your URL"}
+            {liveUrl ? t("liveUrl") : t("yourUrl")}
           </p>
           {liveUrl ? (
             <div className="mt-2 flex items-start gap-2">
@@ -147,7 +143,7 @@ export function PublishModal({
                   type="button"
                   onClick={() => void copyUrl()}
                   className="inline-flex size-8 cursor-pointer items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                  aria-label="Copy URL"
+                  aria-label={t("copyUrl")}
                 >
                   {copied ? (
                     <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
@@ -160,7 +156,7 @@ export function PublishModal({
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex size-8 items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                  aria-label="Open live site"
+                  aria-label={t("openLive")}
                 >
                   <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
                 </a>
@@ -173,19 +169,18 @@ export function PublishModal({
           )}
           {!liveUrl ? (
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              A unique address is assigned on first publish. You can connect your
-              own domain afterward.
+              {t("uniqueAddress")}
             </p>
           ) : null}
           {pendingCustom ? (
             <p className="mt-3 text-sm text-muted-foreground">
-              Custom domain pending:{" "}
+              {t("pendingCustom")}{" "}
               <span className="font-mono text-foreground">{pendingCustom}</span>
             </p>
           ) : null}
           {customActive && florasUrl ? (
             <p className="mt-3 truncate font-mono text-[11px] text-muted-foreground">
-              Also at {stripProtocol(florasUrl)}
+              {t("alsoAt", { url: stripProtocol(florasUrl) })}
             </p>
           ) : null}
         </div>
@@ -202,13 +197,13 @@ export function PublishModal({
           ))}
           {canPublish ? (
           <li className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0">
-            Manage domains in{" "}
+            {t("manageDomainsBefore")}{" "}
             <Link
               href="/dashboard/account#domains"
               className="text-foreground underline-offset-4 hover:underline"
               onClick={() => onOpenChange(false)}
             >
-              Account → Domains
+              {t("manageDomainsLink")}
             </Link>
           </li>
           ) : null}
@@ -226,7 +221,7 @@ export function PublishModal({
                     className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
                   >
                     <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
-                    Open site
+                    {t("openSite")}
                   </a>
                   <button
                     type="button"
@@ -240,10 +235,10 @@ export function PublishModal({
                     {publishing ? (
                       <>
                         <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                        Publishing…
+                        {t("publishing")}
                       </>
                     ) : (
-                      "Update live"
+                      t("updateLive")
                     )}
                   </button>
                 </div>
@@ -260,10 +255,10 @@ export function PublishModal({
                   {publishing ? (
                     <>
                       <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                      Publishing…
+                      {t("publishing")}
                     </>
                   ) : (
-                    "Update live"
+                    t("updateLive")
                   )}
                 </button>
               )}
@@ -280,10 +275,10 @@ export function PublishModal({
                   {unpublishing ? (
                     <>
                       <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                      Unpublishing…
+                      {t("unpublishing")}
                     </>
                   ) : (
-                    "Unpublish"
+                    t("unpublish")
                   )}
                 </button>
               ) : null}
@@ -301,10 +296,10 @@ export function PublishModal({
               {publishing ? (
                 <>
                   <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                  Publishing…
+                  {t("publishing")}
                 </>
               ) : (
-                "Publish site"
+                t("publishSite")
               )}
             </button>
           ) : onUpgrade ? (
@@ -313,7 +308,7 @@ export function PublishModal({
               onClick={onUpgrade}
               className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
             >
-              Upgrade to Pro for hosting
+              {t("upgradeHosting")}
             </button>
           ) : null}
           {onExport ? (
@@ -329,12 +324,12 @@ export function PublishModal({
               {exporting ? (
                 <>
                   <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                  Exporting…
+                  {t("exporting")}
                 </>
               ) : (
                 <>
                   <HugeiconsIcon icon={Download01Icon} className="size-3.5" />
-                  Export as ZIP
+                  {t("exportZip")}
                 </>
               )}
             </button>

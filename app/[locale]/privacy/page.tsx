@@ -1,14 +1,30 @@
 import type { Metadata } from "next";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { hasLocale } from "next-intl";
 import { LegalPage } from "@/components/site/legal-page";
+import { routing, type Locale } from "@/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description: "How Floras collects, uses, and stores your data.",
-};
+type Props = { params: Promise<{ locale: string }> };
 
-export default function PrivacyPolicyPage() {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale: loc } = await params;
+  if (!hasLocale(routing.locales, loc)) return {};
+  const locale = loc as Locale;
+  const t = await getTranslations({ locale, namespace: "legal" });
+  return {
+    title: t("privacyTitle"),
+    description: t("privacyDescription"),
+  };
+}
+
+export default async function PrivacyPolicyPage({ params }: Props) {
+  const { locale: loc } = await params;
+  if (!hasLocale(routing.locales, loc)) return null;
+  setRequestLocale(loc);
+  const t = await getTranslations("legal");
+
   return (
-    <LegalPage title="Privacy Policy" updated="August 3, 2026">
+    <LegalPage title={t("privacyTitle")} updated="August 3, 2026">
       <p>
         This Privacy Policy describes how Floras (operated by TMI Valtteri
         Savonen, “we”, “us”) handles information when you use floras.app and

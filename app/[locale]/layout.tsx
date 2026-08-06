@@ -11,12 +11,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ConvexClientProvider } from "../ConvexClientProvider";
 import { AutumnWrapper } from "../AutumnWrapper";
-import { ThemeProviderWrapper } from "@/components/site/theme-provider";
 import {
-  THEME_COOKIE,
-  parseTheme,
-  themeCookieScript,
-} from "@/lib/theme";
+  ReactGrabScript,
+  ThemeProviderWrapper,
+} from "@/components/site/theme-provider";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
@@ -59,19 +58,8 @@ export default async function LocaleLayout({
         style={{ colorScheme: theme }}
         suppressHydrationWarning
       >
-        <head>
-          <script
-            id="theme-cookie-sync"
-            dangerouslySetInnerHTML={{ __html: themeCookieScript() }}
-          />
-          {process.env.NODE_ENV === "development" ? (
-            <script
-              src="//unpkg.com/react-grab/dist/index.global.js"
-              crossOrigin="anonymous"
-            />
-          ) : null}
-        </head>
         <body className="min-h-[100dvh] bg-background font-sans text-foreground antialiased">
+          {process.env.NODE_ENV === "development" ? <ReactGrabScript /> : null}
           <NextIntlClientProvider messages={messages}>
             <ThemeProviderWrapper defaultTheme={theme}>
               <ConvexClientProvider>

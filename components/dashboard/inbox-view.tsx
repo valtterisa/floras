@@ -38,13 +38,16 @@ function formatWhen(ts: number): string {
   }
 }
 
-function previewLine(fields: Record<string, string>): string {
+function previewLine(
+  fields: Record<string, string>,
+  fallback: string
+): string {
   return (
     fields.message ||
     fields.email ||
     fields.name ||
     Object.values(fields)[0] ||
-    "Submission"
+    fallback
   );
 }
 
@@ -88,27 +91,24 @@ export function InboxView() {
 
   return (
     <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
-      <PageHeader
-        title="Inbox"
-        description="Messages from contact forms on your sites."
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="flex flex-wrap items-center gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger
-            aria-label="Site"
+            aria-label={t("site")}
             className={cn(
               "inline-flex h-9 min-w-0 max-w-full cursor-pointer items-center gap-2 border border-border bg-background px-2.5 text-left text-muted-foreground transition-colors",
               "hover:bg-card hover:text-foreground",
               "focus:outline-none data-[state=open]:bg-card data-[state=open]:text-foreground"
             )}
           >
-            <span className="text-xs text-muted-foreground">Site</span>
+            <span className="text-xs text-muted-foreground">{t("site")}</span>
             <span className="min-w-0 truncate text-xs font-medium text-foreground">
               {projectFilter === "all"
-                ? "All sites"
+                ? t("allSites")
                 : (projects.find((p) => p.id === projectFilter)?.name ??
-                  "All sites")}
+                  t("allSites"))}
             </span>
             <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 shrink-0" />
           </DropdownMenuTrigger>
@@ -125,7 +125,7 @@ export function InboxView() {
               )}
             >
               <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                All sites
+                {t("allSites")}
               </span>
               {projectFilter === "all" ? (
                 <HugeiconsIcon
@@ -174,19 +174,19 @@ export function InboxView() {
               : "bg-background text-muted-foreground hover:text-foreground"
           )}
         >
-          {showArchived ? "Showing archived" : "Show archived"}
+          {showArchived ? t("showingArchived") : t("showArchived")}
         </button>
       </div>
 
       {filtered === undefined ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title={showArchived ? "No archived messages" : "Inbox is empty"}
+          title={showArchived ? t("emptyArchivedTitle") : t("emptyTitle")}
           description={
             showArchived
-              ? "Archived submissions will show up here."
-              : "When visitors submit a contact form on a published or preview site, their messages land here."
+              ? t("emptyArchivedDescription")
+              : t("emptyDescription")
           }
         />
       ) : (
@@ -217,7 +217,7 @@ export function InboxView() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm text-foreground">
-                        {s.fields.name || s.fields.email || "Visitor"}
+                        {s.fields.name || s.fields.email || t("visitor")}
                       </span>
                       {s.status === "new" ? (
                         <span className="size-1.5 shrink-0 rounded-full bg-brand" />
@@ -227,7 +227,7 @@ export function InboxView() {
                       {s.projectName}
                     </span>
                     <span className="line-clamp-2 text-xs text-muted-foreground">
-                      {previewLine(s.fields)}
+                      {previewLine(s.fields, t("submission"))}
                     </span>
                   </button>
                 </li>
@@ -240,7 +240,9 @@ export function InboxView() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-lg font-semibold tracking-tight">
-                    {selected.fields.name || selected.fields.email || "Visitor"}
+                    {selected.fields.name ||
+                      selected.fields.email ||
+                      t("visitor")}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {selected.projectName}
@@ -256,7 +258,7 @@ export function InboxView() {
                       onClick={() => void mark("archived")}
                       className="h-9 border border-border px-3 text-sm text-muted-foreground hover:text-foreground"
                     >
-                      Archive
+                      {t("archive")}
                     </button>
                   ) : (
                     <button
@@ -264,7 +266,7 @@ export function InboxView() {
                       onClick={() => void mark("new")}
                       className="h-9 border border-border px-3 text-sm text-muted-foreground hover:text-foreground"
                     >
-                      Restore
+                      {t("restore")}
                     </button>
                   )}
                 </div>

@@ -7,11 +7,13 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { setThemeCookie, type AppTheme } from "@/lib/theme";
 
 export function ThemeToggle() {
+  const t = useTranslations("theme");
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -31,12 +33,12 @@ export function ThemeToggle() {
     <div className="flex h-full items-center border-r border-border px-2.5">
       <div
         role="group"
-        aria-label="Color theme"
+        aria-label={t("label")}
         className="inline-flex h-8 border border-border"
       >
         <button
           type="button"
-          aria-label="Switch to light mode"
+          aria-label={t("switchLight")}
           aria-pressed={active === "light"}
           onClick={() => select("light")}
           className={cn(
@@ -47,11 +49,11 @@ export function ThemeToggle() {
           )}
         >
           <HugeiconsIcon icon={Sun03Icon} className="size-3.5 shrink-0" aria-hidden />
-          <span className="hidden sm:inline">Light</span>
+          <span className="hidden sm:inline">{t("light")}</span>
         </button>
         <button
           type="button"
-          aria-label="Switch to dark mode"
+          aria-label={t("switchDark")}
           aria-pressed={active === "dark"}
           onClick={() => select("dark")}
           className={cn(
@@ -62,7 +64,7 @@ export function ThemeToggle() {
           )}
         >
           <HugeiconsIcon icon={Moon02Icon} className="size-3.5 shrink-0" aria-hidden />
-          <span className="hidden sm:inline">Dark</span>
+          <span className="hidden sm:inline">{t("dark")}</span>
         </button>
       </div>
     </div>

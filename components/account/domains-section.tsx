@@ -10,6 +10,7 @@ import {
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { AccountSection } from "@/components/account/account-section";
 import { Button } from "@/components/ui/button";
@@ -31,19 +32,22 @@ type ProjectRow = {
   customDomainError?: string;
 };
 
-function statusLabel(status: DomainStatus): string {
+function statusLabel(
+  status: DomainStatus,
+  t: (key: "active" | "pending" | "error" | "blocked" | "deactivated") => string
+): string {
   switch (status) {
     case "active":
-      return "Active";
+      return t("active");
     case "pending":
     case "initializing":
-      return "Pending DNS";
+      return t("pending");
     case "error":
-      return "Error";
+      return t("error");
     case "blocked":
-      return "Blocked";
+      return t("blocked");
     case "deactivated":
-      return "Off";
+      return t("deactivated");
     default: {
       const _exhaustive: never = status;
       return String(_exhaustive);
@@ -72,6 +76,8 @@ async function mutateDomain(
 }
 
 function ProjectDomainCard({ project }: { project: ProjectRow }) {
+  const t = useTranslations("account.domains");
+  const tCommon = useTranslations("common");
   const [domainInput, setDomainInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,11 +146,13 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
               {subdomain}
             </a>
           ) : (
-            <p className="text-sm font-medium text-foreground">Published site</p>
+            <p className="text-sm font-medium text-foreground">
+              {t("publishedSite")}
+            </p>
           )}
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href={`/build/${project._id}`}>Open</Link>
+          <Link href={`/build/${project._id}`}>{tCommon("open")}</Link>
         </Button>
       </div>
 
@@ -155,7 +163,7 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
               htmlFor={`domain-${project._id}`}
               className="text-xs font-medium text-muted-foreground"
             >
-              Custom domain
+              {t("customDomain")}
             </label>
             <input
               id={`domain-${project._id}`}
@@ -179,10 +187,10 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
               {loading ? (
                 <>
                   <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                  Connecting…
+                  {t("connecting")}
                 </>
               ) : (
-                "Connect domain"
+                t("connect")
               )}
             </Button>
           </div>
@@ -201,7 +209,7 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
                       : "text-muted-foreground"
                 )}
               >
-                {statusLabel(status)}
+                {statusLabel(status, (key) => t(`status.${key}`))}
               </p>
             ) : (
               <span />
@@ -218,7 +226,7 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
                 {loading ? (
                   <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
                 ) : (
-                  "Check status"
+                  t("checkStatus")
                 )}
               </Button>
               <Button
@@ -229,7 +237,7 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
                   void run(() => mutateDomain("DELETE", project._id))
                 }
               >
-                Remove
+                {tCommon("remove")}
               </Button>
             </div>
           </div>
@@ -244,11 +252,10 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
           {subdomain ? (
             <div>
               <p className="text-xs font-medium text-muted-foreground">
-                DNS records
+                {t("dnsRecords")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Point your domain at the Floras subdomain. Apex needs
-                ALIAS/ANAME or CNAME flattening.
+                {t("dnsHint")}
               </p>
               <div className="mt-3 border border-border/60 bg-background/60 px-3 py-2.5">
                 <div className="flex items-center justify-between gap-2">
@@ -259,7 +266,7 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
                     type="button"
                     className="inline-flex size-7 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
                     onClick={() => void copyCname()}
-                    aria-label="Copy CNAME record"
+                    aria-label={t("copyCname")}
                   >
                     {copied ? (
                       <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
@@ -269,11 +276,11 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
                   </button>
                 </div>
                 <p className="mt-1 break-all font-mono text-[12px]">
-                  <span className="text-muted-foreground">Name </span>
+                  <span className="text-muted-foreground">{t("cnameName")} </span>
                   {customDomain}
                 </p>
                 <p className="mt-0.5 break-all font-mono text-[12px]">
-                  <span className="text-muted-foreground">Value </span>
+                  <span className="text-muted-foreground">{t("cnameValue")} </span>
                   {subdomain}
                 </p>
               </div>
@@ -286,6 +293,8 @@ function ProjectDomainCard({ project }: { project: ProjectRow }) {
 }
 
 export function DomainsSection() {
+  const t = useTranslations("account.domains");
+  const tCommon = useTranslations("common");
   const projects = useQuery(api.projects.list, {}) as
     | ProjectRow[]
     | undefined;
@@ -310,32 +319,29 @@ export function DomainsSection() {
 
   let body: ReactNode;
   if (!billingReady || projects === undefined) {
-    body = <p className="text-sm text-muted-foreground">Loading…</p>;
+    body = <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>;
   } else if (!canPublish) {
     body = (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">
           {!hasSubscription
-            ? "Custom domains require Pro."
+            ? t("requirePro")
             : hasByokPlan
-              ? "Custom domains require Pro. BYOK includes export only."
-              : "Custom domains require Pro."}
+              ? t("requireProByok")
+              : t("requirePro")}
         </p>
         <Button
           variant="outline"
           className="w-fit rounded-none"
           onClick={openUpgrade}
         >
-          Upgrade to Pro
+          {t("upgradePro")}
         </Button>
       </div>
     );
   } else if (published.length === 0) {
     body = (
-      <p className="text-sm text-muted-foreground">
-        No published sites yet. Publish a site from the workspace, then connect
-        a domain here.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("nonePublished")}</p>
     );
   } else {
     body = (
@@ -350,8 +356,8 @@ export function DomainsSection() {
   return (
     <AccountSection
       id="domains"
-      title="Domains"
-      description="Connect custom hostnames to sites published on Cloudflare Pages."
+      title={t("title")}
+      description={t("description")}
     >
       {body}
       <BillingGateModals

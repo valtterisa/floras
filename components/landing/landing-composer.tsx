@@ -57,7 +57,7 @@ export function LandingComposer({
       return true;
     } catch (e) {
       if (!gates.handleDenyCode(errorCode(e))) {
-        toast.error(userFacingError(e, "Could not start generation"));
+        toast.error(userFacingError(e, t("couldNotStart")));
       }
       setPending(false);
       return false;
@@ -74,7 +74,7 @@ export function LandingComposer({
         suggestions={suggestions}
         defaultModelId={modelId}
         defaultValue={seedPrompt}
-        placeholder="Describe the site you want to build…"
+        placeholder={t("placeholderLanding")}
         onSubmit={async (text, selectedModel) => {
           setModelId(selectedModel);
           if (!isAuthenticated) {

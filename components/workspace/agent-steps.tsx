@@ -13,6 +13,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -39,13 +40,6 @@ const ICONS: Record<string, IconSvgElement> = {
   sandbox: Package01Icon,
 };
 
-function formatThoughtDuration(ms: number): string {
-  const seconds = Math.max(1, Math.round(ms / 1000));
-  return seconds === 1
-    ? "Thought for 1 second"
-    : `Thought for ${seconds} seconds`;
-}
-
 export function AgentSteps({
   steps = [],
   reasoning,
@@ -57,6 +51,7 @@ export function AgentSteps({
   thoughtDurationMs?: number;
   active?: boolean;
 }) {
+  const t = useTranslations("workspace");
   const trimmedReasoning = reasoning?.trim() ?? "";
   const hasReasoning = trimmedReasoning.length > 0;
   const hasSteps = steps.length > 0;
@@ -83,15 +78,31 @@ export function AgentSteps({
   const last = steps[steps.length - 1];
   const lastIndex = steps.length - 1;
 
+  const thoughtLabel =
+    typeof thoughtDurationMs === "number"
+      ? (() => {
+          const seconds = Math.max(1, Math.round(thoughtDurationMs / 1000));
+          return seconds === 1
+            ? t("thoughtForOne")
+            : t("thoughtForMany", { seconds });
+        })()
+      : null;
+
+  const stepsLabel = hasSteps
+    ? steps.length === 1
+      ? t("stepsOne")
+      : t("stepsMany", { count: steps.length })
+    : null;
+
   const headerText = active
     ? hasSteps
-      ? (last?.label ?? "Thinking")
-      : "Thinking"
-    : typeof thoughtDurationMs === "number"
-      ? formatThoughtDuration(thoughtDurationMs)
-      : hasSteps
-        ? `${steps.length} step${steps.length === 1 ? "" : "s"}`
-        : "Thinking";
+      ? (last?.label ?? t("thinking"))
+      : t("thinking")
+    : thoughtLabel
+      ? thoughtLabel
+      : stepsLabel
+        ? stepsLabel
+        : t("thinking");
 
   return (
     <ChainOfThought

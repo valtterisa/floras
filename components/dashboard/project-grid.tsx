@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { EmptyState } from "@/components/site/empty-state";
 import { Section } from "@/components/site/section";
 import { ProjectCard } from "@/components/dashboard/project-card";
@@ -8,6 +11,8 @@ export function ProjectGrid({
 }: {
   projects: DashboardProject[] | undefined;
 }) {
+  const t = useTranslations("dashboard");
+
   return (
     <Section
       flush
@@ -16,19 +21,19 @@ export function ProjectGrid({
     >
       <div className="border-b border-border px-6 py-4 md:px-8">
         <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          Your sites
+          {t("yourSites")}
         </h2>
       </div>
 
       {projects === undefined ? (
         <div className="border-b border-border px-6 py-10 md:px-8">
-          <EmptyState title="Loading…" />
+          <EmptyState title={t("loading")} />
         </div>
       ) : projects.length === 0 ? (
         <div className="border-b border-border px-6 py-10 md:px-8">
           <EmptyState
-            title="No sites yet"
-            description="Your first generation will show up here."
+            title={t("noSitesTitle")}
+            description={t("noSitesDescription")}
           />
         </div>
       ) : (

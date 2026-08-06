@@ -1,14 +1,30 @@
 import type { Metadata } from "next";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { hasLocale } from "next-intl";
 import { LegalPage } from "@/components/site/legal-page";
+import { routing, type Locale } from "@/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Terms of Service",
-  description: "Terms that govern your use of Floras.",
-};
+type Props = { params: Promise<{ locale: string }> };
 
-export default function TermsOfServicePage() {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale: loc } = await params;
+  if (!hasLocale(routing.locales, loc)) return {};
+  const locale = loc as Locale;
+  const t = await getTranslations({ locale, namespace: "legal" });
+  return {
+    title: t("termsTitle"),
+    description: t("termsDescription"),
+  };
+}
+
+export default async function TermsOfServicePage({ params }: Props) {
+  const { locale: loc } = await params;
+  if (!hasLocale(routing.locales, loc)) return null;
+  setRequestLocale(loc);
+  const t = await getTranslations("legal");
+
   return (
-    <LegalPage title="Terms of Service" updated="August 3, 2026">
+    <LegalPage title={t("termsTitle")} updated="August 3, 2026">
       <p>
         These Terms of Service (“Terms”) govern access to Floras, operated by
         TMI Valtteri Savonen (“Floras”, “we”, “us”). By creating an account or

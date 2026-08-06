@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { MarketingLayout } from "@/components/site/marketing-layout";
 import { Reveal } from "@/components/site/reveal";
 import { FlorasLogoMark } from "@/components/brand/floras-logo";
 import { Floral } from "@/components/brand/floral";
 import { SectionGutter } from "@/components/landing/section-gutter";
 
-export const metadata: Metadata = {
-  title: "Page not found",
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("notFound");
+  return {
+    title: t("title"),
+    robots: { index: false, follow: true },
+  };
+}
 
-export default function NotFoundPage() {
+export default async function NotFoundPage() {
+  const t = await getTranslations("notFound");
+
   return (
     <MarketingLayout>
       <section className="relative flex flex-1 flex-col overflow-hidden border-b border-border">
@@ -33,12 +39,12 @@ export default function NotFoundPage() {
 
           <Reveal delay={0.05}>
             <p className="text-center font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Error 404
+              {t("eyebrow")}
             </p>
             <h1 className="mx-auto mt-4 max-w-[14ch] text-center text-4xl font-semibold tracking-tight text-foreground md:text-5xl md:leading-[1.1]">
-              This page never{" "}
+              {t("headingBefore")}{" "}
               <span className="relative inline-block whitespace-nowrap px-0.5">
-                bloomed.
+                {t("headingAccent")}
                 <svg
                   aria-hidden
                   viewBox="0 0 200 12"
@@ -56,8 +62,7 @@ export default function NotFoundPage() {
               </span>
             </h1>
             <p className="mx-auto mt-5 max-w-[42ch] text-center text-base leading-relaxed text-muted-foreground">
-              The route is gone — or it never existed. Head home and describe the
-              site you meant to build.
+              {t("body")}
             </p>
           </Reveal>
 
@@ -67,7 +72,13 @@ export default function NotFoundPage() {
                 href="/"
                 className="inline-flex h-11 items-center justify-center bg-brand px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.98]"
               >
-                Back home
+                {t("backHome")}
+              </Link>
+              <Link
+                href="/sign-up"
+                className="inline-flex h-11 items-center justify-center border border-border bg-card px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-background active:scale-[0.98]"
+              >
+                {t("startBuilding")}
               </Link>
             </div>
           </Reveal>

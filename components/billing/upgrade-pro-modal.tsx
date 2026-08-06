@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useConvexAuth } from "convex/react";
 import { useCustomer } from "autumn-js/react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -16,7 +17,6 @@ import {
   PRO_MONTHLY_PLAN_ID,
   PRO_YEARLY_PLAN_ID,
 } from "@/lib/billing/constants";
-import { BYOK_FEATURES, PRO_FEATURES } from "@/lib/billing/plan-copy";
 import { checkoutSuccessUrl, redirectToCheckout } from "@/lib/billing/checkout";
 
 export type UpgradeProModalProps = {
@@ -32,6 +32,8 @@ export function UpgradeProModal({
   onPurchased,
   defaultTier = "byok",
 }: UpgradeProModalProps) {
+  const t = useTranslations("billing.upgrade");
+  const tPlans = useTranslations("plans");
   const { isAuthenticated } = useConvexAuth();
   const { attach, refetch } = useCustomer({
     errorOnNotFound: false,
@@ -54,12 +56,14 @@ export function UpgradeProModal({
   const priceLabel =
     tier === "byok" ? "$5" : interval === "month" ? "$20" : "$192";
   const cadenceLabel = tier === "byok" || interval === "month" ? "/mo" : "/yr";
-  const features = tier === "byok" ? BYOK_FEATURES : PRO_FEATURES;
-  const ctaLabel = tier === "byok" ? "Get BYOK" : "Get Pro";
+  const byokFeatures = tPlans.raw("byok") as string[];
+  const proFeatures = tPlans.raw("pro") as string[];
+  const features = tier === "byok" ? byokFeatures : proFeatures;
+  const ctaLabel = tier === "byok" ? t("getByok") : t("getPro");
 
   const purchase = async () => {
     if (!isAuthenticated) {
-      toast.error("Sign in to continue.");
+      toast.error(t("signIn"));
       return;
     }
     setPending(true);
@@ -75,10 +79,10 @@ export function UpgradeProModal({
       await refetch();
       onPurchased?.();
       onOpenChange(false);
-      toast.success(tier === "byok" ? "BYOK is active." : "Pro is active.");
+      toast.success(tier === "byok" ? t("byokActive") : t("proActive"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not open checkout."
+        error instanceof Error ? error.message : t("checkoutFailed")
       );
     } finally {
       setPending(false);
@@ -90,20 +94,19 @@ export function UpgradeProModal({
       <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
         <div className="border-b border-border px-6 py-5 pr-14">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            Required to continue
+            {t("eyebrow")}
           </p>
           <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">
-            Choose a plan
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
-            BYOK covers sandboxes with your Anthropic key. Pro includes Floras
-            AI credits and hosting.
+            {t("description")}
           </DialogDescription>
         </div>
 
         <div
           role="group"
-          aria-label="Plan"
+          aria-label={t("planAria")}
           className="grid grid-cols-2 border-b border-border"
         >
           <button
@@ -151,7 +154,7 @@ export function UpgradeProModal({
         {tier === "pro" ? (
           <div
             role="group"
-            aria-label="Billing period"
+            aria-label={t("periodAria")}
             className="grid grid-cols-2 border-b border-border"
           >
             <button
@@ -165,7 +168,7 @@ export function UpgradeProModal({
                   : "text-muted-foreground hover:bg-background"
               )}
             >
-              Monthly
+              {t("monthly")}
             </button>
             <button
               type="button"
@@ -178,7 +181,7 @@ export function UpgradeProModal({
                   : "text-muted-foreground hover:bg-background"
               )}
             >
-              Yearly −20%
+              {t("yearlyDiscount")}
             </button>
           </div>
         ) : null}
@@ -205,7 +208,7 @@ export function UpgradeProModal({
             )}
           >
             {pending
-              ? "Opening checkout…"
+              ? t("openingCheckout")
               : `${ctaLabel} · ${priceLabel}${cadenceLabel}`}
           </button>
         </div>
