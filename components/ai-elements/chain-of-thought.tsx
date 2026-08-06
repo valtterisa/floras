@@ -88,7 +88,7 @@ export const ChainOfThoughtStep = memo(
   }: ChainOfThoughtStepProps) => (
     <div
       className={cn(
-        "flex gap-2 text-sm last:[&>div>div:last-child]:hidden",
+        "flex gap-2 text-sm last:[&_[data-slot=chain-of-thought-line]]:hidden",
         stepStatusStyles[status],
         "fade-in-0 slide-in-from-top-2 animate-in",
         className
@@ -98,7 +98,10 @@ export const ChainOfThoughtStep = memo(
       <div className="relative mt-0.5">
         <HugeiconsIcon icon={Icon}
           className={cn("size-4", status === "active" && "animate-pulse")} />
-        <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-border" />
+        <div
+          data-slot="chain-of-thought-line"
+          className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-border"
+        />
       </div>
       <div className="flex-1 space-y-2 overflow-hidden">
         <div>{label}</div>
