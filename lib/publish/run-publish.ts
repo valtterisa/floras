@@ -145,14 +145,6 @@ export async function runPublish(projectId: string, token: string) {
       retryable: isRetryableCloudflareError,
     });
 
-    const publishInfo = await withRetry(() => getProjectPublishInfo(name), {
-      attempts: 4,
-      initialDelayMs: 500,
-      maxDelayMs: 4000,
-      label: "getProjectPublishInfo",
-      retryable: isRetryableCloudflareError,
-    });
-
     const existingSubdomain =
       typeof project.cfSubdomain === "string" ? project.cfSubdomain : "";
     florasHostIsNew = !isFlorasHostname(existingSubdomain);
@@ -161,24 +153,34 @@ export async function runPublish(projectId: string, token: string) {
       : existingSubdomain;
     florasHost = host;
 
-    await withRetry(() => addDomain(name, host), {
-      attempts: 3,
-      initialDelayMs: 800,
-      maxDelayMs: 6000,
-      label: "addFlorasSubdomain",
-      retryable: isRetryableCloudflareError,
-    });
+    if (florasHostIsNew) {
+      const publishInfo = await withRetry(() => getProjectPublishInfo(name), {
+        attempts: 4,
+        initialDelayMs: 500,
+        maxDelayMs: 4000,
+        label: "getProjectPublishInfo",
+        retryable: isRetryableCloudflareError,
+      });
 
-    await withRetry(
-      () => upsertFlorasCname(host, publishInfo.subdomain),
-      {
+      await withRetry(() => addDomain(name, host), {
         attempts: 3,
         initialDelayMs: 800,
         maxDelayMs: 6000,
-        label: "upsertFlorasCname",
+        label: "addFlorasSubdomain",
         retryable: isRetryableCloudflareError,
-      }
-    );
+      });
+
+      await withRetry(
+        () => upsertFlorasCname(host, publishInfo.subdomain),
+        {
+          attempts: 3,
+          initialDelayMs: 800,
+          maxDelayMs: 6000,
+          label: "upsertFlorasCname",
+          retryable: isRetryableCloudflareError,
+        }
+      );
+    }
 
     await withRetry(
       () =>

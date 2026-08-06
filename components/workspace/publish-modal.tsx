@@ -101,7 +101,7 @@ export function PublishModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
+      <DialogContent className="max-h-[min(90dvh,calc(100dvh-2rem))] w-[calc(100%-2rem)] max-w-md gap-0 overflow-y-auto overflow-x-hidden overscroll-contain rounded-none border-border p-0">
         <div className="space-y-2 px-6 pb-5 pt-6 pr-14">
           <DialogTitle className="text-xl font-semibold tracking-tight">
             {title}
@@ -112,12 +112,12 @@ export function PublishModal({
         </div>
 
         {canPublish ? (
-          <div className="mx-6 mb-5 border border-border bg-background p-4">
+          <div className="mx-6 mb-5 min-w-0 border border-border bg-background p-4">
             <p className="text-xs text-muted-foreground">
               {liveUrl ? t("liveUrl") : t("yourUrl")}
             </p>
             {liveUrl ? (
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex min-w-0 items-center gap-2">
                 <a
                   href={liveUrl}
                   target="_blank"
@@ -154,7 +154,7 @@ export function PublishModal({
                 </div>
               </div>
             ) : (
-              <p className="mt-2 font-mono text-sm text-foreground">
+              <p className="mt-2 break-all font-mono text-sm text-foreground">
                 *.{FLORAS_SITES_DOMAIN}
               </p>
             )}
@@ -164,15 +164,15 @@ export function PublishModal({
               </p>
             ) : null}
             {pendingCustom ? (
-              <p className="mt-3 text-xs text-muted-foreground">
+              <p className="mt-3 min-w-0 text-xs text-muted-foreground">
                 {t("pendingCustom")}{" "}
-                <span className="font-mono text-foreground">
+                <span className="break-all font-mono text-foreground">
                   {pendingCustom}
                 </span>
               </p>
             ) : null}
             {customActive && florasUrl ? (
-              <p className="mt-3 truncate font-mono text-[11px] text-muted-foreground">
+              <p className="mt-3 min-w-0 truncate font-mono text-[11px] text-muted-foreground">
                 {t("alsoAt", { url: stripProtocol(florasUrl) })}
               </p>
             ) : null}
@@ -182,7 +182,7 @@ export function PublishModal({
         <div className="space-y-3 border-t border-border px-6 py-5">
           {canPublish && isPublished ? (
             <>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-2 sm:grid-cols-2">
                 {liveUrl ? (
                   <a
                     href={liveUrl}
@@ -190,12 +190,12 @@ export function PublishModal({
                     rel="noreferrer"
                     className={cn(
                       buttonVariants({ variant: "brand" }),
-                      "h-11 w-full"
+                      "h-11 w-full min-w-0"
                     )}
                   >
                     <HugeiconsIcon
                       icon={LinkSquare02Icon}
-                      className="size-3.5"
+                      className="size-3.5 shrink-0"
                     />
                     {t("openSite")}
                   </a>
@@ -203,7 +203,7 @@ export function PublishModal({
                 <Button
                   type="button"
                   variant={liveUrl ? "outline" : "brand"}
-                  className={cn("h-11 w-full", !liveUrl && "sm:col-span-2")}
+                  className={cn("h-11 w-full min-w-0", !liveUrl && "sm:col-span-2")}
                   onClick={onConfirm}
                   disabled={busy}
                 >

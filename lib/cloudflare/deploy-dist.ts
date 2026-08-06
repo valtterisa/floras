@@ -38,6 +38,7 @@ export async function deployDistArchive(
         "deploy",
         root,
         `--project-name=${projectName}`,
+        "--branch=main",
         "--commit-dirty=true",
       ],
       {

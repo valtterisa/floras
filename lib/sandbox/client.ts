@@ -434,7 +434,7 @@ function isEdgeTimeout(error: unknown): boolean {
 async function ensureSiteDeps(sandboxName: string): Promise<void> {
   const hasBinary = await runCommand(
     sandboxName,
-    "test -x node_modules/.bin/astro || test -x node_modules/.bin/vite",
+    "test -x node_modules/.bin/astro",
     { timeoutSeconds: 30, retries: 3 }
   );
   if (hasBinary.success && hasBinary.exitCode === 0) return;
@@ -603,6 +603,7 @@ export async function probePublicPreview(url: string): Promise<boolean> {
 }
 
 export async function buildSite(sandboxName: string): Promise<void> {
+  await ensureSiteDeps(sandboxName);
   const res = await runCommand(
     sandboxName,
     "if command -v pnpm >/dev/null 2>&1; then pnpm run build; elif command -v bun >/dev/null 2>&1; then bun run build; else npm run build; fi",
