@@ -85,26 +85,6 @@ export function PreviewConsole({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [lines, open]);
 
-  useEffect(() => {
-    const onMove = (event: PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag) return;
-      const next = drag.startH + (drag.startY - event.clientY);
-      setHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, next)));
-    };
-    const onUp = () => {
-      dragRef.current = null;
-      document.body.style.removeProperty("cursor");
-      document.body.style.removeProperty("user-select");
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, []);
-
   if (!sandboxName) return null;
 
   const showFix = issue && issue.fingerprint !== dismissed && !busy;
@@ -138,24 +118,28 @@ export function PreviewConsole({
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-8 w-full cursor-pointer items-center gap-2 px-3 text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
-        aria-expanded={open}
+      <div
+        className={cn(
+          "flex h-8 w-full items-center border-b border-transparent",
+          open && "border-border/40"
+        )}
       >
-        <HugeiconsIcon
-          icon={open ? ArrowDown01Icon : ArrowUp01Icon}
-          className="size-3.5"
-        />
-        <span>{t("console.title")}</span>
-        {showFix ? (
-          <span className="ml-1 size-1.5 bg-destructive" />
-        ) : null}
-      </button>
-
-      {open ? (
-        <>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex h-full cursor-pointer items-center gap-2 px-3 text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+          aria-expanded={open}
+        >
+          <HugeiconsIcon
+            icon={open ? ArrowDown01Icon : ArrowUp01Icon}
+            className="size-3.5"
+          />
+          <span>{t("console.title")}</span>
+          {showFix ? (
+            <span className="ml-1 size-1.5 bg-destructive" />
+          ) : null}
+        </button>
+        {open ? (
           <div
             role="separator"
             aria-orientation="horizontal"
@@ -163,54 +147,84 @@ export function PreviewConsole({
             onPointerDown={(event) => {
               event.preventDefault();
               dragRef.current = { startY: event.clientY, startH: height };
+              event.currentTarget.setPointerCapture(event.pointerId);
               document.body.style.cursor = "row-resize";
               document.body.style.userSelect = "none";
             }}
-            className="flex h-2 cursor-row-resize items-center justify-center border-t border-border/40 bg-[#0c0c0c]"
+            onPointerMove={(event) => {
+              const drag = dragRef.current;
+              if (!drag) return;
+              const next = drag.startH + (drag.startY - event.clientY);
+              setHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, next)));
+            }}
+            onPointerUp={(event) => {
+              dragRef.current = null;
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              document.body.style.removeProperty("cursor");
+              document.body.style.removeProperty("user-select");
+            }}
+            onPointerCancel={(event) => {
+              dragRef.current = null;
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              document.body.style.removeProperty("cursor");
+              document.body.style.removeProperty("user-select");
+            }}
+            className="flex h-full min-w-0 flex-1 cursor-row-resize items-center justify-center"
           >
-            <span className="h-0.5 w-8 rounded-full bg-white/20" />
+            <span className="h-0.5 w-8 rounded-full bg-muted-foreground/40" />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="h-full min-w-0 flex-1 cursor-pointer"
+            aria-label={t("console.title")}
+          />
+        )}
+      </div>
+
+      {open ? (
+        <div className="flex flex-col bg-[#0c0c0c]" style={{ height }}>
+          <div className="flex items-center justify-end border-b border-white/5 px-3 py-1">
+            <button
+              type="button"
+              onClick={() => setLines([])}
+              className="inline-flex cursor-pointer items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35 hover:text-white/70"
+            >
+              <HugeiconsIcon icon={Delete02Icon} className="size-3" />
+              {t("console.clear")}
+            </button>
           </div>
           <div
-            className="flex flex-col bg-[#0c0c0c]"
-            style={{ height }}
+            className="min-h-0 flex-1 overflow-auto px-3 py-2 font-mono text-[11px] leading-relaxed text-white/75"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              stickRef.current =
+                el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+            }}
           >
-            <div className="flex items-center justify-end border-b border-white/5 px-3 py-1">
-              <button
-                type="button"
-                onClick={() => setLines([])}
-                className="inline-flex cursor-pointer items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35 hover:text-white/70"
-              >
-                <HugeiconsIcon icon={Delete02Icon} className="size-3" />
-                {t("console.clear")}
-              </button>
-            </div>
-            <div
-              className="min-h-0 flex-1 overflow-auto px-3 py-2 font-mono text-[11px] leading-relaxed text-white/75"
-              onScroll={(e) => {
-                const el = e.currentTarget;
-                stickRef.current =
-                  el.scrollHeight - el.scrollTop - el.clientHeight < 48;
-              }}
-            >
-              {lines.length === 0 ? (
-                <p className="text-white/30">{t("console.empty")}</p>
-              ) : (
-                lines.map((line, i) => (
-                  <div
-                    key={`${i}-${line.slice(0, 20)}`}
-                    className={cn(
-                      "whitespace-pre-wrap break-all",
-                      ERROR_HINT.test(line) && "text-red-300"
-                    )}
-                  >
-                    {line}
-                  </div>
-                ))
-              )}
-              <div ref={bottomRef} />
-            </div>
+            {lines.length === 0 ? (
+              <p className="text-white/30">{t("console.empty")}</p>
+            ) : (
+              lines.map((line, i) => (
+                <div
+                  key={`${i}-${line.slice(0, 20)}`}
+                  className={cn(
+                    "whitespace-pre-wrap break-all",
+                    ERROR_HINT.test(line) && "text-red-300"
+                  )}
+                >
+                  {line}
+                </div>
+              ))
+            )}
+            <div ref={bottomRef} />
           </div>
-        </>
+        </div>
       ) : null}
     </div>
   );

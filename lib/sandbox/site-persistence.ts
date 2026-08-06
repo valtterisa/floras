@@ -5,6 +5,9 @@ import * as sandbox from "@/lib/sandbox/client";
 import { SITE_ROOT, sandboxLog } from "@/lib/sandbox/config";
 
 const SNAPSHOT_TAR = "/tmp/.floras-site-snapshot.tar.gz";
+const UPLOAD_ATTEMPTS = 3;
+
+export type SnapshotResult = "saved" | "skipped";
 
 function assertGzip(buf: Uint8Array, label: string): void {
   if (buf.byteLength < 24) {
@@ -15,6 +18,10 @@ function assertGzip(buf: Uint8Array, label: string): void {
       `${label}: not gzip (got ${buf[0]?.toString(16)} ${buf[1]?.toString(16)}, ${buf.byteLength} bytes)`
     );
   }
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function restoreSiteFromR2(
@@ -70,14 +77,15 @@ export async function snapshotSiteToR2(
   sandboxName: string,
   projectId: string,
   token: string
-): Promise<void> {
+): Promise<SnapshotResult> {
   const present = await sandbox.runCommand(
     sandboxName,
     `test -f ${shellQuote(`${SITE_ROOT}/package.json`)}`,
     { cwd: "/", timeoutSeconds: 30 }
   );
   if (!present.success || present.exitCode !== 0) {
-    throw new Error("Site is not ready to snapshot");
+    sandboxLog(sandboxName, "r2", "snapshot skipped (no site)");
+    return "skipped";
   }
 
   await sandbox.runCommand(sandboxName, `rm -f ${shellQuote(SNAPSHOT_TAR)}`, {
@@ -108,32 +116,41 @@ export async function snapshotSiteToR2(
     const bytes = new Uint8Array(await blob.arrayBuffer());
     assertGzip(bytes, "packed snapshot");
 
-    const { key, url } = await fetchMutation(
-      api.siteSnapshots.prepareSiteSnapshotUpload,
-      { projectId: asProjectId(projectId) },
-      { token }
-    );
-
-    const upload = await fetch(url, {
-      method: "PUT",
-      body: bytes,
-    });
-    if (!upload.ok) {
-      const detail = (await upload.text().catch(() => "")).slice(0, 500);
-      throw new Error(
-        `R2 upload failed (${upload.status})${detail ? `: ${detail}` : ""}`
+    let lastUploadError = "R2 upload failed";
+    for (let attempt = 1; attempt <= UPLOAD_ATTEMPTS; attempt++) {
+      const { key, url } = await fetchMutation(
+        api.siteSnapshots.prepareSiteSnapshotUpload,
+        { projectId: asProjectId(projectId) },
+        { token }
       );
+      const upload = await fetch(url, {
+        method: "PUT",
+        body: bytes,
+      });
+      if (upload.ok) {
+        await fetchMutation(
+          api.siteSnapshots.finalizeSiteSnapshot,
+          { projectId: asProjectId(projectId), key },
+          { token }
+        );
+        sandboxLog(sandboxName, "r2", "snapshot uploaded", {
+          key,
+          bytes: bytes.byteLength,
+          attempt,
+        });
+        return "saved";
+      }
+      const detail = (await upload.text().catch(() => "")).slice(0, 500);
+      lastUploadError = `R2 upload failed (${upload.status})${detail ? `: ${detail}` : ""}`;
+      sandboxLog(sandboxName, "r2", "upload attempt failed", {
+        attempt,
+        status: upload.status,
+      });
+      if (attempt < UPLOAD_ATTEMPTS) {
+        await sleep(250 * attempt);
+      }
     }
-
-    await fetchMutation(
-      api.siteSnapshots.finalizeSiteSnapshot,
-      { projectId: asProjectId(projectId), key },
-      { token }
-    );
-    sandboxLog(sandboxName, "r2", "snapshot uploaded", {
-      key,
-      bytes: bytes.byteLength,
-    });
+    throw new Error(lastUploadError);
   } finally {
     await sandbox
       .runCommand(sandboxName, `rm -f ${shellQuote(SNAPSHOT_TAR)}`, {

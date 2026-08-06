@@ -74,16 +74,18 @@ export async function POST(req: Request) {
 
     after(() =>
       (async () => {
+        const { snapshotSiteToR2 } = await import(
+          "@/lib/sandbox/site-persistence"
+        );
         try {
-          const { snapshotSiteToR2 } = await import(
-            "@/lib/sandbox/site-persistence"
-          );
           await snapshotSiteToR2(sandboxName, projectId, token);
         } catch (error) {
-          console.error("[preview:stop] snapshot failed", {
+          console.error("[preview:stop] snapshot failed; keeping sandbox", {
             projectId,
+            sandboxName,
             error: error instanceof Error ? error.message : String(error),
           });
+          return;
         }
         await deleteSandboxResources(sandboxName);
       })()

@@ -142,23 +142,27 @@ export const WebPreviewNavigationButton = ({
 
 export type WebPreviewUrlProps = ComponentProps<typeof Input>;
 
+function previewPathDisplay(url: string): string {
+  if (!url) return "/";
+  try {
+    const parsed = new URL(url);
+    return `${parsed.pathname || "/"}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url.startsWith("/") ? url : "/";
+  }
+}
+
 export const WebPreviewUrl = ({
   value,
   ...props
 }: WebPreviewUrlProps) => {
   const { url } = useWebPreview();
-  let display = "/";
-  try {
-    display = new URL(url).pathname || "/";
-  } catch {
-    display = url || "/";
-  }
 
   return (
     <Input
       className="h-8 flex-1 text-sm"
       placeholder="/"
-      value={value ?? display}
+      value={value ?? previewPathDisplay(url)}
       {...props}
     />
   );

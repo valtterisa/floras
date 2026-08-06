@@ -69,6 +69,59 @@ function isDeadStatus(status: string | undefined): boolean {
   );
 }
 
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function isWorkloadUnavailable(error: unknown): boolean {
+  const message = errorText(error);
+  return (
+    /WORKLOAD_UNAVAILABLE/i.test(message) ||
+    /currently not available/i.test(message) ||
+    /not yet ready to serve/i.test(message) ||
+    (/status["']?\s*:\s*404/.test(message) &&
+      /sandbox|workload|resource/i.test(message))
+  );
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Blaxel: 500ms → 30s backoff, give up after ~60s. */
+async function withWorkloadRetry<T>(
+  sandboxName: string,
+  label: string,
+  fn: () => Promise<T>,
+  opts?: { budgetMs?: number; initialMs?: number; maxMs?: number }
+): Promise<T> {
+  const budgetMs = opts?.budgetMs ?? 60_000;
+  const maxMs = opts?.maxMs ?? 30_000;
+  let delay = opts?.initialMs ?? 500;
+  const started = Date.now();
+  let lastError: unknown;
+
+  for (;;) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      const elapsed = Date.now() - started;
+      if (!isWorkloadUnavailable(error) || elapsed + delay > budgetMs) {
+        throw error;
+      }
+      sandboxLog(sandboxName, "retry", label, {
+        delayMs: delay,
+        elapsedMs: elapsed,
+      });
+      await sleep(delay);
+      delay = Math.min(maxMs, delay * 2);
+    }
+  }
+}
+
+const POST_CREATE_SETTLE_MS = 4_000;
+
 async function loadSandbox(name: string): Promise<SandboxInstance> {
   try {
     return await SandboxInstance.get(name);
@@ -140,7 +193,11 @@ export async function createOrResumeSandbox(opts: {
     };
   }
 
-  const sandbox = await SandboxInstance.createIfNotExists(createArgs);
+  const sandbox = await withWorkloadRetry(
+    sandboxName,
+    "createIfNotExists",
+    () => SandboxInstance.createIfNotExists(createArgs)
+  );
   const status = String(sandbox.status ?? "");
   if (status && !isUsableStatus(status) && isDeadStatus(status)) {
     throw new AppError("preview", "Sandbox failed to become ready.", {
@@ -148,6 +205,7 @@ export async function createOrResumeSandbox(opts: {
     });
   }
 
+  await sleep(POST_CREATE_SETTLE_MS);
   await ensureSiteWorkspace(sandboxName, opts.persistence);
   sandboxLog(sandboxName, "create", "ready");
   return { sandboxName };
@@ -328,30 +386,32 @@ export async function runCommand(
   const cwd = opts.cwd === "." ? "/" : opts.cwd ?? SITE_ROOT;
   const timeoutSeconds = opts.timeoutSeconds ?? 120;
   const retries = opts.retries ?? 2;
-  const sandbox = await loadSandbox(sandboxName);
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await sandbox.process.exec({
-        name: `cmd-${Date.now().toString(36)}-${attempt}`,
-        command,
-        workingDir: cwd,
-        waitForCompletion: true,
-        timeout: timeoutSeconds,
-        ...(opts.env ? { env: opts.env } : {}),
+      return await withWorkloadRetry(sandboxName, "exec", async () => {
+        const sandbox = await loadSandbox(sandboxName);
+        const res = await sandbox.process.exec({
+          name: `cmd-${Date.now().toString(36)}-${attempt}`,
+          command,
+          workingDir: cwd,
+          waitForCompletion: true,
+          timeout: timeoutSeconds,
+          ...(opts.env ? { env: opts.env } : {}),
+        });
+        const exitCode = res.exitCode ?? 1;
+        return {
+          exitCode,
+          stdout: res.stdout ?? res.logs ?? "",
+          stderr: res.stderr ?? "",
+          success: exitCode === 0 && res.status !== "failed",
+        };
       });
-      const exitCode = res.exitCode ?? 1;
-      return {
-        exitCode,
-        stdout: res.stdout ?? res.logs ?? "",
-        stderr: res.stderr ?? "",
-        success: exitCode === 0 && res.status !== "failed",
-      };
     } catch (error) {
       lastError = error;
       if (attempt >= retries || !isEdgeTimeout(error)) break;
-      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      await sleep(2000 * (attempt + 1));
     }
   }
 
@@ -393,23 +453,25 @@ async function ensureSiteDeps(sandboxName: string): Promise<void> {
 
 async function ensureDevServer(sandboxName: string): Promise<void> {
   try {
-    await (
-      await loadSandbox(sandboxName)
-    ).process.exec({
-      name: DEV_PROCESS_NAME,
-      command:
-        "if command -v pnpm >/dev/null 2>&1; then pnpm run dev; elif command -v bun >/dev/null 2>&1; then bun run dev; else npm run dev; fi",
-      workingDir: SITE_ROOT,
-      waitForPorts: [PREVIEW_PORT],
-      restartOnFailure: true,
-      maxRestarts: 25,
-      env: {
-        HOST: "0.0.0.0",
-        PORT: String(PREVIEW_PORT),
-      },
+    await withWorkloadRetry(sandboxName, "devServer", async () => {
+      await (
+        await loadSandbox(sandboxName)
+      ).process.exec({
+        name: DEV_PROCESS_NAME,
+        command:
+          "if command -v pnpm >/dev/null 2>&1; then pnpm run dev; elif command -v bun >/dev/null 2>&1; then bun run dev; else npm run dev; fi",
+        workingDir: SITE_ROOT,
+        waitForPorts: [PREVIEW_PORT],
+        restartOnFailure: true,
+        maxRestarts: 25,
+        env: {
+          HOST: "0.0.0.0",
+          PORT: String(PREVIEW_PORT),
+        },
+      });
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorText(error);
     if (/already exists/i.test(message)) return;
     throw new AppError("preview", "Could not start the site preview server.", {
       detail: message.slice(0, 500),
@@ -418,20 +480,38 @@ async function ensureDevServer(sandboxName: string): Promise<void> {
 }
 
 async function ensurePreviewUrl(sandboxName: string): Promise<string> {
-  const preview = await (
-    await loadSandbox(sandboxName)
-  ).previews.createIfNotExists({
-    metadata: { name: PREVIEW_NAME },
-    spec: {
-      port: PREVIEW_PORT,
-      public: true,
-      responseHeaders: PREVIEW_RESPONSE_HEADERS,
-    },
+  const preview = await withWorkloadRetry(sandboxName, "previewUrl", async () => {
+    const sandbox = await loadSandbox(sandboxName);
+    const body = {
+      metadata: { name: PREVIEW_NAME },
+      spec: {
+        port: PREVIEW_PORT,
+        public: true,
+        responseHeaders: PREVIEW_RESPONSE_HEADERS,
+      },
+    };
+
+    try {
+      const existing = await sandbox.previews.get(PREVIEW_NAME);
+      if (existing.spec?.public === true && existing.spec?.url) {
+        return existing;
+      }
+      await sandbox.previews.delete(PREVIEW_NAME);
+    } catch {
+      /* create below */
+    }
+
+    return sandbox.previews.create(body);
   });
   const url = preview.spec?.url?.trim();
   if (!url || !/^https?:\/\//i.test(url)) {
     throw new AppError("preview", "Could not resolve public preview URL.", {
       detail: "Blaxel preview returned no URL",
+    });
+  }
+  if (preview.spec?.public !== true) {
+    throw new AppError("preview", "Preview URL is not public.", {
+      detail: PREVIEW_NAME,
     });
   }
   return url.replace(/\/$/, "");
@@ -462,9 +542,13 @@ export async function restartPreview(
         persistence.token
       );
     } catch (error) {
-      console.error("[sandbox] pre-restart snapshot failed", {
+      const message = errorText(error);
+      if (!isWorkloadUnavailable(error) && !/404|not found/i.test(message)) {
+        throw error;
+      }
+      console.warn("[sandbox] snapshot skipped; sandbox unavailable", {
         sandboxName,
-        error: error instanceof Error ? error.message : String(error),
+        detail: message.slice(0, 300),
       });
     }
   }
@@ -511,6 +595,7 @@ export async function probePublicPreview(url: string): Promise<boolean> {
     if (!res.ok) return false;
     const body = await res.text();
     if (/upstream unavailable/i.test(body)) return false;
+    if (/AUTHENTICATION_REQUIRED/i.test(body)) return false;
     return body.length > 0;
   } catch {
     return false;
