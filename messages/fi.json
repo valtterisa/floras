@@ -15,6 +15,9 @@
   "footer": {
     "privacy": "Tietosuoja",
     "terms": "Ehdot",
+    "useCases": "Käyttötapaukset",
+    "comparisons": "Vertailut",
+    "sitemap": "Sivukartta",
     "tagline": "Kuvaile yrityksesi. Saat sivuston, jonka voit avata ja jakaa."
   },
   "hero": {
@@ -244,7 +247,40 @@
   "useCase": {
     "eyebrow": "Rakennettu yrityksellesi",
     "cta": "Rakenna tämä sivusto",
-    "proof": "Kuvaile yritys kerran. Saat live-sivuston, jota voit hiota chatissa ja julkaista kun olet valmis."
+    "proof": "Kuvaile yritys kerran. Saat live-sivuston, jota voit hiota chatissa ja julkaista kun olet valmis.",
+    "more": "Lisää",
+    "allUseCases": "Katso kaikki yritystyypit"
+  },
+  "useCaseIndex": {
+    "eyebrow": "Käyttötapaukset",
+    "title": "Tee verkkosivut Floraksella",
+    "description": "Valitse yritystyyppi. Floras muuttaa lyhyen kuvauksen live-sivustoksi, jota voit hiota chatissa ja julkaista.",
+    "seeComparisons": "Vertaa Florasta muihin rakentajiin →"
+  },
+  "comparison": {
+    "eyebrow": "Vertailu",
+    "cta": "Kokeile Florasta",
+    "allComparisons": "Kaikki vertailut",
+    "florasWins": "Missä Floras voittaa",
+    "competitorWins": "Missä {competitor} voittaa",
+    "chooseFloras": "Valitse Floras jos",
+    "chooseCompetitor": "Valitse {competitor} jos",
+    "more": "Lisää vertailuja"
+  },
+  "comparisonIndex": {
+    "eyebrow": "Vertailut",
+    "title": "Floras vs muut sivustonrakentajat",
+    "description": "Rehelliset vertailut: milloin Floras sopii paremmin, ja milloin toinen työkalu voittaa yhä.",
+    "seeUseCases": "Selaa yritysten käyttötapauksia →"
+  },
+  "htmlSitemap": {
+    "eyebrow": "Hakemisto",
+    "title": "Sivukartta",
+    "description": "Kaikki Floraksen julkiset sivut — yritysten käyttötapaukset, vertailut ja ydinsivut.",
+    "xmlSitemap": "XML-sivukartta",
+    "core": "Ydinsivut",
+    "useCases": "Yritysten käyttötapaukset",
+    "comparisons": "Vertailut"
   },
   "theme": {
     "label": "Väriteema",

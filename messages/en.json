@@ -15,6 +15,9 @@
   "footer": {
     "privacy": "Privacy",
     "terms": "Terms",
+    "useCases": "Use cases",
+    "comparisons": "Comparisons",
+    "sitemap": "Sitemap",
     "tagline": "Describe your business. Get a website you can open and share."
   },
   "hero": {
@@ -244,7 +247,40 @@
   "useCase": {
     "eyebrow": "Built for your business",
     "cta": "Build this site",
-    "proof": "Describe the business once. Get a live site you can refine in chat and publish when ready."
+    "proof": "Describe the business once. Get a live site you can refine in chat and publish when ready.",
+    "more": "More",
+    "allUseCases": "See all business types"
+  },
+  "useCaseIndex": {
+    "eyebrow": "Use cases",
+    "title": "Make a website with Floras",
+    "description": "Pick your business type. Floras turns a short description into a live site you can refine in chat and publish.",
+    "seeComparisons": "Compare Floras to other builders →"
+  },
+  "comparison": {
+    "eyebrow": "Comparison",
+    "cta": "Try Floras",
+    "allComparisons": "All comparisons",
+    "florasWins": "Where Floras wins",
+    "competitorWins": "Where {competitor} wins",
+    "chooseFloras": "Choose Floras if",
+    "chooseCompetitor": "Choose {competitor} if",
+    "more": "More comparisons"
+  },
+  "comparisonIndex": {
+    "eyebrow": "Comparisons",
+    "title": "Floras vs other website builders",
+    "description": "Honest comparisons: when Floras is the better fit, and when another tool still wins.",
+    "seeUseCases": "Browse business use cases →"
+  },
+  "htmlSitemap": {
+    "eyebrow": "Index",
+    "title": "Sitemap",
+    "description": "All public Floras pages — business use cases, comparisons, and core product pages.",
+    "xmlSitemap": "XML sitemap",
+    "core": "Core pages",
+    "useCases": "Business use cases",
+    "comparisons": "Comparisons"
   },
   "theme": {
     "label": "Color theme",

@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   authors: [{ name: siteConfig.name }],
   creator: siteConfig.name,
   publisher: siteConfig.name,
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/brand/logo-mark-256.png" }],
+  },
   openGraph: {
     type: "website",
     siteName: siteConfig.name,

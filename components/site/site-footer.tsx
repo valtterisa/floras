@@ -24,6 +24,24 @@ export function SiteFooter() {
             className="flex flex-wrap gap-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
           >
             <Link
+              href="/for"
+              className="transition-colors hover:text-foreground"
+            >
+              {t("useCases")}
+            </Link>
+            <Link
+              href="/vs"
+              className="transition-colors hover:text-foreground"
+            >
+              {t("comparisons")}
+            </Link>
+            <Link
+              href="/sitemap"
+              className="transition-colors hover:text-foreground"
+            >
+              {t("sitemap")}
+            </Link>
+            <Link
               href="/privacy"
               className="transition-colors hover:text-foreground"
             >

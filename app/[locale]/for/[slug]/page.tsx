@@ -128,11 +128,11 @@ export default async function UseCasePage({ params }: Props) {
       <section className="px-4 py-10 md:px-8">
         <div className="mx-auto max-w-3xl">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            More
+            {t("more")}
           </p>
           <ul className="mt-4 flex flex-wrap gap-2">
             {USE_CASES.filter((u) => u.id !== useCase.id)
-              .slice(0, 6)
+              .slice(0, 8)
               .map((u) => (
                 <li key={u.id}>
                   <Link
@@ -144,6 +144,12 @@ export default async function UseCasePage({ params }: Props) {
                 </li>
               ))}
           </ul>
+          <Link
+            href="/for"
+            className="mt-6 inline-block text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {t("allUseCases")}
+          </Link>
         </div>
       </section>
     </MarketingLayout>
