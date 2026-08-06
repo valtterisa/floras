@@ -21,6 +21,7 @@ import { formatCredits } from "@/lib/billing/constants";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import type { DomainStatus, PublishStatus } from "@/lib/publish/types";
+import { isFlorasHostname } from "@/lib/publish/types";
 import type { WorkspaceProject } from "@/lib/types/user";
 
 export function WorkspaceHeader({
@@ -65,7 +66,13 @@ export function WorkspaceHeader({
     if (publishStatus === "published") {
       awaitingResult.current = false;
       setPublishing(false);
-      setPublishOpen(true);
+      if (publishError) {
+        toast.error(
+          AppError.from({ error: publishError, code: "publish" }).message
+        );
+      } else {
+        setPublishOpen(true);
+      }
       return;
     }
 
@@ -86,7 +93,10 @@ export function WorkspaceHeader({
 
   const creditLabel = formatCredits(gates.balance);
   const isPublishing = publishing || publishStatus === "publishing";
-  const isPublished = publishStatus === "published";
+  const isPublished =
+    publishStatus === "published" ||
+    Boolean(publishedUrl) ||
+    (typeof cfSubdomain === "string" && isFlorasHostname(cfSubdomain));
   const busy = isPublishing || unpublishing || exporting;
   const canOpenPublish = Boolean(sandboxName);
 

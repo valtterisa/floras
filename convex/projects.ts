@@ -313,9 +313,9 @@ export const setPublishError = authedMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { project } = await requireOwnedProject(ctx, args.projectId);
-    const wasPublished = project.publishStatus === "published";
+    const stillLive = Boolean(project.publishedUrl || project.cfSubdomain);
     await ctx.db.patch(args.projectId, {
-      publishStatus: wasPublished ? "published" : "error",
+      publishStatus: stillLive ? "published" : "error",
       publishError: args.error,
       busyAt: undefined,
     });
