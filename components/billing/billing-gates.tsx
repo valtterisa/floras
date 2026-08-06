@@ -19,7 +19,10 @@ export function useBillingGates() {
       return false;
     }
     if (reason === "no_api_key") {
-      router.push("/dashboard/account#api-key");
+      router.push("/dashboard/account");
+      queueMicrotask(() => {
+        window.location.hash = "api-key";
+      });
       return false;
     }
     if (reason === "no_credits") {
@@ -36,7 +39,10 @@ export function useBillingGates() {
         return true;
       }
       if (code === "NO_API_KEY") {
-        router.push("/dashboard/account#api-key");
+        router.push("/dashboard/account");
+        queueMicrotask(() => {
+          window.location.hash = "api-key";
+        });
         return true;
       }
       if (code === "NO_CREDITS") {

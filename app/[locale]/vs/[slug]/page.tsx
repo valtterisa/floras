@@ -10,7 +10,7 @@ import {
   getComparisonBySlug,
   getComparisonSlugs,
 } from "@/lib/pseo/comparisons";
-import { routing, type Locale } from "@/i18n/routing";
+import { localizedPath, routing, type Locale } from "@/i18n/routing";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -31,10 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!comparison) return {};
 
   const siteUrl = getSiteUrl();
-  const path = `/${locale}/vs/${slug}`;
+  const path = localizedPath(locale, "vs", slug);
   const languages: Record<string, string> = {};
   for (const l of routing.locales) {
-    languages[l] = `${siteUrl}/${l}/vs/${comparison.slugs[l]}`;
+    languages[l] = `${siteUrl}${localizedPath(l, "vs", comparison.slugs[l])}`;
   }
 
   return {
@@ -64,14 +64,13 @@ export default async function ComparisonPage({ params }: Props) {
   if (!comparison) notFound();
 
   const t = await getTranslations("comparison");
-  const href = "/" as const;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: comparison.title[locale],
     description: comparison.description[locale],
-    url: `${getSiteUrl()}/${locale}/vs/${slug}`,
+    url: `${getSiteUrl()}${localizedPath(locale, "vs", slug)}`,
     about: {
       "@type": "SoftwareApplication",
       name: "Floras",
@@ -118,7 +117,7 @@ export default async function ComparisonPage({ params }: Props) {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href={href}
+                href="/"
                 className="inline-flex h-11 items-center justify-center bg-brand px-6 text-sm font-medium text-brand-foreground transition-[filter] hover:brightness-110"
               >
                 {t("cta")}
@@ -201,7 +200,10 @@ export default async function ComparisonPage({ params }: Props) {
               .map((c) => (
                 <li key={c.id}>
                   <Link
-                    href={`/vs/${c.slugs[locale]}`}
+                    href={{
+                      pathname: "/vs/[slug]",
+                      params: { slug: c.slugs[locale] },
+                    }}
                     className="inline-flex border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
                   >
                     {c.title[locale]}

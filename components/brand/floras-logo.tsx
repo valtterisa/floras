@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/navigation";
+import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 export function FlorasLogoMark({ className }: { className?: string }) {
@@ -18,7 +19,7 @@ export function FlorasLogo({
   href = "/",
 }: {
   className?: string;
-  href?: string;
+  href?: ComponentProps<typeof Link>["href"];
 }) {
   return (
     <Link

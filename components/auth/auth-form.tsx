@@ -34,12 +34,11 @@ function buildAuthHref(
     modelId?: string | null;
   }
 ) {
-  const params = new URLSearchParams();
-  if (opts.prompt) params.set("prompt", opts.prompt);
-  if (opts.nextPath) params.set("next", opts.nextPath);
-  if (opts.modelId) params.set("modelId", opts.modelId);
-  const qs = params.toString();
-  return qs ? `${path}?${qs}` : path;
+  const query: Record<string, string> = {};
+  if (opts.prompt) query.prompt = opts.prompt;
+  if (opts.nextPath) query.next = opts.nextPath;
+  if (opts.modelId) query.modelId = opts.modelId;
+  return Object.keys(query).length > 0 ? { pathname: path, query } : path;
 }
 
 function buildRedirectTo(opts: {
@@ -53,6 +52,22 @@ function buildRedirectTo(opts: {
     return opts.nextPath;
   }
   return "/dashboard";
+}
+
+function buildRedirectHref(opts: {
+  prompt?: string | null;
+  nextPath?: string | null;
+}) {
+  if (opts.prompt) {
+    return {
+      pathname: "/dashboard" as const,
+      query: { prompt: opts.prompt },
+    };
+  }
+  if (opts.nextPath?.startsWith("/") && !opts.nextPath.startsWith("//")) {
+    return opts.nextPath as "/dashboard";
+  }
+  return "/dashboard" as const;
 }
 
 function passwordAuthErrorMessage(
@@ -127,7 +142,7 @@ export function AuthForm({
   const [googleLoading, setGoogleLoading] = useState(false);
 
   async function finishAuthenticated() {
-    router.push(buildRedirectTo({ prompt: pendingPrompt, nextPath }));
+    router.push(buildRedirectHref({ prompt: pendingPrompt, nextPath }));
   }
 
   async function onPasswordSubmit(e: React.FormEvent<HTMLFormElement>) {

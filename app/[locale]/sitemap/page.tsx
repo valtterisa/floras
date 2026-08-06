@@ -12,7 +12,9 @@ import {
   getUseCaseSeoPaths,
   absoluteUrl,
 } from "@/lib/pseo/seo-paths";
-import { routing, type Locale } from "@/i18n/routing";
+import { USE_CASES } from "@/lib/pseo/use-cases";
+import { COMPARISONS } from "@/lib/pseo/comparisons";
+import { localizedPath, routing, type Locale } from "@/i18n/routing";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -25,10 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = loc as Locale;
   const t = await getTranslations({ locale, namespace: "htmlSitemap" });
   const siteUrl = getSiteUrl();
-  const path = `/${locale}/sitemap`;
+  const path = localizedPath(locale, "sitemap");
   const languages: Record<string, string> = {};
   for (const l of routing.locales) {
-    languages[l] = `${siteUrl}/${l}/sitemap`;
+    languages[l] = `${siteUrl}${localizedPath(l, "sitemap")}`;
   }
 
   return {
@@ -42,12 +44,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: path,
     },
   };
-}
-
-function toAppHref(fullPath: string, locale: Locale): `/${string}` | "/" {
-  const prefix = `/${locale}`;
-  if (fullPath === prefix) return "/";
-  return (fullPath.slice(prefix.length) || "/") as `/${string}`;
 }
 
 export default async function HtmlSitemapPage({ params }: Props) {
@@ -66,18 +62,16 @@ export default async function HtmlSitemapPage({ params }: Props) {
     "@type": "ItemList",
     name: t("title"),
     description: t("description"),
-    url: absoluteUrl(`/${locale}/sitemap`),
+    url: absoluteUrl(localizedPath(locale, "sitemap")),
     numberOfItems: core.length + useCases.length + comparisons.length,
-    itemListElement: [
-      ...core,
-      ...useCases,
-      ...comparisons,
-    ].map((entry, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: entry.title[locale],
-      url: absoluteUrl(entry.pathByLocale[locale]),
-    })),
+    itemListElement: [...core, ...useCases, ...comparisons].map(
+      (entry, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: entry.title[locale],
+        url: absoluteUrl(entry.pathByLocale[locale]),
+      })
+    ),
   };
 
   return (
@@ -118,35 +112,97 @@ export default async function HtmlSitemapPage({ params }: Props) {
       </section>
 
       <SitemapSection title={t("core")}>
-        {core.map((entry) => (
-          <SitemapLink
-            key={entry.id}
-            href={toAppHref(entry.pathByLocale[locale], locale)}
-            title={entry.title[locale]}
-            description={entry.description[locale]}
-          />
-        ))}
+        <li>
+          <Link
+            href="/"
+            className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {core.find((c) => c.id === "home")?.title[locale]}
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/for"
+            className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {core.find((c) => c.id === "for-index")?.title[locale]}
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/vs"
+            className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {core.find((c) => c.id === "vs-index")?.title[locale]}
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/privacy"
+            className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {core.find((c) => c.id === "privacy")?.title[locale]}
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/terms"
+            className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {core.find((c) => c.id === "terms")?.title[locale]}
+            </span>
+          </Link>
+        </li>
       </SitemapSection>
 
       <SitemapSection title={t("useCases")}>
-        {useCases.map((entry) => (
-          <SitemapLink
-            key={entry.id}
-            href={toAppHref(entry.pathByLocale[locale], locale)}
-            title={entry.title[locale]}
-            description={entry.description[locale]}
-          />
+        {USE_CASES.map((useCase) => (
+          <li key={useCase.id}>
+            <Link
+              href={{
+                pathname: "/for/[slug]",
+                params: { slug: useCase.slugs[locale] },
+              }}
+              className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
+            >
+              <span className="text-sm font-medium text-foreground">
+                {useCase.title[locale]}
+              </span>
+              <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-muted-foreground">
+                {useCase.description[locale]}
+              </span>
+            </Link>
+          </li>
         ))}
       </SitemapSection>
 
       <SitemapSection title={t("comparisons")}>
-        {comparisons.map((entry) => (
-          <SitemapLink
-            key={entry.id}
-            href={toAppHref(entry.pathByLocale[locale], locale)}
-            title={entry.title[locale]}
-            description={entry.description[locale]}
-          />
+        {COMPARISONS.map((comparison) => (
+          <li key={comparison.id}>
+            <Link
+              href={{
+                pathname: "/vs/[slug]",
+                params: { slug: comparison.slugs[locale] },
+              }}
+              className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
+            >
+              <span className="text-sm font-medium text-foreground">
+                {comparison.title[locale]}
+              </span>
+              <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-muted-foreground">
+                {comparison.description[locale]}
+              </span>
+            </Link>
+          </li>
         ))}
       </SitemapSection>
     </MarketingLayout>
@@ -169,29 +225,5 @@ function SitemapSection({
         <ul className="mt-5 grid gap-2 sm:grid-cols-2">{children}</ul>
       </div>
     </section>
-  );
-}
-
-function SitemapLink({
-  href,
-  title,
-  description,
-}: {
-  href: `/${string}` | "/";
-  title: string;
-  description: string;
-}) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="block border border-border px-3 py-3 transition-colors hover:border-foreground"
-      >
-        <span className="text-sm font-medium text-foreground">{title}</span>
-        <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-muted-foreground">
-          {description}
-        </span>
-      </Link>
-    </li>
   );
 }

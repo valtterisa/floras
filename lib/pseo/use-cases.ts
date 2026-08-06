@@ -153,7 +153,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "pizzeria",
-    { en: "pizzeria", fi: "pizzeria" },
+    { en: "pizzeria", fi: "pizzaravintola" },
     {
       en: "Pizzeria website with menu & contact",
       fi: "Pizzerian sivusto menulla ja yhteydenotolla",
@@ -249,7 +249,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "spa",
-    { en: "spa", fi: "spa" },
+    { en: "spa", fi: "kylpyla" },
     {
       en: "Spa & wellness website",
       fi: "Spa- ja wellness-sivusto",
@@ -1049,7 +1049,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "freelancer",
-    { en: "freelancer", fi: "freelancer" },
+    { en: "freelancer", fi: "freelanceri" },
     {
       en: "Freelancer portfolio website",
       fi: "Freelancerin portfoliosivusto",
@@ -1081,7 +1081,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "startup",
-    { en: "startup", fi: "startup" },
+    { en: "startup", fi: "kasvuyritys" },
     {
       en: "Startup landing page",
       fi: "Startupin landing page",
@@ -1113,7 +1113,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "saas",
-    { en: "saas", fi: "saas" },
+    { en: "saas", fi: "ohjelmistotuote" },
     {
       en: "SaaS product website",
       fi: "SaaS-tuotteen verkkosivut",
@@ -1209,7 +1209,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "personal-trainer",
-    { en: "personal-trainer", fi: "personal-trainer" },
+    { en: "personal-trainer", fi: "valmentaja" },
     {
       en: "Personal trainer website",
       fi: "Personal trainerin sivusto",
@@ -1593,7 +1593,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "catering",
-    { en: "catering", fi: "catering" },
+    { en: "catering", fi: "pitopalvelu" },
     {
       en: "Catering company website",
       fi: "Catering-yrityksen sivusto",
@@ -1849,7 +1849,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "podcast",
-    { en: "podcast", fi: "podcast" },
+    { en: "podcast", fi: "podcastsivu" },
     {
       en: "Podcast website",
       fi: "Podcastin verkkosivut",
@@ -1881,7 +1881,7 @@ export const USE_CASES: UseCase[] = [
   ),
   uc(
     "portfolio",
-    { en: "portfolio", fi: "portfolio" },
+    { en: "portfolio", fi: "henkiloportfolio" },
     {
       en: "Personal portfolio website",
       fi: "Henkilökohtainen portfoliosivusto",

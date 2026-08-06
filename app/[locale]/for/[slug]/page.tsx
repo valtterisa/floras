@@ -10,7 +10,7 @@ import {
   getUseCaseSlugs,
   USE_CASES,
 } from "@/lib/pseo/use-cases";
-import { routing, type Locale } from "@/i18n/routing";
+import { localizedPath, routing, type Locale } from "@/i18n/routing";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -31,10 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!useCase) return {};
 
   const siteUrl = getSiteUrl();
-  const path = `/${locale}/for/${slug}`;
+  const path = localizedPath(locale, "for", slug);
   const languages: Record<string, string> = {};
   for (const l of routing.locales) {
-    languages[l] = `${siteUrl}/${l}/for/${useCase.slugs[l]}`;
+    languages[l] = `${siteUrl}${localizedPath(l, "for", useCase.slugs[l])}`;
   }
 
   return {
@@ -65,14 +65,13 @@ export default async function UseCasePage({ params }: Props) {
 
   const t = await getTranslations("useCase");
   const prompt = useCase.examplePrompt[locale];
-  const href = `/?prompt=${encodeURIComponent(prompt)}` as const;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: useCase.title[locale],
     description: useCase.description[locale],
-    url: `${getSiteUrl()}/${locale}/for/${slug}`,
+    url: `${getSiteUrl()}${localizedPath(locale, "for", slug)}`,
   };
 
   return (
@@ -95,7 +94,7 @@ export default async function UseCasePage({ params }: Props) {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href={href}
+                href={{ pathname: "/", query: { prompt } }}
                 className="inline-flex h-11 items-center justify-center bg-brand px-6 text-sm font-medium text-brand-foreground transition-[filter] hover:brightness-110"
               >
                 {t("cta")}
@@ -136,7 +135,10 @@ export default async function UseCasePage({ params }: Props) {
               .map((u) => (
                 <li key={u.id}>
                   <Link
-                    href={`/for/${u.slugs[locale]}`}
+                    href={{
+                      pathname: "/for/[slug]",
+                      params: { slug: u.slugs[locale] },
+                    }}
                     className="inline-flex border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
                   >
                     {u.title[locale].split(" ").slice(0, 2).join(" ")}

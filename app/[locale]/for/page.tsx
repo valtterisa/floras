@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { MarketingLayout } from "@/components/site/marketing-layout";
 import { Reveal } from "@/components/site/reveal";
 import { USE_CASES } from "@/lib/pseo/use-cases";
-import { routing, type Locale } from "@/i18n/routing";
+import { localizedPath, routing, type Locale } from "@/i18n/routing";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -19,10 +19,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = loc as Locale;
   const t = await getTranslations({ locale, namespace: "useCaseIndex" });
   const siteUrl = getSiteUrl();
-  const path = `/${locale}/for`;
+  const path = localizedPath(locale, "for");
   const languages: Record<string, string> = {};
   for (const l of routing.locales) {
-    languages[l] = `${siteUrl}/${l}/for`;
+    languages[l] = `${siteUrl}${localizedPath(l, "for")}`;
   }
 
   return {
@@ -56,13 +56,13 @@ export default async function UseCaseIndexPage({ params }: Props) {
             "@type": "ItemList",
             name: t("title"),
             description: t("description"),
-            url: `${getSiteUrl()}/${locale}/for`,
+            url: `${getSiteUrl()}${localizedPath(locale, "for")}`,
             numberOfItems: USE_CASES.length,
             itemListElement: USE_CASES.map((useCase, index) => ({
               "@type": "ListItem",
               position: index + 1,
               name: useCase.title[locale],
-              url: `${getSiteUrl()}/${locale}/for/${useCase.slugs[locale]}`,
+              url: `${getSiteUrl()}${localizedPath(locale, "for", useCase.slugs[locale])}`,
             })),
           }),
         }}
@@ -88,7 +88,10 @@ export default async function UseCaseIndexPage({ params }: Props) {
           {USE_CASES.map((useCase) => (
             <Link
               key={useCase.id}
-              href={`/for/${useCase.slugs[locale]}`}
+              href={{
+                pathname: "/for/[slug]",
+                params: { slug: useCase.slugs[locale] },
+              }}
               className="border border-border px-4 py-4 transition-colors hover:border-foreground"
             >
               <p className="text-sm font-medium text-foreground">

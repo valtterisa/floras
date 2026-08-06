@@ -1,4 +1,4 @@
-import { routing, type Locale } from "@/i18n/routing";
+import { routing, type Locale, localizedPath } from "@/i18n/routing";
 import { USE_CASES } from "@/lib/pseo/use-cases";
 import { COMPARISONS } from "@/lib/pseo/comparisons";
 import { getSiteUrl } from "@/lib/seo";
@@ -26,7 +26,10 @@ export const STATIC_SEO_PATHS: SeoPath[] = [
   },
   {
     id: "for-index",
-    pathByLocale: { en: "/en/for", fi: "/fi/for" },
+    pathByLocale: {
+      en: localizedPath("en", "for"),
+      fi: localizedPath("fi", "for"),
+    },
     title: { en: "Make a website with Floras", fi: "Tee verkkosivut Floraksella" },
     description: {
       en: "Business-type use cases for Floras.",
@@ -37,7 +40,10 @@ export const STATIC_SEO_PATHS: SeoPath[] = [
   },
   {
     id: "vs-index",
-    pathByLocale: { en: "/en/vs", fi: "/fi/vs" },
+    pathByLocale: {
+      en: localizedPath("en", "vs"),
+      fi: localizedPath("fi", "vs"),
+    },
     title: {
       en: "Floras vs other website builders",
       fi: "Floras vs muut sivustonrakentajat",
@@ -51,7 +57,10 @@ export const STATIC_SEO_PATHS: SeoPath[] = [
   },
   {
     id: "sitemap",
-    pathByLocale: { en: "/en/sitemap", fi: "/fi/sitemap" },
+    pathByLocale: {
+      en: localizedPath("en", "sitemap"),
+      fi: localizedPath("fi", "sitemap"),
+    },
     title: { en: "Sitemap", fi: "Sivukartta" },
     description: {
       en: "HTML sitemap of all public Floras pages.",
@@ -62,7 +71,10 @@ export const STATIC_SEO_PATHS: SeoPath[] = [
   },
   {
     id: "privacy",
-    pathByLocale: { en: "/en/privacy", fi: "/fi/privacy" },
+    pathByLocale: {
+      en: localizedPath("en", "privacy"),
+      fi: localizedPath("fi", "privacy"),
+    },
     title: { en: "Privacy", fi: "Tietosuoja" },
     description: {
       en: "Floras privacy policy.",
@@ -73,7 +85,10 @@ export const STATIC_SEO_PATHS: SeoPath[] = [
   },
   {
     id: "terms",
-    pathByLocale: { en: "/en/terms", fi: "/fi/terms" },
+    pathByLocale: {
+      en: localizedPath("en", "terms"),
+      fi: localizedPath("fi", "terms"),
+    },
     title: { en: "Terms", fi: "Ehdot" },
     description: {
       en: "Floras terms of service.",
@@ -88,8 +103,8 @@ export function getUseCaseSeoPaths(): SeoPath[] {
   return USE_CASES.map((useCase) => ({
     id: `for-${useCase.id}`,
     pathByLocale: {
-      en: `/en/for/${useCase.slugs.en}`,
-      fi: `/fi/for/${useCase.slugs.fi}`,
+      en: localizedPath("en", "for", useCase.slugs.en),
+      fi: localizedPath("fi", "for", useCase.slugs.fi),
     },
     title: useCase.title,
     description: useCase.description,
@@ -102,8 +117,8 @@ export function getComparisonSeoPaths(): SeoPath[] {
   return COMPARISONS.map((comparison) => ({
     id: `vs-${comparison.id}`,
     pathByLocale: {
-      en: `/en/vs/${comparison.slugs.en}`,
-      fi: `/fi/vs/${comparison.slugs.fi}`,
+      en: localizedPath("en", "vs", comparison.slugs.en),
+      fi: localizedPath("fi", "vs", comparison.slugs.fi),
     },
     title: comparison.title,
     description: comparison.description,
@@ -134,4 +149,24 @@ export function languageAlternates(
     languages[locale] = absoluteUrl(pathByLocale[locale]);
   }
   return languages;
+}
+
+export function translateUseCaseSlug(
+  fromLocale: Locale,
+  toLocale: Locale,
+  slug: string
+): string | undefined {
+  const useCase = USE_CASES.find((item) => item.slugs[fromLocale] === slug);
+  return useCase?.slugs[toLocale];
+}
+
+export function translateComparisonSlug(
+  fromLocale: Locale,
+  toLocale: Locale,
+  slug: string
+): string | undefined {
+  const comparison = COMPARISONS.find(
+    (item) => item.slugs[fromLocale] === slug
+  );
+  return comparison?.slugs[toLocale];
 }

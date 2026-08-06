@@ -4,7 +4,7 @@ import {
 } from "@convex-dev/auth/nextjs/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
-import { routing } from "@/i18n/routing";
+import { localizedPath, routing, type Locale } from "@/i18n/routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -30,8 +30,9 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   }
 
   if (isProtected(pathname) && !(await convexAuth.isAuthenticated())) {
-    const locale = pathname.match(/^\/(en|fi)/)?.[1] ?? routing.defaultLocale;
-    return nextjsMiddlewareRedirect(request, `/${locale}/login`);
+    const locale = (pathname.match(/^\/(en|fi)/)?.[1] ??
+      routing.defaultLocale) as Locale;
+    return nextjsMiddlewareRedirect(request, localizedPath(locale, "login"));
   }
 
   return intlMiddleware(request);

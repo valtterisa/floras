@@ -199,9 +199,14 @@ export function PublishModal({
           <li className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0">
             {t("manageDomainsBefore")}{" "}
             <Link
-              href="/dashboard/account#domains"
+              href="/dashboard/account"
               className="text-foreground underline-offset-4 hover:underline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => {
+                onOpenChange(false);
+                queueMicrotask(() => {
+                  window.location.hash = "domains";
+                });
+              }}
             >
               {t("manageDomainsLink")}
             </Link>

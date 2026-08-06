@@ -18,6 +18,9 @@
     "useCases": "Käyttötapaukset",
     "comparisons": "Vertailut",
     "sitemap": "Sivukartta",
+    "home": "Etusivu",
+    "product": "Tuote",
+    "viewAll": "Näytä kaikki",
     "tagline": "Kuvaile yrityksesi. Saat sivuston, jonka voit avata ja jakaa."
   },
   "hero": {

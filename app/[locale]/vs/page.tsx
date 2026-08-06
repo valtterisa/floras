@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { MarketingLayout } from "@/components/site/marketing-layout";
 import { Reveal } from "@/components/site/reveal";
 import { COMPARISONS } from "@/lib/pseo/comparisons";
-import { routing, type Locale } from "@/i18n/routing";
+import { localizedPath, routing, type Locale } from "@/i18n/routing";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -19,10 +19,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = loc as Locale;
   const t = await getTranslations({ locale, namespace: "comparisonIndex" });
   const siteUrl = getSiteUrl();
-  const path = `/${locale}/vs`;
+  const path = localizedPath(locale, "vs");
   const languages: Record<string, string> = {};
   for (const l of routing.locales) {
-    languages[l] = `${siteUrl}/${l}/vs`;
+    languages[l] = `${siteUrl}${localizedPath(l, "vs")}`;
   }
 
   return {
@@ -56,13 +56,13 @@ export default async function ComparisonIndexPage({ params }: Props) {
             "@type": "ItemList",
             name: t("title"),
             description: t("description"),
-            url: `${getSiteUrl()}/${locale}/vs`,
+            url: `${getSiteUrl()}${localizedPath(locale, "vs")}`,
             numberOfItems: COMPARISONS.length,
             itemListElement: COMPARISONS.map((comparison, index) => ({
               "@type": "ListItem",
               position: index + 1,
               name: comparison.title[locale],
-              url: `${getSiteUrl()}/${locale}/vs/${comparison.slugs[locale]}`,
+              url: `${getSiteUrl()}${localizedPath(locale, "vs", comparison.slugs[locale])}`,
             })),
           }),
         }}
@@ -88,7 +88,10 @@ export default async function ComparisonIndexPage({ params }: Props) {
           {COMPARISONS.map((comparison) => (
             <Link
               key={comparison.id}
-              href={`/vs/${comparison.slugs[locale]}`}
+              href={{
+                pathname: "/vs/[slug]",
+                params: { slug: comparison.slugs[locale] },
+              }}
               className="border border-border px-4 py-4 transition-colors hover:border-foreground"
             >
               <p className="text-sm font-medium text-foreground">

@@ -53,7 +53,10 @@ export function LandingComposer({
       const id = await createSite({ prompt: value, modelId: selectedModel });
       await triggerGeneration(id);
       await gates.refetch();
-      router.push(`/build/${id}`);
+      router.push({
+        pathname: "/build/[projectId]",
+        params: { projectId: id },
+      });
       return true;
     } catch (e) {
       if (!gates.handleDenyCode(errorCode(e))) {

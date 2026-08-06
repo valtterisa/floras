@@ -181,7 +181,10 @@ export function DashboardSidebar({
               {filtered.map((project) => (
                 <li key={project._id}>
                   <Link
-                    href={`/build/${project._id}`}
+                    href={{
+                      pathname: "/build/[projectId]",
+                      params: { projectId: project._id },
+                    }}
                     title={project.name}
                     className={cn(
                       "group flex items-center gap-2 px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",

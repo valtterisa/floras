@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/seo";
+import { localizedPath } from "@/i18n/routing";
 
 export default function robots(): MetadataRoute.Robots {
   const base = getSiteUrl();
@@ -24,10 +25,10 @@ export default function robots(): MetadataRoute.Robots {
           "/fi/account",
           "/en/build/",
           "/fi/build/",
-          "/en/login",
-          "/fi/login",
-          "/en/sign-up",
-          "/fi/sign-up",
+          localizedPath("en", "login"),
+          localizedPath("fi", "login"),
+          localizedPath("en", "sign-up"),
+          localizedPath("fi", "sign-up"),
           "/en/signin",
           "/fi/signin",
         ],

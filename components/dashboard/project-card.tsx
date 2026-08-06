@@ -33,7 +33,10 @@ export function ProjectCard({
 
   return (
     <Link
-      href={`/build/${project._id}`}
+      href={{
+        pathname: "/build/[projectId]",
+        params: { projectId: project._id },
+      }}
       className={cn(
         "group flex flex-col transition-colors hover:bg-white active:scale-[0.995]",
         className
