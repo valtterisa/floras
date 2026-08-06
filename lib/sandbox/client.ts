@@ -14,9 +14,9 @@ import {
   sandboxMemoryMb,
   sandboxRegion,
   sandboxLog,
-  cfEnvPath,
   absoluteSitePath,
   sandboxNameForProject,
+  sandboxIdleTtl,
 } from "@/lib/sandbox/config";
 
 export type SandboxFile = {
@@ -37,12 +37,6 @@ export type CommandResult = {
   stdout: string;
   stderr: string;
   success: boolean;
-};
-
-export type WranglerDeployCreds = {
-  apiToken: string;
-  accountId: string;
-  projectName: string;
 };
 
 export { sandboxNameForProject };
@@ -85,19 +79,35 @@ async function loadSandbox(name: string): Promise<SandboxInstance> {
   }
 }
 
+export async function getSandboxInstance(
+  name: string
+): Promise<SandboxInstance> {
+  return loadSandbox(name);
+}
+
+export type SitePersistence = {
+  projectId: string;
+  token: string;
+};
+
 export async function createOrResumeSandbox(opts: {
   sandboxName: string;
   displayName?: string;
-}): Promise<string> {
+  persistence?: SitePersistence;
+}): Promise<{ sandboxName: string }> {
   if (!sandboxConfigured()) {
     throw new AppError("config", "Blaxel sandboxes are not configured.");
   }
 
   const { sandboxName, displayName = sandboxName } = opts;
   const image = sandboxImage();
+  const region = sandboxRegion();
+  const idleTtl = sandboxIdleTtl();
+
   sandboxLog(sandboxName, "create", "createIfNotExists", {
     image,
     displayName,
+    idleTtl: idleTtl ?? "off",
     templateRepo: requireTemplateRepo(),
     templateRef: templateRef(),
   });
@@ -117,8 +127,18 @@ export async function createOrResumeSandbox(opts: {
       { name: "PORT", value: String(PREVIEW_PORT) },
     ],
   };
-  const region = sandboxRegion();
-  if (region) createArgs.region = region;
+  createArgs.region = region;
+  if (idleTtl) {
+    createArgs.lifecycle = {
+      expirationPolicies: [
+        {
+          type: "ttl-idle",
+          value: idleTtl,
+          action: "delete",
+        },
+      ],
+    };
+  }
 
   const sandbox = await SandboxInstance.createIfNotExists(createArgs);
   const status = String(sandbox.status ?? "");
@@ -128,9 +148,22 @@ export async function createOrResumeSandbox(opts: {
     });
   }
 
-  await ensureTemplateCloned(sandboxName);
+  await ensureSiteWorkspace(sandboxName, opts.persistence);
   sandboxLog(sandboxName, "create", "ready");
-  return sandboxName;
+  return { sandboxName };
+}
+
+export async function deleteSandboxResources(
+  sandboxName: string
+): Promise<void> {
+  try {
+    await SandboxInstance.delete(sandboxName);
+  } catch (error) {
+    console.error("[sandbox] delete sandbox failed", {
+      sandboxName,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 export async function getSandboxLifecycle(
@@ -149,7 +182,10 @@ export async function getSandboxLifecycle(
   }
 }
 
-export async function ensureSandboxReady(sandboxName: string): Promise<void> {
+export async function ensureSandboxReady(
+  sandboxName: string,
+  persistence?: SitePersistence
+): Promise<void> {
   sandboxLog(sandboxName, "ready", "ensure");
   const lifecycle = await getSandboxLifecycle(sandboxName);
   if (lifecycle === "error") {
@@ -157,26 +193,55 @@ export async function ensureSandboxReady(sandboxName: string): Promise<void> {
       detail: `sandbox ${sandboxName}`,
     });
   }
-  if (lifecycle === "stopped" || lifecycle === "stopping") {
-    sandboxLog(sandboxName, "ready", "recreating terminated sandbox");
-    await createOrResumeSandbox({ sandboxName });
+  if (lifecycle !== "ready") {
+    sandboxLog(sandboxName, "ready", "createOrResume", { lifecycle });
+    await createOrResumeSandbox({ sandboxName, persistence });
     return;
   }
   await loadSandbox(sandboxName);
-  await ensureTemplateCloned(sandboxName);
+  await ensureSiteWorkspace(sandboxName, persistence);
 }
 
-async function ensureTemplateCloned(sandboxName: string): Promise<void> {
+async function ensureSiteWorkspace(
+  sandboxName: string,
+  persistence?: SitePersistence
+): Promise<void> {
   const present = await runCommand(
     sandboxName,
     `test -f ${shellQuote(`${SITE_ROOT}/package.json`)}`,
-    { cwd: "/", timeoutSeconds: 30, retries: 1 }
+    { cwd: "/", timeoutSeconds: 30, retries: 3 }
   );
   if (present.success && present.exitCode === 0) {
     sandboxLog(sandboxName, "template", "already present");
     return;
   }
 
+  if (persistence) {
+    try {
+      const { restoreSiteFromR2 } = await import(
+        "@/lib/sandbox/site-persistence"
+      );
+      const restored = await restoreSiteFromR2(
+        sandboxName,
+        persistence.projectId,
+        persistence.token
+      );
+      if (restored) return;
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error("[sandbox] R2 restore failed", { sandboxName, detail });
+      throw new AppError(
+        "preview",
+        "Couldn't restore the site snapshot. Try restart, or regenerate the site.",
+        { detail }
+      );
+    }
+  }
+
+  await cloneTemplate(sandboxName);
+}
+
+async function cloneTemplate(sandboxName: string): Promise<void> {
   const repo = requireTemplateRepo();
   const ref = templateRef();
   const cloneUrl = authenticatedCloneUrl(repo, templateGithubToken());
@@ -257,6 +322,7 @@ export async function runCommand(
     cwd?: string;
     timeoutSeconds?: number;
     retries?: number;
+    env?: Record<string, string>;
   } = {}
 ): Promise<CommandResult> {
   const cwd = opts.cwd === "." ? "/" : opts.cwd ?? SITE_ROOT;
@@ -266,44 +332,26 @@ export async function runCommand(
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const t0 = Date.now();
-    const procName = `cmd-${Date.now().toString(36)}-${attempt}`;
-    sandboxLog(sandboxName, "cmd", "start", {
-      cwd,
-      timeoutSeconds,
-      attempt: attempt + 1,
-      command: command.length > 160 ? `${command.slice(0, 160)}…` : command,
-    });
     try {
       const res = await sandbox.process.exec({
-        name: procName,
+        name: `cmd-${Date.now().toString(36)}-${attempt}`,
         command,
         workingDir: cwd,
         waitForCompletion: true,
         timeout: timeoutSeconds,
+        ...(opts.env ? { env: opts.env } : {}),
       });
       const exitCode = res.exitCode ?? 1;
-      const result: CommandResult = {
+      return {
         exitCode,
         stdout: res.stdout ?? res.logs ?? "",
         stderr: res.stderr ?? "",
         success: exitCode === 0 && res.status !== "failed",
       };
-      sandboxLog(sandboxName, "cmd", "done", {
-        ms: Date.now() - t0,
-        exit: result.exitCode,
-        success: result.success,
-      });
-      return result;
     } catch (error) {
       lastError = error;
-      sandboxLog(sandboxName, "cmd", "error", {
-        ms: Date.now() - t0,
-        attempt: attempt + 1,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      if (attempt >= retries) break;
-      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      if (attempt >= retries || !isEdgeTimeout(error)) break;
+      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
     }
   }
 
@@ -314,18 +362,23 @@ export async function runCommand(
       });
 }
 
+function isEdgeTimeout(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    /\b504\b/.test(message) ||
+    /gateway timeout/i.test(message) ||
+    /unreachable at the edge/i.test(message)
+  );
+}
+
 async function ensureSiteDeps(sandboxName: string): Promise<void> {
   const hasBinary = await runCommand(
     sandboxName,
     "test -x node_modules/.bin/astro || test -x node_modules/.bin/vite",
-    { timeoutSeconds: 30, retries: 1 }
+    { timeoutSeconds: 30, retries: 3 }
   );
-  if (hasBinary.success && hasBinary.exitCode === 0) {
-    sandboxLog(sandboxName, "deps", "present");
-    return;
-  }
+  if (hasBinary.success && hasBinary.exitCode === 0) return;
 
-  sandboxLog(sandboxName, "deps", "install");
   const install = await runCommand(
     sandboxName,
     "if command -v pnpm >/dev/null 2>&1; then COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm install; elif command -v bun >/dev/null 2>&1; then bun install; else npm install; fi",
@@ -339,40 +392,35 @@ async function ensureSiteDeps(sandboxName: string): Promise<void> {
 }
 
 async function ensureDevServer(sandboxName: string): Promise<void> {
-  const sandbox = await loadSandbox(sandboxName);
-  const processes = await sandbox.process.list();
-  const existing = processes.find((p) => p.name === DEV_PROCESS_NAME);
-  if (existing?.status === "running") {
-    sandboxLog(sandboxName, "dev", "already running");
-    return;
+  try {
+    await (
+      await loadSandbox(sandboxName)
+    ).process.exec({
+      name: DEV_PROCESS_NAME,
+      command:
+        "if command -v pnpm >/dev/null 2>&1; then pnpm run dev; elif command -v bun >/dev/null 2>&1; then bun run dev; else npm run dev; fi",
+      workingDir: SITE_ROOT,
+      waitForPorts: [PREVIEW_PORT],
+      restartOnFailure: true,
+      maxRestarts: 25,
+      env: {
+        HOST: "0.0.0.0",
+        PORT: String(PREVIEW_PORT),
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/already exists/i.test(message)) return;
+    throw new AppError("preview", "Could not start the site preview server.", {
+      detail: message.slice(0, 500),
+    });
   }
-  if (existing) {
-    try {
-      await sandbox.process.kill(DEV_PROCESS_NAME);
-    } catch {
-      /* ignore */
-    }
-  }
-
-  sandboxLog(sandboxName, "dev", "start");
-  await sandbox.process.exec({
-    name: DEV_PROCESS_NAME,
-    command:
-      "if command -v pnpm >/dev/null 2>&1; then pnpm run dev; elif command -v bun >/dev/null 2>&1; then bun run dev; else npm run dev; fi",
-    workingDir: SITE_ROOT,
-    waitForPorts: [PREVIEW_PORT],
-    restartOnFailure: true,
-    maxRestarts: 25,
-    env: {
-      HOST: "0.0.0.0",
-      PORT: String(PREVIEW_PORT),
-    },
-  });
 }
 
 async function ensurePreviewUrl(sandboxName: string): Promise<string> {
-  const sandbox = await loadSandbox(sandboxName);
-  const preview = await sandbox.previews.createIfNotExists({
+  const preview = await (
+    await loadSandbox(sandboxName)
+  ).previews.createIfNotExists({
     metadata: { name: PREVIEW_NAME },
     spec: {
       port: PREVIEW_PORT,
@@ -389,46 +437,66 @@ async function ensurePreviewUrl(sandboxName: string): Promise<string> {
   return url.replace(/\/$/, "");
 }
 
-export async function startPreview(sandboxName: string): Promise<string> {
-  const t0 = Date.now();
-  sandboxLog(sandboxName, "start", "begin");
-  await ensureSandboxReady(sandboxName);
+export async function startPreview(
+  sandboxName: string,
+  persistence?: SitePersistence
+): Promise<string> {
+  await ensureSandboxReady(sandboxName, persistence);
   await ensureSiteDeps(sandboxName);
   await ensureDevServer(sandboxName);
-  const url = await ensurePreviewUrl(sandboxName);
-  sandboxLog(sandboxName, "start", "complete", { url, ms: Date.now() - t0 });
-  return url;
+  return ensurePreviewUrl(sandboxName);
 }
 
-export async function restartPreview(sandboxName: string): Promise<string> {
-  const t0 = Date.now();
-  sandboxLog(sandboxName, "restart", "begin");
-  await ensureSandboxReady(sandboxName);
-  const sandbox = await loadSandbox(sandboxName);
-  try {
-    await sandbox.process.kill(DEV_PROCESS_NAME);
-  } catch {
-    /* ignore */
+export async function restartPreview(
+  sandboxName: string,
+  persistence?: SitePersistence
+): Promise<string> {
+  if (persistence) {
+    try {
+      const { snapshotSiteToR2 } = await import(
+        "@/lib/sandbox/site-persistence"
+      );
+      await snapshotSiteToR2(
+        sandboxName,
+        persistence.projectId,
+        persistence.token
+      );
+    } catch (error) {
+      console.error("[sandbox] pre-restart snapshot failed", {
+        sandboxName,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
+
+  await deleteSandboxResources(sandboxName);
+  await createOrResumeSandbox({ sandboxName, persistence });
   await ensureSiteDeps(sandboxName);
   await ensureDevServer(sandboxName);
-  const url = await ensurePreviewUrl(sandboxName);
-  sandboxLog(sandboxName, "restart", "complete", { url, ms: Date.now() - t0 });
-  return url;
+  return ensurePreviewUrl(sandboxName);
 }
 
-export async function stopSandbox(sandboxName: string): Promise<void> {
-  const t0 = Date.now();
-  sandboxLog(sandboxName, "stop", "begin");
-  const sandbox = await loadSandbox(sandboxName);
+export async function getDevProcessLogs(
+  sandboxName: string
+): Promise<{ logs: string; found: boolean }> {
   try {
-    await sandbox.process.kill(DEV_PROCESS_NAME);
-  } catch {
-    /* ignore — may already be stopped */
+    const sandbox = await loadSandbox(sandboxName);
+    const processes = await sandbox.process.list();
+    const exists = processes.some((p) => p.name === DEV_PROCESS_NAME);
+    if (!exists) {
+      return { logs: "", found: false };
+    }
+    const logs = await sandbox.process.logs(DEV_PROCESS_NAME, "all");
+    const raw = typeof logs === "string" ? logs : String(logs ?? "");
+    const { redactSandboxLogs } = await import("@/lib/sandbox/redact-logs");
+    return { logs: redactSandboxLogs(raw), found: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/404|not found/i.test(message)) {
+      return { logs: "", found: false };
+    }
+    throw error;
   }
-  sandboxLog(sandboxName, "stop", "dev stopped; sandbox left on standby", {
-    ms: Date.now() - t0,
-  });
 }
 
 export async function probePublicPreview(url: string): Promise<boolean> {
@@ -471,118 +539,75 @@ export async function assertDistPresent(sandboxName: string): Promise<void> {
   }
 }
 
-const EXPORT_ZIP_PATH = "/tmp/.floras-export.zip";
-const EXPORT_SCRIPT_PATH = "/tmp/.floras-export.py";
+const EXPORT_TAR_PATH = "/tmp/.floras-export.tar.gz";
+const DIST_TAR_PATH = "/tmp/.floras-dist.tar";
 
-function exportZipScript(): string {
-  return `import os
-import sys
-import zipfile
-
-root = ${JSON.stringify(SITE_ROOT)}
-out = ${JSON.stringify(EXPORT_ZIP_PATH)}
-skip_dirs = {"node_modules", ".git", ".astro", "dist"}
-skip_files = {".DS_Store"}
-
-if not os.path.isdir(root):
-    print("site directory missing", file=sys.stderr)
-    sys.exit(1)
-
-with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
-    for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [
-            d for d in dirnames
-            if d not in skip_dirs and not d.startswith(".floras-")
-        ]
-        for name in filenames:
-            if name in skip_files or name.startswith(".floras-"):
-                continue
-            full = os.path.join(dirpath, name)
-            arc = os.path.relpath(full, root)
-            zf.write(full, arc)
-print("ok")
-`;
-}
-
-export async function exportSiteZip(sandboxName: string): Promise<Blob> {
-  await ensureSandboxReady(sandboxName);
-  const sandbox = await loadSandbox(sandboxName);
-
-  await runCommand(
-    sandboxName,
-    `rm -f ${shellQuote(EXPORT_ZIP_PATH)} ${shellQuote(EXPORT_SCRIPT_PATH)}`,
-    { cwd: "/", timeoutSeconds: 30 }
-  );
-  await sandbox.fs.write(EXPORT_SCRIPT_PATH, exportZipScript());
-
-  try {
-    const zip = await runCommand(
-      sandboxName,
-      `python3 ${shellQuote(EXPORT_SCRIPT_PATH)}`,
-      { cwd: "/", timeoutSeconds: 180 }
-    );
-    if (!zip.success || zip.exitCode !== 0) {
-      throw new AppError("unknown", "Couldn't create the project zip.", {
-        detail: zip.stderr || zip.stdout || `exit ${zip.exitCode}`,
-      });
-    }
-    return await sandbox.fs.readBinary(EXPORT_ZIP_PATH);
-  } finally {
-    await runCommand(
-      sandboxName,
-      `rm -f ${shellQuote(EXPORT_ZIP_PATH)} ${shellQuote(EXPORT_SCRIPT_PATH)}`,
-      { cwd: "/", timeoutSeconds: 30 }
-    ).catch((error) => {
-      console.error("[sandbox] export zip cleanup failed", error);
-    });
-  }
-}
-
-export async function scrubCfEnv(
+export async function exportSiteZip(
   sandboxName: string,
-  envPath?: string
-): Promise<void> {
-  if (envPath) {
-    await runCommand(sandboxName, `rm -f ${shellQuote(envPath)}`, {
-      cwd: "/",
-      timeoutSeconds: 30,
-    });
-    return;
-  }
-  await runCommand(sandboxName, "rm -f /tmp/.floras-cf-*.env", {
+  persistence?: SitePersistence
+): Promise<Blob> {
+  await ensureSandboxReady(sandboxName, persistence);
+
+  await runCommand(sandboxName, `rm -f ${shellQuote(EXPORT_TAR_PATH)}`, {
     cwd: "/",
     timeoutSeconds: 30,
   });
-}
 
-export async function deployDistWithWrangler(
-  sandboxName: string,
-  creds: WranglerDeployCreds
-): Promise<void> {
-  const envPath = cfEnvPath(sandboxName);
   try {
-    const sandbox = await loadSandbox(sandboxName);
-    await sandbox.fs.write(
-      envPath,
-      [
-        `CLOUDFLARE_API_TOKEN=${creds.apiToken}`,
-        `CLOUDFLARE_ACCOUNT_ID=${creds.accountId}`,
-        "",
-      ].join("\n")
-    );
-    const res = await runCommand(
+    const pack = await runCommand(
       sandboxName,
-      `set -a && . ${shellQuote(envPath)} && set +a && (command -v pnpm >/dev/null 2>&1 && pnpm dlx wrangler@4 pages deploy dist --project-name=${shellQuote(creds.projectName)} --commit-dirty=true || npx --yes wrangler@4 pages deploy dist --project-name=${shellQuote(creds.projectName)} --commit-dirty=true)`,
-      { timeoutSeconds: 300 }
+      `tar -C ${shellQuote(SITE_ROOT)} -czf ${shellQuote(EXPORT_TAR_PATH)} --exclude=node_modules --exclude=.git --exclude=.astro --exclude=dist --exclude='.floras-*' .`,
+      { cwd: "/", timeoutSeconds: 180 }
     );
-    if (!res.success || res.exitCode !== 0) {
-      throw new AppError("publish", "Deploy to Cloudflare failed.", {
-        detail: res.stderr || res.stdout || `exit ${res.exitCode}`,
+    if (!pack.success || pack.exitCode !== 0) {
+      throw new AppError("unknown", "Couldn't create the project archive.", {
+        detail: pack.stderr || pack.stdout || `exit ${pack.exitCode}`,
       });
     }
+    return await (await loadSandbox(sandboxName)).fs.readBinary(EXPORT_TAR_PATH);
   } finally {
-    await scrubCfEnv(sandboxName, envPath).catch((error) => {
-      console.error("[sandbox] scrubCfEnv failed", error);
+    await runCommand(sandboxName, `rm -f ${shellQuote(EXPORT_TAR_PATH)}`, {
+      cwd: "/",
+      timeoutSeconds: 30,
+    }).catch((error) => {
+      console.error("[sandbox] export archive cleanup failed", error);
+    });
+  }
+}
+
+export async function exportDistArchive(
+  sandboxName: string
+): Promise<Uint8Array> {
+  await runCommand(sandboxName, `rm -f ${shellQuote(DIST_TAR_PATH)}`, {
+    cwd: "/",
+    timeoutSeconds: 30,
+  });
+
+  try {
+    const pack = await runCommand(
+      sandboxName,
+      `tar -C ${shellQuote(`${SITE_ROOT}/dist`)} -cf ${shellQuote(DIST_TAR_PATH)} .`,
+      { cwd: "/", timeoutSeconds: 180 }
+    );
+    if (!pack.success || pack.exitCode !== 0) {
+      throw new AppError("publish", "Couldn't package the build output.", {
+        detail: pack.stderr || pack.stdout || `exit ${pack.exitCode}`,
+      });
+    }
+    const blob = await (await loadSandbox(sandboxName)).fs.readBinary(
+      DIST_TAR_PATH
+    );
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    if (buf.byteLength === 0) {
+      throw new AppError("publish", "Build output package is empty.");
+    }
+    return buf;
+  } finally {
+    await runCommand(sandboxName, `rm -f ${shellQuote(DIST_TAR_PATH)}`, {
+      cwd: "/",
+      timeoutSeconds: 30,
+    }).catch((error) => {
+      console.error("[sandbox] dist archive cleanup failed", error);
     });
   }
 }

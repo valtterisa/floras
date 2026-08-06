@@ -22,11 +22,6 @@ function stopSandboxRequest(projectId: string, reason: string) {
   });
 }
 
-/**
- * Stop the sandbox when leaving the editor (client nav) or closing the tab.
- * Defers unmount stops so React Strict Mode remounts do not stop the sandbox.
- * Skips while the project is busy so generation is not interrupted.
- */
 export function useStopSandboxOnLeave(
   projectId: string,
   sandboxName: string | undefined,

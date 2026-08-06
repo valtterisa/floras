@@ -13,7 +13,10 @@ export async function POST(req: Request) {
   if (ctx instanceof Response) return ctx;
 
   try {
-    const previewUrl = await startPreview(ctx.sandboxName);
+    const previewUrl = await startPreview(ctx.sandboxName, {
+      projectId: ctx.projectId,
+      token: ctx.token,
+    });
     if (previewUrl !== ctx.previewUrl) {
       await fetchMutation(
         api.projects.setPreview,

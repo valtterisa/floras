@@ -23,6 +23,7 @@ import {
   derivePreviewUi,
   LIVE_SANDBOX_STATES,
 } from "@/lib/workspace/derive-preview-ui";
+import { PreviewConsole } from "@/components/workspace/preview-console";
 
 const PROJECT_STATUS_KEYS = [
   "draft",
@@ -131,12 +132,23 @@ export function PreviewPane({
       return;
     }
 
+    if (previewOk && !waking) {
+      setSandboxState((prev) =>
+        prev === "loading" || prev === null ? "ready" : prev
+      );
+      return;
+    }
+
+    if (waking) {
+      return;
+    }
+
     let cancelled = false;
 
     const poll = async () => {
       try {
         const res = await fetch(
-          `/api/preview/status?projectId=${encodeURIComponent(projectId)}`
+          `/api/preview/status?projectId=${encodeURIComponent(projectId)}&mode=preview`
         );
         const data = (await res.json().catch(() => ({}))) as {
           state?: string | null;
@@ -148,7 +160,11 @@ export function PreviewPane({
           setSandboxState((prev) => (prev === "loading" ? null : prev));
           return;
         }
-        setSandboxState(data.state ?? null);
+        if (typeof data.state === "string") {
+          setSandboxState(data.state);
+        } else if (data.previewOk) {
+          setSandboxState("ready");
+        }
         if (!waking) {
           const ok = Boolean(data.previewOk);
           if (ok) {
@@ -166,10 +182,7 @@ export function PreviewPane({
     };
 
     void poll();
-    const id = window.setInterval(
-      () => void poll(),
-      waking ? 2000 : previewOk ? 8000 : 5000
-    );
+    const id = window.setInterval(() => void poll(), 10_000);
     return () => {
       cancelled = true;
       window.clearInterval(id);
@@ -211,22 +224,30 @@ export function PreviewPane({
   if (!previewUrl) {
     const waiting = busy || starting;
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 bg-background text-center">
-        {waiting ? (
-          <HugeiconsIcon icon={Loading03Icon} className="size-7 animate-spin text-brand" />
-        ) : (
-          <HugeiconsIcon icon={SmartPhone01Icon} className="size-7 text-muted-foreground" />
-        )}
-        <div>
-          <p className="text-sm font-medium">{projectLabel}</p>
-          <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-            {waiting
-              ? sandboxName
-                ? t("starting")
-                : t("willAppear")
-              : t("switchToBuild")}
-          </p>
+      <div className="flex h-full flex-col bg-background">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
+          {waiting ? (
+            <HugeiconsIcon icon={Loading03Icon} className="size-7 animate-spin text-brand" />
+          ) : (
+            <HugeiconsIcon icon={SmartPhone01Icon} className="size-7 text-muted-foreground" />
+          )}
+          <div>
+            <p className="text-sm font-medium">{projectLabel}</p>
+            <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+              {waiting
+                ? sandboxName
+                  ? t("starting")
+                  : t("willAppear")
+                : t("switchToBuild")}
+            </p>
+          </div>
         </div>
+        <PreviewConsole
+          projectId={projectId}
+          sandboxName={sandboxName}
+          active={Boolean(sandboxName) && !busy}
+          busy={busy || waking}
+        />
       </div>
     );
   }
@@ -247,80 +268,88 @@ export function PreviewPane({
   const screenBody = screen.bodyOverride ?? (screen.bodyKey ? t(screen.bodyKey) : "");
 
   return (
-    <WebPreview
-      key={`${previewUrl}-${reloadKey}`}
-      defaultUrl={previewUrl}
-      className="h-full rounded-none border-0"
-    >
-      <WebPreviewNavigation className="gap-2 px-3">
-        <Badge
-          variant="outline"
-          className={
-            sandboxLive && previewOk && !waking && !previewError
-              ? "border-brand/40 text-xs font-normal text-brand"
-              : "border-border text-xs font-normal text-muted-foreground"
-          }
-        >
-          {badgeLabel}
-        </Badge>
-        <WebPreviewUrl readOnly />
-        <WebPreviewNavigationButton
-          tooltip={t("openInNewTab")}
-          disabled={!previewUrl || waking}
-          onClick={() => {
-            if (previewUrl) {
-              window.open(previewUrl, "_blank", "noopener,noreferrer");
+    <div className="flex h-full min-h-0 flex-col">
+      <WebPreview
+        key={`${previewUrl}-${reloadKey}`}
+        defaultUrl={previewUrl}
+        className="min-h-0 flex-1 rounded-none border-0"
+      >
+        <WebPreviewNavigation className="gap-2 px-3">
+          <Badge
+            variant="outline"
+            className={
+              sandboxLive && previewOk && !waking && !previewError
+                ? "border-brand/40 text-xs font-normal text-brand"
+                : "border-border text-xs font-normal text-muted-foreground"
             }
-          }}
-          aria-label={t("openInNewTab")}
-        >
-          <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" />
-        </WebPreviewNavigationButton>
-        <WebPreviewNavigationButton
-          tooltip={waking ? t("starting") : t("restart")}
-          disabled={!sandboxName || waking || busy}
-          onClick={() => void onRestart()}
-          aria-label={t("restart")}
-        >
-          {waking ? (
-            <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
-          ) : (
-            <HugeiconsIcon icon={ReloadIcon} className="size-4" />
-          )}
-        </WebPreviewNavigationButton>
-      </WebPreviewNavigation>
-      <div className="relative min-h-0 flex-1 bg-background">
-        {showOwnUi ? (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-            {screen.spinning ? (
-              <HugeiconsIcon icon={Loading03Icon} className="size-7 animate-spin text-brand" />
+          >
+            {badgeLabel}
+          </Badge>
+          <WebPreviewUrl readOnly />
+          <WebPreviewNavigationButton
+            tooltip={t("openInNewTab")}
+            disabled={!previewUrl || waking}
+            onClick={() => {
+              if (previewUrl) {
+                window.open(previewUrl, "_blank", "noopener,noreferrer");
+              }
+            }}
+            aria-label={t("openInNewTab")}
+          >
+            <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" />
+          </WebPreviewNavigationButton>
+          <WebPreviewNavigationButton
+            tooltip={waking ? t("starting") : t("restart")}
+            disabled={!sandboxName || waking || busy}
+            onClick={() => void onRestart()}
+            aria-label={t("restart")}
+          >
+            {waking ? (
+              <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
             ) : (
-              <HugeiconsIcon icon={SmartPhone01Icon} className="size-7 text-muted-foreground" />
+              <HugeiconsIcon icon={ReloadIcon} className="size-4" />
             )}
-            <div>
-              <p className="text-sm font-medium">{screenTitle}</p>
-              <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                {screenBody}
-              </p>
+          </WebPreviewNavigationButton>
+        </WebPreviewNavigation>
+        <div className="relative min-h-0 flex-1 bg-background">
+          {showOwnUi ? (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+              {screen.spinning ? (
+                <HugeiconsIcon icon={Loading03Icon} className="size-7 animate-spin text-brand" />
+              ) : (
+                <HugeiconsIcon icon={SmartPhone01Icon} className="size-7 text-muted-foreground" />
+              )}
+              <div>
+                <p className="text-sm font-medium">{screenTitle}</p>
+                <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                  {screenBody}
+                </p>
+              </div>
+              {screen.showRestart && sandboxName && !busy ? (
+                <button
+                  type="button"
+                  onClick={() => void onRestart()}
+                  disabled={waking}
+                  className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 border border-border bg-background px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <HugeiconsIcon icon={ReloadIcon} className="size-3.5" />
+                  {t("restartPreview")}
+                </button>
+              ) : null}
             </div>
-            {screen.showRestart && sandboxName && !busy ? (
-              <button
-                type="button"
-                onClick={() => void onRestart()}
-                disabled={waking}
-                className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 border border-border bg-background px-4 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <HugeiconsIcon icon={ReloadIcon} className="size-3.5" />
-                {t("restartPreview")}
-              </button>
-            ) : null}
-          </div>
-        ) : (
-          <div className="absolute inset-0">
-            <WebPreviewBody src={previewUrl} className="bg-white" />
-          </div>
-        )}
-      </div>
-    </WebPreview>
+          ) : (
+            <div className="absolute inset-0">
+              <WebPreviewBody src={previewUrl} className="bg-white" />
+            </div>
+          )}
+        </div>
+      </WebPreview>
+      <PreviewConsole
+        projectId={projectId}
+        sandboxName={sandboxName}
+        active={Boolean(sandboxName) && !busy}
+        busy={busy || waking}
+      />
+    </div>
   );
 }

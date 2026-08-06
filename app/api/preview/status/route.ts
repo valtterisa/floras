@@ -16,6 +16,7 @@ const LIVE_STATES = new Set(["ready"]);
 
 const querySchema = z.object({
   projectId: z.string().min(1),
+  mode: z.enum(["full", "preview"]).optional(),
 });
 
 export async function GET(req: Request) {
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const parsed = querySchema.safeParse({
     projectId: url.searchParams.get("projectId") ?? "",
+    mode: url.searchParams.get("mode") ?? undefined,
   });
   if (!parsed.success) {
     return Response.json(
@@ -60,10 +62,23 @@ export async function GET(req: Request) {
     });
   }
 
+  const previewUrl =
+    typeof project.previewUrl === "string" ? project.previewUrl : null;
+  const mode = parsed.data.mode ?? "preview";
+
   try {
+    if (mode === "preview") {
+      const previewOk = previewUrl
+        ? await probePublicPreview(previewUrl)
+        : false;
+      return Response.json({
+        state: null as string | null,
+        sandboxName: project.sandboxName,
+        previewOk,
+      });
+    }
+
     const state = await getSandboxLifecycle(project.sandboxName);
-    const previewUrl =
-      typeof project.previewUrl === "string" ? project.previewUrl : null;
     const previewOk =
       LIVE_STATES.has(state) && previewUrl
         ? await probePublicPreview(previewUrl)

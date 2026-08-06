@@ -12,6 +12,7 @@ import {
   requireOwnedProject,
 } from "./lib/auth";
 import { authedMutation } from "./lib/customFunctions";
+import { r2 } from "./siteSnapshots";
 
 export const create = authedMutation({
   args: {
@@ -87,7 +88,10 @@ export const remove = authedMutation({
   args: { projectId: v.id("projects") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireOwnedProject(ctx, args.projectId);
+    const { project } = await requireOwnedProject(ctx, args.projectId);
+    if (project.snapshotKey) {
+      await r2.deleteObject(ctx, project.snapshotKey);
+    }
     const msgs = await ctx.db
       .query("messages")
       .withIndex("by_project", (q) => q.eq("projectId", args.projectId))

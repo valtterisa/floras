@@ -13,14 +13,14 @@ const requestSchema = z.object({
   projectId: z.string().min(1),
 });
 
-function zipFilename(name: unknown, projectId: string): string {
+function archiveFilename(name: unknown, projectId: string): string {
   const raw = typeof name === "string" && name.trim() ? name.trim() : "site";
   const slug = raw
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
-  return `${slug || "site"}-${projectId.slice(-6)}.zip`;
+  return `${slug || "site"}-${projectId.slice(-6)}.tar.gz`;
 }
 
 export async function POST(req: Request) {
@@ -66,12 +66,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const blob = await exportSiteZip(project.sandboxName);
-    const filename = zipFilename(project.name, parsed.data.projectId);
+    const blob = await exportSiteZip(project.sandboxName, {
+      projectId: parsed.data.projectId,
+      token,
+    });
+    const filename = archiveFilename(project.name, parsed.data.projectId);
     return new Response(blob, {
       status: 200,
       headers: {
-        "Content-Type": "application/zip",
+        "Content-Type": "application/gzip",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store",
       },

@@ -57,9 +57,8 @@ export function sandboxMemoryMb(): number {
   return Number.isFinite(n) && n >= 1024 ? Math.floor(n) : 4096;
 }
 
-export function sandboxRegion(): string | undefined {
-  const region = process.env.BL_SANDBOX_REGION?.trim();
-  return region || undefined;
+export function sandboxRegion(): string {
+  return process.env.BL_SANDBOX_REGION?.trim() || "eu-lon-1";
 }
 
 export function sandboxNameForProject(projectId: string): string {
@@ -71,16 +70,16 @@ export function sandboxNameForProject(projectId: string): string {
   return `floras-${cleaned || "site"}`;
 }
 
+export function sandboxIdleTtl(): string | undefined {
+  const raw = process.env.BL_SANDBOX_IDLE_TTL?.trim();
+  if (raw === "0" || raw === "off" || raw === "none") return undefined;
+  return raw || "60d";
+}
+
 export function absoluteSitePath(relative: string): string {
   const cleaned = relative.replace(/^\/+/, "").trim();
   if (!cleaned) return SITE_ROOT;
   return `${SITE_ROOT.replace(/\/$/, "")}/${cleaned}`;
-}
-
-export function cfEnvPath(sandboxName: string): string {
-  const safe =
-    sandboxName.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 24) || "sandbox";
-  return `/tmp/.floras-cf-${safe}-${Date.now()}.env`;
 }
 
 export function sandboxLog(

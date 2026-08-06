@@ -107,25 +107,19 @@ export function isRetryableCloudflareError(error: unknown): boolean {
   return isRetryableNetworkError(error);
 }
 
-export function isRetryableWranglerError(error: unknown): boolean {
-  const message =
-    error instanceof Error
-      ? error.message.toLowerCase()
-      : typeof error === "string"
-        ? error.toLowerCase()
-        : "";
-
+export function isRetryableSandboxError(error: unknown): boolean {
+  const status = httpStatusFromError(error);
   if (
-    /\b(429|rate.?limit|502|503|504|timeout|timed out|network|econnreset|fetch failed)\b/.test(
-      message
-    )
+    status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
   ) {
     return true;
   }
-  return isRetryableNetworkError(error);
-}
 
-export function isRetryableSandboxError(error: unknown): boolean {
   const message =
     error instanceof Error
       ? error.message.toLowerCase()
@@ -134,9 +128,10 @@ export function isRetryableSandboxError(error: unknown): boolean {
         : "";
 
   if (
-    /\b(timeout|timed out|provision|temporarily|unavailable|retry|standby)\b/.test(
+    /\b(timeout|timed out|provision|temporarily|unavailable|retry|standby|gateway|unreachable|edge)\b/.test(
       message
-    )
+    ) ||
+    /\b504\b/.test(message)
   ) {
     return true;
   }

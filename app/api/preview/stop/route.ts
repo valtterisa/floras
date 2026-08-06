@@ -7,7 +7,7 @@ import { asProjectId } from "@/lib/convex/ids";
 import {
   sandboxConfigured,
   getSandboxLifecycle,
-  stopSandbox,
+  deleteSandboxResources,
 } from "@/lib/sandbox/client";
 import { AppError } from "@/lib/errors";
 
@@ -73,7 +73,20 @@ export async function POST(req: Request) {
     }
 
     after(() =>
-      stopSandbox(sandboxName)
+      (async () => {
+        try {
+          const { snapshotSiteToR2 } = await import(
+            "@/lib/sandbox/site-persistence"
+          );
+          await snapshotSiteToR2(sandboxName, projectId, token);
+        } catch (error) {
+          console.error("[preview:stop] snapshot failed", {
+            projectId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+        await deleteSandboxResources(sandboxName);
+      })()
         .then(() => {
           if (process.env.DEBUG_SANDBOX === "1") {
             console.info("[preview:stop] background ok", {

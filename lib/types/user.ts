@@ -13,6 +13,7 @@ export type WorkspaceProject = {
   busyAt?: number;
   previewUrl?: string;
   sandboxName?: string;
+  snapshotKey?: string;
   error?: string;
   modelId?: string;
   publishStatus?: string;

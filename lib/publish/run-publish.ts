@@ -6,19 +6,18 @@ import {
   deleteFlorasCname,
   upsertFlorasCname,
 } from "@/lib/cloudflare/dns";
+import { deployDistArchive } from "@/lib/cloudflare/deploy-dist";
 import {
   addDomain,
   cloudflareConfigured,
   deletePagesProject,
   ensurePagesProject,
-  getCloudflareConfig,
   getProjectPublishInfo,
 } from "@/lib/cloudflare/pages";
 import { AppError } from "@/lib/errors";
 import {
   isRetryableSandboxError,
   isRetryableCloudflareError,
-  isRetryableWranglerError,
   withRetry,
 } from "@/lib/publish/retry";
 import {
@@ -84,13 +83,20 @@ export async function runPublish(projectId: string, token: string) {
   if (!claimed) return;
 
   try {
-    await withRetry(() => sandbox.ensureSandboxReady(sandboxName), {
-      attempts: 3,
-      initialDelayMs: 1000,
-      maxDelayMs: 8000,
-      label: "ensureSandboxReady",
-      retryable: isRetryableSandboxError,
-    });
+    await withRetry(
+      () =>
+        sandbox.ensureSandboxReady(sandboxName, {
+          projectId,
+          token,
+        }),
+      {
+        attempts: 3,
+        initialDelayMs: 1000,
+        maxDelayMs: 8000,
+        label: "ensureSandboxReady",
+        retryable: isRetryableSandboxError,
+      }
+    );
 
     const ensured = await withRetry(() => ensurePagesProject(name), {
       attempts: 3,
@@ -104,22 +110,24 @@ export async function runPublish(projectId: string, token: string) {
     await sandbox.buildSite(sandboxName);
     await sandbox.assertDistPresent(sandboxName);
 
-    const creds = getCloudflareConfig();
-    await withRetry(
-      () =>
-        sandbox.deployDistWithWrangler(sandboxName, {
-          projectName: name,
-          apiToken: creds.apiToken,
-          accountId: creds.accountId,
-        }),
+    const distArchive = await withRetry(
+      () => sandbox.exportDistArchive(sandboxName),
       {
-        attempts: 3,
-        initialDelayMs: 1500,
-        maxDelayMs: 10000,
-        label: "deployDistWithWrangler",
-        retryable: isRetryableWranglerError,
+        attempts: 2,
+        initialDelayMs: 800,
+        maxDelayMs: 4000,
+        label: "exportDistArchive",
+        retryable: isRetryableSandboxError,
       }
     );
+
+    await withRetry(() => deployDistArchive(distArchive, name), {
+      attempts: 3,
+      initialDelayMs: 1500,
+      maxDelayMs: 10000,
+      label: "deployDistArchive",
+      retryable: isRetryableCloudflareError,
+    });
 
     const publishInfo = await withRetry(() => getProjectPublishInfo(name), {
       attempts: 4,
@@ -215,10 +223,6 @@ export async function runPublish(projectId: string, token: string) {
       { token }
     ).catch((secondary) => {
       console.error("Failed to set publish error", secondary);
-    });
-  } finally {
-    await sandbox.scrubCfEnv(sandboxName).catch((error) => {
-      console.error("Failed to scrub CF env", error);
     });
   }
 }

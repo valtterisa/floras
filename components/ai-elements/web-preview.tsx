@@ -144,43 +144,21 @@ export type WebPreviewUrlProps = ComponentProps<typeof Input>;
 
 export const WebPreviewUrl = ({
   value,
-  onChange,
-  onKeyDown,
   ...props
 }: WebPreviewUrlProps) => {
-  const { url, setUrl } = useWebPreview();
-  const [prevUrl, setPrevUrl] = useState(url);
-  const [inputValue, setInputValue] = useState(url);
-
-  // Sync input value with context URL when it changes externally (derived state pattern)
-  if (url !== prevUrl) {
-    setPrevUrl(url);
-    setInputValue(url);
+  const { url } = useWebPreview();
+  let display = "/";
+  try {
+    display = new URL(url).pathname || "/";
+  } catch {
+    display = url || "/";
   }
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value);
-    onChange?.(event);
-  };
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter") {
-        const target = event.target as HTMLInputElement;
-        setUrl(target.value);
-      }
-      onKeyDown?.(event);
-    },
-    [setUrl, onKeyDown]
-  );
 
   return (
     <Input
       className="h-8 flex-1 text-sm"
-      onChange={onChange ?? handleChange}
-      onKeyDown={handleKeyDown}
-      placeholder="Enter URL..."
-      value={value ?? inputValue}
+      placeholder="/"
+      value={value ?? display}
       {...props}
     />
   );
@@ -202,7 +180,6 @@ export const WebPreviewBody = ({
     <div className="size-full min-h-0">
       <iframe
         className={cn("size-full", className)}
-        // oxlint-disable-next-line eslint-plugin-react(iframe-missing-sandbox)
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
         src={(src ?? url) || undefined}
         title="Preview"

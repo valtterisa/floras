@@ -149,7 +149,7 @@ export function WorkspaceHeader({
 
       const disposition = res.headers.get("Content-Disposition");
       const match = disposition?.match(/filename="([^"]+)"/);
-      const filename = match?.[1] ?? `${name ?? "site"}.zip`;
+      const filename = match?.[1] ?? `${name ?? "site"}.tar.gz`;
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");

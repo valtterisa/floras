@@ -24,6 +24,7 @@
     "@auth/core": "0.37.0",
     "@blaxel/core": "^0.3.10",
     "@convex-dev/auth": "^0.0.94",
+    "@convex-dev/r2": "0.10.2",
     "@hookform/resolvers": "^5.4.0",
     "@hugeicons/core-free-icons": "^3.3.0",
     "@hugeicons/react": "^1.1.9",
@@ -89,6 +90,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-stick-to-bottom": "^1.1.6",
     "vaul": "^1.1.2",
+    "wrangler": "^4.119.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },

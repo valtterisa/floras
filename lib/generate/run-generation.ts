@@ -62,9 +62,10 @@ export async function runGeneration(projectId: string, token: string) {
     const session = createSandboxSession({
       projectId,
       projectName: typeof project.name === "string" ? project.name : "site",
+      token,
       initialSandboxName,
       initialPreviewUrl: previewUrl,
-      onSandbox: async (sandboxName) => {
+      onSandbox: async ({ sandboxName }) => {
         await fetchMutation(
           api.projects.setSandbox,
           { projectId: pid, sandboxName },
@@ -179,6 +180,21 @@ export async function runGeneration(projectId: string, token: string) {
       { projectId: pid, status: "ready" },
       { token }
     );
+
+    const sandboxName = session.currentSandboxName();
+    if (sandboxName) {
+      try {
+        const { snapshotSiteToR2 } = await import(
+          "@/lib/sandbox/site-persistence"
+        );
+        await snapshotSiteToR2(sandboxName, projectId, token);
+      } catch (error) {
+        console.error("[r2] post-generation snapshot failed", {
+          projectId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
   } catch (err) {
     const error = AppError.from(err);
     console.error("Generation failed:", error.detail);

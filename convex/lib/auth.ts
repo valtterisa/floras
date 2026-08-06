@@ -55,6 +55,7 @@ export const projectDocValidator = v.object({
   status: projectStatus,
   busyAt: v.optional(v.number()),
   sandboxName: v.optional(v.string()),
+  snapshotKey: v.optional(v.string()),
   previewUrl: v.optional(v.string()),
   plan: v.optional(v.any()),
   error: v.optional(v.string()),

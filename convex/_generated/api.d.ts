@@ -16,6 +16,7 @@ import type * as lib_customFunctions from "../lib/customFunctions.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as projects from "../projects.js";
+import type * as siteSnapshots from "../siteSnapshots.js";
 import type * as users from "../users.js";
 
 import type {
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   migrations: typeof migrations;
   projects: typeof projects;
+  siteSnapshots: typeof siteSnapshots;
   users: typeof users;
 }>;
 
@@ -62,4 +64,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  r2: import("@convex-dev/r2/_generated/component.js").ComponentApi<"r2">;
+};

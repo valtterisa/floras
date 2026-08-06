@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
@@ -24,6 +24,7 @@ import {
 } from "@/lib/ai/models";
 import { triggerAsk, triggerGeneration } from "@/lib/generate/trigger-api";
 import { errorCode, userFacingError } from "@/lib/errors";
+import { onPreviewFixRequest } from "@/lib/workspace/detect-preview-errors";
 
 function ChatBillingBanner({
   billingReady,
@@ -179,6 +180,26 @@ export function ChatPanel({
       return false;
     }
   };
+
+  const handleRef = useRef(handle);
+  handleRef.current = handle;
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
+
+  useEffect(() => {
+    return onPreviewFixRequest((prompt) => {
+      if (pendingRef.current) {
+        toast.message(t("fixQueuedBusy"));
+        return;
+      }
+      setMode("build");
+      void handleRef
+        .current(prompt, resolveAgentModelId(project?.modelId ?? null), "build")
+        .then((ok) => {
+          if (ok) toast.success(t("fixSent"));
+        });
+    });
+  }, [project?.modelId, t]);
 
   return (
     <div className="flex h-full flex-col">

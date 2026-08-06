@@ -28,13 +28,14 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
 - **Sandbox/preview:** `lib/sandbox/client.ts` wraps `@blaxel/core`. Each project gets
   a named Blaxel sandbox (`floras-{projectId}`) running the Astro (or bun/pnpm) dev
   server on port 4321, exposed via Blaxel preview URLs (`*.preview.bl.run`).
-  Convex stores `sandboxName` on the project; there is no separate subdomain field.
-- **Publish / domains:** Next.js routes `app/api/publish` and `app/api/domains`. Build +
-  Wrangler Direct Upload run **inside** the sandbox; Pages project/domain CRUD uses the
-  official `cloudflare` SDK. Because Pages has no wildcard custom domains, publish
-  also upserts a DNS CNAME for `{id}.floras.app` → the project `*.pages.dev` host.
-  Live URL is the floras.app hostname (custom domains optional afterward).
-  **Pro only** — BYOK is export-only (no Floras hosting).
+  Convex stores `sandboxName` on the project. Site files are snapshotted to Cloudflare
+  R2 via `@convex-dev/r2` (`sites/{projectId}/workspace.tar.gz`, field `snapshotKey`)
+  after generation and on preview stop; recreate restores from R2 before cloning the
+  template. No Blaxel volumes (free-tier incompatible).
+- **Publish / domains:** Next.js routes `app/api/publish` and `app/api/domains`. Sandbox
+  builds the site; Next.js pulls `dist` and runs Wrangler Direct Upload locally so
+  `CLOUDFLARE_*` never enters the VM. Pages/DNS CRUD uses the `cloudflare` SDK. Publish
+  also upserts `{id}.floras.app` → `*.pages.dev`. **Pro only** — BYOK is export-only.
 - **Billing:** `autumn-js` via Next.js (`app/api/autumn/[...all]`, `lib/billing/get-access.ts`,
   fail-closed in production; fail-open only when `BILLING_FAIL_OPEN=1` or non-prod) + `autumn.config.ts` plans.
   Plans: **BYOK** ($5/mo, user Anthropic key, preview + export) and **Pro** (credits + hosting).
@@ -56,16 +57,21 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
   `BL_TEMPLATE_REPO`, `AUTUMN_SECRET_KEY`, Cloudflare publish vars below. Optional:
   `AGENT_MODEL` (defaults to `claude-sonnet-5`), `BL_TEMPLATE_REF` (default `main`),
   `BL_TEMPLATE_GITHUB_TOKEN`, `BL_SANDBOX_IMAGE` (default `blaxel/node:latest`),
-  `BL_SANDBOX_REGION`, `BL_SANDBOX_MEMORY_MB`, `BL_SITE_ROOT` (defaults to `/app`),
-  `BL_PREVIEW_PORT` (defaults to `4321`). New sandboxes clone `BL_TEMPLATE_REPO`
-  once into the site root when empty.
+  `BL_SANDBOX_REGION` (default `eu-lon-1`), `BL_SANDBOX_MEMORY_MB`, `BL_SANDBOX_IDLE_TTL` (default `60d`;
+  set `off` to disable), `BL_SITE_ROOT` (defaults to `/app`), `BL_PREVIEW_PORT`
+  (defaults to `4321`). Site persistence uses Cloudflare R2 through the Convex
+  `@convex-dev/r2` component (not Blaxel volumes). Set on the **Convex** deployment:
+  `R2_BUCKET` (`floras-sites`), `R2_ENDPOINT`
+  (`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`), `R2_ACCESS_KEY_ID`,
+  `R2_SECRET_ACCESS_KEY`, and optionally `R2_TOKEN`. Bucket CORS must allow GET/PUT
+  from your app origins. Template repo is cloned into the sandbox only when empty
+  and no R2 snapshot exists.
 - **Cloudflare publish (Next.js `.env.local` / host secrets, not sandbox env):**
   `CLOUDFLARE_API_TOKEN` (User token: Account → Cloudflare Pages → Edit **and**
   Zone → DNS → Edit on `floras.app`), `CLOUDFLARE_ACCOUNT_ID`, and
   `CLOUDFLARE_ZONE_ID` (floras.app zone). Pages does not support wildcard custom
   domains, so publish upserts a per-site CNAME `{id}.floras.app` → `*.pages.dev`.
-  Do **not** put these permanently in sandbox env — publish injects them into the
-  sandbox only for the Wrangler deploy command, then scrubs the temp file.
+  Do **not** put these in sandbox env — publish uploads from the Next.js process only.
 - **Cloudflare Email Sending (form notifications, Next.js only):** Onboard
   `floras.app` under Dashboard → Compute → Email Service → Email Sending (Workers
   Paid). Token needs Account → Email Sending → Edit (`CLOUDFLARE_API_TOKEN` or

@@ -330,6 +330,8 @@
     "resetting": "Nollataan…",
     "resetSuccess": "Nollattu. Voit lähettää uudelleen.",
     "couldNotReset": "Nollaaminen epäonnistui",
+    "fixSent": "Esikatseluvirhe lähetetty chattiin.",
+    "fixQueuedBusy": "Odota vuoron päättymistä, sitten yritä Korjaa chatissa uudelleen.",
     "thinking": "Ajatellaan",
     "thoughtForOne": "Ajateltiin 1 sekunti",
     "thoughtForMany": "Ajateltiin {seconds} sekuntia",
@@ -433,7 +435,15 @@
     "restartPreview": "Käynnistä esikatselu uudelleen",
     "restarted": "Hiekkalaatikko käynnistetty uudelleen.",
     "couldNotStart": "Hiekkalaatikkoa ei voitu käynnistää.",
-    "couldNotRestart": "Hiekkalaatikkoa ei voitu käynnistää uudelleen."
+    "couldNotRestart": "Hiekkalaatikkoa ei voitu käynnistää uudelleen.",
+    "console": {
+      "title": "Konsoli",
+      "empty": "Ei prosessitulostetta vielä.",
+      "clear": "Tyhjennä",
+      "fixInChat": "Korjaa chatissa",
+      "dismiss": "Hylkää",
+      "resize": "Muuta konsolin kokoa"
+    }
   },
   "account": {
     "title": "Tili",

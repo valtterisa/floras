@@ -90,7 +90,11 @@ function assertAllowedCommand(command: string): string {
   if (/[;&|`$(){}]|<<|>>|>|<|\n|\r|\$\(|\$\{/.test(trimmed)) {
     throw new AppError("unknown", "Command rejected: unsafe shell syntax.");
   }
-  if (/\.\.|\/etc\/|floras-cf\.env|CLOUDFLARE_|AUTUMN_|ANTHROPIC_/i.test(trimmed)) {
+  if (
+    /\.\.|\/etc\/|\/proc\/|\/sys\/|environ|printenv|floras-cf|\.floras-cf|CLOUDFLARE_|AUTUMN_|ANTHROPIC_|BYOK_/i.test(
+      trimmed
+    )
+  ) {
     throw new AppError("unknown", "Command rejected: forbidden path or secret.");
   }
 
@@ -105,10 +109,15 @@ function assertAllowedCommand(command: string): string {
   if (/^rm\b/.test(trimmed) && /(-rf|--no-preserve-root|\/)\b/.test(trimmed)) {
     throw new AppError("unknown", "Command rejected: destructive rm.");
   }
+  if (/^find\b/.test(trimmed) && /(\/proc|\/sys|\/etc)\b/.test(trimmed)) {
+    throw new AppError("unknown", "Command rejected: forbidden path.");
+  }
   return trimmed;
 }
 
 const INSTRUCTIONS = `You are an expert Astro web engineer. Sites live in the sandbox project root (paths like src/, public/, package.json). Edit in place. Do not recreate package.json or reinstall the framework unless something is broken. Never restart the Astro dev server manually.
+
+If the live preview is blank, 502, or failing to boot, call read_preview_logs and fix the reported Astro/build errors.
 
 FIRST TOOL CALL (mandatory)
 Call inspect_site before any other tool. Follow the returned mode exactly:
@@ -396,6 +405,25 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
           ok: true,
           publishedUrl: result.publishedUrl,
           domain: null,
+        };
+      },
+    }),
+    read_preview_logs: tool({
+      description:
+        "Read the Astro preview server (astro-dev) stdout/stderr. Use when the preview is blank, 502, or the site fails to start.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const sandboxName = await requireSandbox();
+        const result = await sandboxClient.getDevProcessLogs(sandboxName);
+        await onStep({
+          kind: "command",
+          label: result.found
+            ? "Read preview console"
+            : "Preview process not running",
+        });
+        return {
+          found: result.found,
+          logs: result.logs.slice(-12_000),
         };
       },
     }),

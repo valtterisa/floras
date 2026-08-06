@@ -330,6 +330,8 @@
     "resetting": "Resetting…",
     "resetSuccess": "Reset. You can send again.",
     "couldNotReset": "Could not reset",
+    "fixSent": "Sent preview error to chat.",
+    "fixQueuedBusy": "Wait until the current turn finishes, then try Fix in chat again.",
     "thinking": "Thinking",
     "thoughtForOne": "Thought for 1 second",
     "thoughtForMany": "Thought for {seconds} seconds",
@@ -433,7 +435,15 @@
     "restartPreview": "Restart preview",
     "restarted": "Sandbox restarted.",
     "couldNotStart": "Could not start sandbox.",
-    "couldNotRestart": "Could not restart sandbox."
+    "couldNotRestart": "Could not restart sandbox.",
+    "console": {
+      "title": "Console",
+      "empty": "No process output yet.",
+      "clear": "Clear",
+      "fixInChat": "Fix in chat",
+      "dismiss": "Dismiss",
+      "resize": "Resize console"
+    }
   },
   "account": {
     "title": "Account",
