@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
 import { appErrorResponse, AppError } from "@/lib/errors";
 import { sandboxConfigured, exportSiteZip } from "@/lib/sandbox/client";
+import { isCanonicalSandboxName } from "@/lib/sandbox/config";
 
 export const maxDuration = 300;
 export const runtime = "nodejs";
@@ -61,6 +62,13 @@ export async function POST(req: Request) {
         "preview",
         "Export requires a sandbox. Generate the site first."
       ),
+      400
+    );
+  }
+
+  if (!isCanonicalSandboxName(parsed.data.projectId, project.sandboxName)) {
+    return appErrorResponse(
+      new AppError("preview", "Invalid sandbox binding for this project."),
       400
     );
   }

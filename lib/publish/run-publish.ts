@@ -2,6 +2,7 @@ import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
 import * as sandbox from "@/lib/sandbox/client";
+import { isCanonicalSandboxName } from "@/lib/sandbox/config";
 import {
   deleteFlorasCname,
   upsertFlorasCname,
@@ -44,6 +45,21 @@ export async function runPublish(projectId: string, token: string) {
         error: new AppError(
           "publish",
           "Publish requires a sandbox. Generate the site first."
+        ).message,
+      },
+      { token }
+    );
+    return;
+  }
+
+  if (!isCanonicalSandboxName(projectId, sandboxName)) {
+    await fetchMutation(
+      api.projects.setPublishError,
+      {
+        projectId: asProjectId(projectId),
+        error: new AppError(
+          "publish",
+          "Invalid sandbox binding for this project."
         ).message,
       },
       { token }

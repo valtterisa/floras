@@ -4,6 +4,7 @@ import { z } from "zod";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
 import { sandboxConfigured } from "@/lib/sandbox/client";
+import { isCanonicalSandboxName } from "@/lib/sandbox/config";
 import { appErrorResponse, AppError } from "@/lib/errors";
 
 const requestSchema = z.object({
@@ -57,6 +58,13 @@ export async function withPreviewProject(
   if (!project.sandboxName || typeof project.sandboxName !== "string") {
     return Response.json(
       { error: "No sandbox for this project yet.", code: "preview" },
+      { status: 400 }
+    );
+  }
+
+  if (!isCanonicalSandboxName(parsed.data.projectId, project.sandboxName)) {
+    return Response.json(
+      { error: "Invalid sandbox binding for this project.", code: "preview" },
       { status: 400 }
     );
   }

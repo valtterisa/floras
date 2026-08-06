@@ -28,10 +28,13 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
 - **Sandbox/preview:** `lib/sandbox/client.ts` wraps `@blaxel/core`. Each project gets
   a named Blaxel sandbox (`floras-{projectId}`) running the Astro (or bun/pnpm) dev
   server on port 4321, exposed via Blaxel preview URLs (`*.preview.bl.run`).
-  Convex stores `sandboxName` on the project. Site files are snapshotted to Cloudflare
-  R2 via `@convex-dev/r2` (`sites/{projectId}/workspace.tar.gz`, field `snapshotKey`)
-  after generation and on preview stop; recreate restores from R2 before cloning the
-  template. No Blaxel volumes (free-tier incompatible).
+  Preview URLs are public (`public: true`) so anyone with the URL can view the draft
+  site — treat leaked URLs as confidentiality loss; do not put secrets in generated
+  sites. Convex stores `sandboxName` on the project (must match `floras-{projectId}`;
+  `setSandbox` and API entrypoints reject foreign names). Site files are snapshotted to
+  Cloudflare R2 via `@convex-dev/r2` (`sites/{projectId}/workspace.tar.gz`, field
+  `snapshotKey`) after generation and on preview stop; recreate restores from R2 before
+  cloning the template. No Blaxel volumes (free-tier incompatible).
 - **Publish / domains:** Next.js routes `app/api/publish` and `app/api/domains`. Sandbox
   builds the site; Next.js pulls `dist` and runs Wrangler Direct Upload locally so
   `CLOUDFLARE_*` never enters the VM. Pages/DNS CRUD uses the `cloudflare` SDK. Publish
@@ -84,10 +87,11 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
   `{CONVEX_SITE_URL}/api/auth/callback/google`. Not the Anthropic/Blaxel/CF keys.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).
   Includes `byok` ($5/mo), `pro`, `pro_yearly`, and `credit_top_up`.
-- **Preview iframes** load Blaxel preview URLs (`*.preview.bl.run`); the cloned
-  Astro template must set `server.allowedHosts: true` and bind `0.0.0.0` (or
-  `HOST=0.0.0.0`) so those hosts are not blocked. Declare port `4321` at sandbox
-  creation (ports cannot be added later).
+- **Preview iframes** load Blaxel preview URLs (`*.preview.bl.run`); those URLs are
+  world-readable if leaked. The cloned Astro template must set
+  `server.allowedHosts: true` and bind `0.0.0.0` (or `HOST=0.0.0.0`) so those hosts
+  are not blocked. Declare port `4321` at sandbox creation (ports cannot be added
+  later).
 - **Typecheck:** `pnpm typecheck` / `next build` both enforce TypeScript. Auth gating
   lives in `proxy.ts` (Next.js 16 network proxy).
 - **Busy jobs:** generate/publish use atomic `claimGeneration` / `claimPublish`. Stuck

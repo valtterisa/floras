@@ -12,6 +12,7 @@ import {
   requireOwnedProject,
 } from "./lib/auth";
 import { authedMutation } from "./lib/customFunctions";
+import { sandboxNameForProject } from "./lib/sandboxName";
 import { r2 } from "./siteSnapshots";
 
 export const create = authedMutation({
@@ -216,6 +217,12 @@ export const setSandbox = authedMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
+    const expected = sandboxNameForProject(args.projectId);
+    if (args.sandboxName !== expected) {
+      throw new Error(
+        `sandboxName must be ${expected} for this project`
+      );
+    }
     await ctx.db.patch(args.projectId, {
       sandboxName: args.sandboxName,
     });

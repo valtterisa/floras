@@ -9,6 +9,7 @@ import {
   getSandboxLifecycle,
   deleteSandboxResources,
 } from "@/lib/sandbox/client";
+import { isCanonicalSandboxName } from "@/lib/sandbox/config";
 import { AppError } from "@/lib/errors";
 
 export const maxDuration = 300;
@@ -51,6 +52,13 @@ export async function POST(req: Request) {
 
   if (!project?.sandboxName) {
     return Response.json({ ok: true as const, skipped: true });
+  }
+
+  if (!isCanonicalSandboxName(parsed.data.projectId, project.sandboxName)) {
+    return Response.json(
+      { error: "Invalid sandbox binding for this project.", code: "preview" },
+      { status: 400 }
+    );
   }
 
   const sandboxName = project.sandboxName;

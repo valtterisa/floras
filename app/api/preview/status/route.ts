@@ -8,6 +8,7 @@ import {
   getSandboxLifecycle,
   probePublicPreview,
 } from "@/lib/sandbox/client";
+import { isCanonicalSandboxName } from "@/lib/sandbox/config";
 import { AppError } from "@/lib/errors";
 
 export const runtime = "nodejs";
@@ -60,6 +61,16 @@ export async function GET(req: Request) {
       sandboxName: null as string | null,
       previewOk: false,
     });
+  }
+
+  if (
+    typeof project.sandboxName !== "string" ||
+    !isCanonicalSandboxName(parsed.data.projectId, project.sandboxName)
+  ) {
+    return Response.json(
+      { error: "Invalid sandbox binding for this project.", code: "preview" },
+      { status: 400 }
+    );
   }
 
   const previewUrl =

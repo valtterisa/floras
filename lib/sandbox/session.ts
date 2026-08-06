@@ -24,11 +24,13 @@ export type SandboxSession = {
 export function createSandboxSession(
   opts: SandboxSessionOptions
 ): SandboxSession {
-  let sandboxName = opts.initialSandboxName?.trim() || undefined;
+  const preferredName = sandboxNameForProject(opts.projectId);
+  const initial = opts.initialSandboxName?.trim() || undefined;
+  let sandboxName =
+    initial && initial === preferredName ? initial : undefined;
   let previewUrl = opts.initialPreviewUrl?.trim() || null;
   let readyPromise: Promise<string> | null = null;
   let previewPromise: Promise<string> | null = null;
-  const preferredName = sandboxNameForProject(opts.projectId);
   const persistence = {
     projectId: opts.projectId,
     token: opts.token,

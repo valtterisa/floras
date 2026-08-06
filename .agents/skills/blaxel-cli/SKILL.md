@@ -1,7 +1,7 @@
 ---
 name: blaxel-cli
 description: Manage Blaxel resources from the command line using the bl CLI. Deploy agents, sandboxes, jobs, and MCP servers. Also installs the Blaxel CLI if not present.
-allowed-tools: Bash(bl:*), Bash(curl:*)
+allowed-tools: Bash(bl:*)
 ---
 
 # Blaxel CLI
@@ -17,13 +17,7 @@ The `bl` command must be available on PATH. To check:
 bl version
 ```
 
-If not installed, install via the official install script:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/blaxel-ai/toolkit/main/install.sh | sh
-```
-
-Or via Homebrew:
+If not installed, install via Homebrew:
 
 ```bash
 brew tap blaxel-ai/blaxel && brew install blaxel

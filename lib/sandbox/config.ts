@@ -70,6 +70,13 @@ export function sandboxNameForProject(projectId: string): string {
   return `floras-${cleaned || "site"}`;
 }
 
+export function isCanonicalSandboxName(
+  projectId: string,
+  sandboxName: string
+): boolean {
+  return sandboxName === sandboxNameForProject(projectId);
+}
+
 export function sandboxIdleTtl(): string | undefined {
   const raw = process.env.BL_SANDBOX_IDLE_TTL?.trim();
   if (raw === "0" || raw === "off" || raw === "none") return undefined;
