@@ -69,6 +69,7 @@ export const projectDocValidator = v.object({
   customDomainStatus: v.optional(domainStatus),
   customDomainError: v.optional(v.string()),
   customDomainUpdatedAt: v.optional(v.number()),
+  formPublicKey: v.optional(v.string()),
 });
 
 export const messageDocValidator = v.object({

@@ -20,6 +20,15 @@ Motion = CSS only (hover, transform/opacity, optional one-shot .reveal). Honor p
 - Vary section layouts; no 3+ zigzag splits in a row. Bento cells = exact content count.
 - Copy: concrete verbs; no Elevate/Seamless/Unleash; re-read every string before finish.
 
+## Contact forms (required for local businesses / contact intents)
+When SitePlan has a \`contact\` section (or the brief asks for contact/booking/inquiry):
+- Build a real HTML form (name, email, message; phone if in plan). Never mailto-only "forms".
+- POST JSON to the Floras submit URL from agent context (FORMS_SUBMIT_URL) with body:
+  \`{ "key": FORM_PUBLIC_KEY, "fields": { name, email, message, phone? }, "pagePath": location.pathname, "_hp": "" }\`
+- Include a hidden honeypot input named \`_hp\` (leave empty; bots fill it).
+- On success show inline confirmation; on error show a short retry message. Disable the button while submitting.
+- Use fetch() from a small \`<script>\` in the page or component. No third-party form SaaS.
+
 ## Implement
 Edit site/ in place. Complete file writes. Short markdown summary when done.
 `;

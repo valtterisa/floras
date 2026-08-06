@@ -1,0 +1,164 @@
+{
+  "meta": {
+    "tagline": "A website from one sentence",
+    "description": "Describe your business in plain English. Floras builds a real website you can preview, tweak in chat, and share — no coding or design skills needed."
+  },
+  "nav": {
+    "signIn": "Sign in",
+    "startBuilding": "Start building",
+    "dashboard": "Dashboard",
+    "signOut": "Sign out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language"
+  },
+  "footer": {
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "tagline": "Describe your business. Get a website you can open and share."
+  },
+  "hero": {
+    "titleBefore": "A live site from",
+    "titleAccent": "one sentence",
+    "titleAfter": ".",
+    "subtitle": "No code. No designer. Just describe what you need."
+  },
+  "composer": {
+    "suggestions": {
+      "0": "Website for a solar-panel installer",
+      "1": "Simple portfolio for a photographer",
+      "2": "Launch site with a blog for a coffee roaster",
+      "3": "Booking page for a yoga studio"
+    }
+  },
+  "features": {
+    "title": "Built for people who need a website, not a web team.",
+    "description": "Describe your business. Get a polished site you can refine in conversation and share with confidence.",
+    "asideTitle": "From idea to something you can open.",
+    "asideBody": "Write one sentence. Watch a full website appear with a live preview — then keep editing until it feels right.",
+    "points": {
+      "looks": {
+        "title": "Looks intentional",
+        "body": "Clear layout, thoughtful spacing, and a design that fits your business — so it feels made for you, not templated."
+      },
+      "ready": {
+        "title": "Ready to show",
+        "body": "Share a live link the same day. Clients and teammates see the real site, not a sketch."
+      },
+      "easy": {
+        "title": "Easy to change",
+        "body": "Ask for a new headline, section, or tone. Chat until it matches what you meant."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "From sentence to site.",
+    "description": "From idea to live preview without opening a design tool.",
+    "steps": {
+      "0": {
+        "title": "Describe",
+        "body": "Write one sentence about your business, offer, or idea. Floras picks a look that fits."
+      },
+      "1": {
+        "title": "See it live",
+        "body": "In moments you get a real website you can open, click through, and share."
+      },
+      "2": {
+        "title": "Refine",
+        "body": "Ask for new copy, sections, or colors in chat. The preview updates as you go."
+      }
+    }
+  },
+  "logoWall": {
+    "title": "Made for",
+    "audiences": {
+      "shops": "Local shops",
+      "creators": "Creators",
+      "consultants": "Consultants",
+      "cafes": "Cafés & studios"
+    }
+  },
+  "pricing": {
+    "title": "Simple pricing.",
+    "description": "Tokens, hosting, and SEO-ready Astro — top up when you want to go further."
+  },
+  "cta": {
+    "title": "Your next website is one sentence away.",
+    "description": "Describe the site. Preview it live. Publish when it feels right.",
+    "button": "Create your site"
+  },
+  "plans": {
+    "byok": [
+      "Bring your own Anthropic key",
+      "Live preview sandboxes",
+      "Export ZIP (self-host)",
+      "No Floras hosting"
+    ],
+    "pro": [
+      "$20 of AI credits every month",
+      "Hosting included",
+      "Top up credits to keep editing",
+      "SEO-ready Astro that ranks"
+    ],
+    "proExtended": [
+      "$20 of AI credits every month",
+      "Hosting included",
+      "Top up credits to keep editing",
+      "SEO-ready Astro that ranks",
+      "Export ZIP anytime"
+    ]
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "signUpTitle": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "continue": "Continue",
+    "withGoogle": "Continue with Google",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "signUpLink": "Sign up",
+    "signInLink": "Sign in"
+  },
+  "dashboard": {
+    "newChat": "New chat",
+    "inbox": "Inbox",
+    "recentChats": "Recent chats",
+    "searchChats": "Search chats",
+    "searchPlaceholder": "Search…",
+    "loading": "Loading…",
+    "noMatches": "No matches",
+    "noChats": "No chats yet",
+    "account": "Account",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "noPlan": "No plan",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "title": "Dashboard",
+    "emptyTitle": "Start a site",
+    "emptyDescription": "Describe what you need. Floras builds it and opens a live preview."
+  },
+  "inbox": {
+    "title": "Inbox",
+    "description": "Messages from contact forms on your sites.",
+    "site": "Site",
+    "allSites": "All sites",
+    "showArchived": "Show archived",
+    "showingArchived": "Showing archived",
+    "emptyTitle": "Inbox is empty",
+    "emptyDescription": "When visitors submit a contact form on a published or preview site, their messages land here.",
+    "emptyArchivedTitle": "No archived messages",
+    "emptyArchivedDescription": "Archived submissions will show up here.",
+    "loading": "Loading…",
+    "visitor": "Visitor",
+    "archive": "Archive",
+    "restore": "Restore"
+  },
+  "useCase": {
+    "eyebrow": "Built for your business",
+    "cta": "Build this site",
+    "proof": "Describe the business once. Get a live site you can refine in chat and publish when ready."
+  }
+}

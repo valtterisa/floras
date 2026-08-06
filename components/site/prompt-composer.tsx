@@ -36,6 +36,7 @@ export interface PromptComposerProps {
   autoFocus?: boolean;
   className?: string;
   defaultModelId?: AgentModelId;
+  defaultValue?: string;
   mode?: ComposerMode;
   defaultMode?: ComposerMode;
   onModeChange?: (mode: ComposerMode) => void;
@@ -52,6 +53,7 @@ export function PromptComposer({
   autoFocus = false,
   className,
   defaultModelId = DEFAULT_AGENT_MODEL_ID,
+  defaultValue = "",
   mode: controlledMode,
   defaultMode = "build",
   onModeChange,
@@ -59,7 +61,7 @@ export function PromptComposer({
   pendingLabel,
   showModeToggle = true,
 }: PromptComposerProps) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState(defaultValue);
   const [modelId, setModelId] = useState<AgentModelId>(defaultModelId);
   const [uncontrolledMode, setUncontrolledMode] =
     useState<ComposerMode>(defaultMode);

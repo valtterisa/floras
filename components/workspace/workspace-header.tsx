@@ -7,7 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";

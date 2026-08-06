@@ -8,6 +8,7 @@ import { createSandboxSession } from "@/lib/box/sandbox-session";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
 import { AppError } from "@/lib/errors";
 import type { SitePlan } from "@/lib/schema/site";
+import { getSiteUrl } from "@/lib/seo";
 
 export async function runGeneration(projectId: string, token: string) {
   const pid = asProjectId(projectId);
@@ -103,6 +104,13 @@ export async function runGeneration(projectId: string, token: string) {
         ? (project.plan as SitePlan)
         : null;
 
+    const formPublicKey = await fetchMutation(
+      api.forms.ensureFormPublicKey,
+      { projectId: pid },
+      { token }
+    );
+    const formsSubmitUrl = `${getSiteUrl()}/api/forms/submit`;
+
     const agent = buildSiteAgent({
       sandbox,
       projectId,
@@ -116,6 +124,8 @@ export async function runGeneration(projectId: string, token: string) {
         typeof me.customInstructions === "string"
           ? me.customInstructions
           : undefined,
+      formPublicKey,
+      formsSubmitUrl,
       onStep: async (step) => {
         await fetchMutation(
           api.messages.addStep,

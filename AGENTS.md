@@ -61,6 +61,12 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   Do **not** put these in Box Dashboard → Secrets — user Boxes are `noEnv` and
   must not receive Floras hosting credentials. Publish injects them into the Box
   only for the Wrangler deploy command, then scrubs the temp file.
+- **Cloudflare Email Sending (form notifications, Next.js only):** Onboard
+  `floras.app` under Dashboard → Compute → Email Service → Email Sending (Workers
+  Paid). Token needs Account → Email Sending → Edit (`CLOUDFLARE_API_TOKEN` or
+  `CLOUDFLARE_EMAIL_API_TOKEN`). Set `EMAIL_FROM` (e.g. `Floras <noreply@floras.app>`).
+  Client: `lib/email/send.ts` → REST `POST .../email/sending/send`. Never inject
+  email credentials into Boxes.
 - **Convex deployment env** (set with `npx convex env set`): Convex Auth keys via
   `npx @convex-dev/auth` (`JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`), plus Google OAuth
   `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`. Redirect URI:

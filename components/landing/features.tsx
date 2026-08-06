@@ -1,30 +1,22 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Reveal } from "@/components/site/reveal";
 import { PageHeader } from "@/components/site/page-header";
 
-const POINTS = [
-  {
-    title: "Looks intentional",
-    body: "Clear layout, thoughtful spacing, and a design that fits your business — so it feels made for you, not templated.",
-  },
-  {
-    title: "Ready to show",
-    body: "Share a live link the same day. Clients and teammates see the real site, not a sketch.",
-  },
-  {
-    title: "Easy to change",
-    body: "Ask for a new headline, section, or tone. Chat until it matches what you meant.",
-  },
-];
+const POINT_KEYS = ["looks", "ready", "easy"] as const;
 
 export function Features() {
+  const t = useTranslations("features");
+
   return (
     <section id="features" className="border-b border-border">
       <div className="border-b border-border px-4 py-10 md:px-8 md:py-12">
         <Reveal>
           <PageHeader
             size="section"
-            title="Built for people who need a website, not a web team."
-            description="Describe your business. Get a polished site you can refine in conversation and share with confidence."
+            title={t("title")}
+            description={t("description")}
             className="md:items-start"
           />
         </Reveal>
@@ -51,29 +43,28 @@ export function Features() {
           </div>
           <div className="border-t border-border px-4 py-7 md:px-8">
             <h3 className="text-xl font-semibold tracking-tight">
-              From idea to something you can open.
+              {t("asideTitle")}
             </h3>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
-              Write one sentence. Watch a full website appear with a live
-              preview — then keep editing until it feels right.
+              {t("asideBody")}
             </p>
           </div>
         </Reveal>
 
         <div className="flex flex-col">
-          {POINTS.map((point, i) => (
+          {POINT_KEYS.map((key, i) => (
             <Reveal
-              key={point.title}
+              key={key}
               delay={0.05 * (i + 1)}
               className={`flex flex-1 flex-col justify-center px-4 py-8 md:px-8 ${
-                i < POINTS.length - 1 ? "border-b border-border" : ""
+                i < POINT_KEYS.length - 1 ? "border-b border-border" : ""
               }`}
             >
               <h3 className="text-lg font-semibold tracking-tight">
-                {point.title}
+                {t(`points.${key}.title`)}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {point.body}
+                {t(`points.${key}.body`)}
               </p>
             </Reveal>
           ))}

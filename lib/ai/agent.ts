@@ -41,6 +41,8 @@ export interface BuildAgentOptions {
   projectName?: string;
   customInstructions?: string;
   model: LanguageModel;
+  formPublicKey?: string;
+  formsSubmitUrl?: string;
 }
 
 function siteAlreadyKnown(opts: BuildAgentOptions): boolean {
@@ -139,6 +141,9 @@ Use setup_domain / check_domain / remove_domain when asked. Site must already be
 Never dump large explanations between tool calls. User-facing text must stay short markdown.
 Write flowing paragraphs. Do not hard-wrap or insert line breaks mid-sentence. Use a blank line only between paragraphs or list blocks.
 
+CONTACT / LOCAL BUSINESS
+For local businesses, service trades, restaurants, salons, clinics, and any brief that wants contact or bookings: include a \`contact\` section in plan_site and implement a working Floras-backed form (see design skill). Do not use mailto as the only contact path.
+
 ${DESIGN_SKILL}`;
 
 function buildInstructions(opts: BuildAgentOptions): string {
@@ -151,7 +156,17 @@ Honor these preferences in every reply (including how you address the user) when
 ${custom}`
     : "";
 
-  return `${INSTRUCTIONS}${customBlock}`;
+  const formBlock =
+    opts.formPublicKey && opts.formsSubmitUrl
+      ? `
+
+FORMS (wire contact sections to these exact values)
+FORM_PUBLIC_KEY=${opts.formPublicKey}
+FORMS_SUBMIT_URL=${opts.formsSubmitUrl}
+Use these when implementing contact forms. Do not invent other endpoints.`
+      : "";
+
+  return `${INSTRUCTIONS}${formBlock}${customBlock}`;
 }
 
 export function buildSiteAgent(opts: BuildAgentOptions) {

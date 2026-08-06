@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { ConvexError } from "convex/values";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +116,7 @@ export function AuthForm({
   variant = "page",
   className,
 }: AuthFormProps) {
+  const t = useTranslations("auth");
   const { signIn } = useAuthActions();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -179,7 +180,7 @@ export function AuthForm({
             isModal ? "text-xl" : "text-2xl md:text-3xl"
           )}
         >
-          {isSignUp ? "Create your account" : "Welcome back"}
+          {isSignUp ? t("signUpTitle") : t("loginTitle")}
         </h1>
         <p className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
           {pendingPrompt
@@ -200,9 +201,7 @@ export function AuthForm({
           <GoogleMark className="size-4" />
           {googleLoading
             ? "Redirecting…"
-            : isSignUp
-              ? "Sign up with Google"
-              : "Continue with Google"}
+            : t("withGoogle")}
         </Button>
 
         <div className="flex items-center gap-3">
@@ -215,7 +214,7 @@ export function AuthForm({
 
         <form onSubmit={onPasswordSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input
               id="email"
               name="email"
@@ -226,7 +225,7 @@ export function AuthForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Input
               id="password"
               name="password"
@@ -273,12 +272,12 @@ export function AuthForm({
       </p>
 
       <p className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
-        {isSignUp ? "Already have an account?" : "New to Floras?"}{" "}
+        {isSignUp ? t("hasAccount") : t("noAccount")}{" "}
         <Link
           href={switchHref}
           className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground underline underline-offset-4 transition-colors hover:text-brand"
         >
-          {isSignUp ? "Sign in" : "Create one"}
+          {isSignUp ? t("signInLink") : t("signUpLink")}
         </Link>
       </p>
     </div>

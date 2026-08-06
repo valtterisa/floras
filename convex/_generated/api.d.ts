@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_customFunctions from "../lib/customFunctions.js";
@@ -24,6 +25,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  forms: typeof forms;
   http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/customFunctions": typeof lib_customFunctions;

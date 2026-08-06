@@ -1,40 +1,32 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Reveal } from "@/components/site/reveal";
 import { PageHeader } from "@/components/site/page-header";
 
-const STEPS = [
-  {
-    title: "Describe",
-    body: "Write one sentence about your business, offer, or idea. Floras picks a look that fits.",
-  },
-  {
-    title: "See it live",
-    body: "In moments you get a real website you can open, click through, and share.",
-  },
-  {
-    title: "Refine",
-    body: "Ask for new copy, sections, or colors in chat. The preview updates as you go.",
-  },
-];
+const STEP_KEYS = ["0", "1", "2"] as const;
 
 export function HowItWorks() {
+  const t = useTranslations("howItWorks");
+
   return (
     <section id="how" className="border-b border-border">
       <div className="border-b border-border px-4 py-10 md:px-8 md:py-12">
         <Reveal>
           <PageHeader
             size="section"
-            title="From sentence to site."
+            title={t("title")}
             className="md:items-start"
           />
         </Reveal>
       </div>
 
       <ol>
-        {STEPS.map((step, i) => (
+        {STEP_KEYS.map((key, i) => (
           <li
-            key={step.title}
+            key={key}
             className={`grid md:grid-cols-[minmax(0,0.28fr)_minmax(0,0.72fr)] ${
-              i < STEPS.length - 1 ? "border-b border-border" : ""
+              i < STEP_KEYS.length - 1 ? "border-b border-border" : ""
             }`}
           >
             <Reveal
@@ -42,7 +34,7 @@ export function HowItWorks() {
               className="flex items-center border-b border-border px-4 py-8 md:border-b-0 md:border-r md:px-8 md:py-10"
             >
               <h3 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                {i + 1}. {step.title}
+                {i + 1}. {t(`steps.${key}.title`)}
               </h3>
             </Reveal>
             <Reveal
@@ -50,7 +42,7 @@ export function HowItWorks() {
               className="flex items-center px-4 py-8 md:px-8 md:py-10 md:pl-12"
             >
               <p className="max-w-xl text-base leading-relaxed text-muted-foreground">
-                {step.body}
+                {t(`steps.${key}.body`)}
               </p>
             </Reveal>
           </li>

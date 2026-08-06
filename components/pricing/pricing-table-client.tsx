@@ -18,6 +18,7 @@ import {
   PRO_FEATURES_EXTENDED,
 } from "@/lib/billing/plan-copy";
 import { checkoutSuccessUrl, redirectToCheckout } from "@/lib/billing/checkout";
+import { useTranslations } from "next-intl";
 
 type BillingInterval = "month" | "year";
 
@@ -40,41 +41,48 @@ const ENTERPRISE_FEATURES = [
   "Team seats and admin controls",
 ] as const;
 
-const PLANS: Record<BillingInterval, PlanCard[]> = {
-  month: [
-    {
-      id: BYOK_PLAN_ID,
-      name: "BYOK",
-      price: "$5",
-      cadence: "/mo",
-      features: BYOK_FEATURES,
-      cta: "Get BYOK",
-    },
-    {
-      id: PRO_MONTHLY_PLAN_ID,
-      name: "Pro",
-      price: "$20",
-      cadence: "/mo",
-      highlight: true,
-      features: PRO_FEATURES_EXTENDED,
-      cta: "Get Pro",
-    },
-    {
-      id: ENTERPRISE_PLAN_ID,
-      name: "Enterprise",
-      price: "Custom",
-      features: ENTERPRISE_FEATURES,
-      cta: "Talk to founder",
-    },
-  ],
-  year: [
+function usePlanCards(interval: BillingInterval): PlanCard[] {
+  const t = useTranslations("plans");
+  const byok = t.raw("byok") as string[];
+  const pro = t.raw("proExtended") as string[];
+
+  if (interval === "month") {
+    return [
+      {
+        id: BYOK_PLAN_ID,
+        name: "BYOK",
+        price: "$5",
+        cadence: "/mo",
+        features: byok.length ? byok : BYOK_FEATURES,
+        cta: "Get BYOK",
+      },
+      {
+        id: PRO_MONTHLY_PLAN_ID,
+        name: "Pro",
+        price: "$20",
+        cadence: "/mo",
+        highlight: true,
+        features: pro.length ? pro : PRO_FEATURES_EXTENDED,
+        cta: "Get Pro",
+      },
+      {
+        id: ENTERPRISE_PLAN_ID,
+        name: "Enterprise",
+        price: "Custom",
+        features: ENTERPRISE_FEATURES,
+        cta: "Talk to founder",
+      },
+    ];
+  }
+
+  return [
     {
       id: BYOK_PLAN_ID,
       name: "BYOK",
       price: "$5",
       cadence: "/mo",
       note: "Billed monthly",
-      features: BYOK_FEATURES,
+      features: byok.length ? byok : BYOK_FEATURES,
       cta: "Get BYOK",
     },
     {
@@ -84,7 +92,7 @@ const PLANS: Record<BillingInterval, PlanCard[]> = {
       cadence: "/yr",
       note: "Save 20% vs monthly",
       highlight: true,
-      features: PRO_FEATURES_EXTENDED,
+      features: pro.length ? pro : PRO_FEATURES_EXTENDED,
       cta: "Get Pro yearly",
     },
     {
@@ -94,8 +102,8 @@ const PLANS: Record<BillingInterval, PlanCard[]> = {
       features: ENTERPRISE_FEATURES,
       cta: "Talk to founder",
     },
-  ],
-};
+  ];
+}
 
 export function PricingTableClient() {
   const { isAuthenticated } = useConvexAuth();
@@ -105,13 +113,13 @@ export function PricingTableClient() {
   });
   const [interval, setInterval] = useState<BillingInterval>("month");
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  const plans = usePlanCards(interval);
 
   const activePaid = data?.subscriptions?.find(
     (s) =>
       s.status === "active" && isSubscribedPlanId(s.planId) && !s.autoEnable
   );
   const currentPlanId = activePaid?.planId ?? null;
-  const plans = PLANS[interval];
 
   const onSelect = async (planId: string) => {
     if (planId === ENTERPRISE_PLAN_ID) {

@@ -22,6 +22,7 @@ export const create = authedMutation({
   returns: v.id("projects"),
   handler: async (ctx, args) => {
     const name = args.name?.trim() || deriveName(args.prompt);
+    const formPublicKey = makeFormPublicKey();
     const projectId = await ctx.db.insert("projects", {
       userId: ctx.userId,
       name,
@@ -29,6 +30,7 @@ export const create = authedMutation({
       modelId: args.modelId,
       status: "draft",
       publishStatus: "idle",
+      formPublicKey,
     });
 
     await ctx.db.insert("messages", {
@@ -42,6 +44,18 @@ export const create = authedMutation({
     return projectId;
   },
 });
+
+function makeFormPublicKey(): string {
+  const alphabet =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (const b of bytes) {
+    out += alphabet[b % alphabet.length]!;
+  }
+  return out;
+}
 
 export const list = query({
   args: {},

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useConvexAuth } from "convex/react";
 import { toast } from "sonner";
 import { PromptComposer } from "@/components/site/prompt-composer";
@@ -18,15 +20,14 @@ import {
 } from "@/lib/ai/models";
 import { errorCode, userFacingError } from "@/lib/errors";
 
-const SUGGESTIONS = [
-  "Website for a solar-panel installer",
-  "Simple portfolio for a photographer",
-  "Launch site with a blog for a coffee roaster",
-  "Booking page for a yoga studio",
-];
-
-export function LandingComposer() {
+export function LandingComposer({
+  initialPrompt,
+}: {
+  initialPrompt?: string;
+}) {
+  const t = useTranslations("composer");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated } = useConvexAuth();
   const createSite = useCreateSite();
   const gates = useBillingGates();
@@ -34,6 +35,16 @@ export function LandingComposer() {
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [modelId, setModelId] = useState<AgentModelId>(DEFAULT_AGENT_MODEL_ID);
+  const [seedPrompt, setSeedPrompt] = useState(initialPrompt ?? "");
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("prompt");
+    if (fromQuery?.trim()) {
+      setSeedPrompt(fromQuery.trim());
+    }
+  }, [searchParams]);
+
+  const suggestions = [0, 1, 2, 3].map((i) => t(`suggestions.${i}`));
 
   const startGeneration = async (value: string, selectedModel: AgentModelId) => {
     if (!gates.allowOrPrompt()) return false;
@@ -56,11 +67,13 @@ export function LandingComposer() {
   return (
     <>
       <PromptComposer
+        key={seedPrompt}
         showModeToggle={false}
         autoFocus
         pending={pending}
-        suggestions={SUGGESTIONS}
+        suggestions={suggestions}
         defaultModelId={modelId}
+        defaultValue={seedPrompt}
         placeholder="Describe the site you want to build…"
         onSubmit={async (text, selectedModel) => {
           setModelId(selectedModel);

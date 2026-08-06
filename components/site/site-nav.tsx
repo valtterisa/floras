@@ -7,11 +7,13 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useId, useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/site/theme-toggle";
+import { LocaleSwitcher } from "@/components/site/locale-switcher";
 import { cn } from "@/lib/utils";
 
 const navLinkClass =
@@ -21,6 +23,8 @@ const ctaClass =
   "inline-flex items-center justify-center bg-brand font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.98]";
 
 export function SiteNav() {
+  const t = useTranslations("nav");
+  const td = useTranslations("dashboard");
   const { signOut } = useAuthActions();
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -58,6 +62,9 @@ export function SiteNav() {
         </div>
 
         <div className="flex items-stretch">
+          <div className="hidden items-center border-r border-border px-3 sm:flex">
+            <LocaleSwitcher />
+          </div>
           <ThemeToggle />
 
           <div className="hidden items-stretch sm:flex">
@@ -69,10 +76,10 @@ export function SiteNav() {
                   navLinkClass
                 )}
               >
-                Sign in
+                {t("signIn")}
               </Link>
               <Link href="/sign-up" className={cn("px-4", ctaClass)}>
-                Start building
+                {t("startBuilding")}
               </Link>
             </Unauthenticated>
             <Authenticated>
@@ -83,7 +90,7 @@ export function SiteNav() {
                   navLinkClass
                 )}
               >
-                Dashboard
+                {t("dashboard")}
               </Link>
               <Link
                 href="/dashboard/account"
@@ -92,7 +99,7 @@ export function SiteNav() {
                   navLinkClass
                 )}
               >
-                Account
+                {td("account")}
               </Link>
               <button
                 type="button"
@@ -102,14 +109,14 @@ export function SiteNav() {
                   navLinkClass
                 )}
               >
-                Sign out
+                {t("signOut")}
               </button>
             </Authenticated>
           </div>
 
           <button
             type="button"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t("closeMenu") : t("openMenu")}
             aria-expanded={open}
             aria-controls={menuId}
             onClick={() => setOpen((value) => !value)}
@@ -128,7 +135,7 @@ export function SiteNav() {
         <>
           <button
             type="button"
-            aria-label="Dismiss menu"
+            aria-label={t("closeMenu")}
             onClick={close}
             className="fixed inset-0 z-40 bg-background/50 backdrop-blur-[2px] sm:hidden"
           />
@@ -137,6 +144,9 @@ export function SiteNav() {
             className="fixed inset-x-0 top-14 z-50 border-t border-b border-border bg-background sm:hidden"
           >
             <nav className="flex w-full flex-col" aria-label="Mobile">
+              <div className="border-b border-border px-5 py-4">
+                <LocaleSwitcher />
+              </div>
               <Unauthenticated>
                 <Link
                   href="/login"
@@ -146,7 +156,7 @@ export function SiteNav() {
                     navLinkClass
                   )}
                 >
-                  Sign in
+                  {t("signIn")}
                 </Link>
                 <div className="p-5">
                   <Link
@@ -154,7 +164,7 @@ export function SiteNav() {
                     onClick={close}
                     className={cn("w-full px-4 py-4", ctaClass)}
                   >
-                    Start building
+                    {t("startBuilding")}
                   </Link>
                 </div>
               </Unauthenticated>
@@ -167,7 +177,7 @@ export function SiteNav() {
                     navLinkClass
                   )}
                 >
-                  Dashboard
+                  {t("dashboard")}
                 </Link>
                 <Link
                   href="/dashboard/account"
@@ -177,7 +187,7 @@ export function SiteNav() {
                     navLinkClass
                   )}
                 >
-                  Account
+                  {td("account")}
                 </Link>
                 <button
                   type="button"
@@ -190,7 +200,7 @@ export function SiteNav() {
                     navLinkClass
                   )}
                 >
-                  Sign out
+                  {t("signOut")}
                 </button>
               </Authenticated>
             </nav>

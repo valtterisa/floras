@@ -1,0 +1,164 @@
+{
+  "meta": {
+    "tagline": "Verkkosivut yhdellä lauseella",
+    "description": "Kuvaile yrityksesi selkeällä suomen kielellä. Floras rakentaa oikean sivuston, jota voit esikatsella, muokata chatissa ja jakaa — ilman koodia tai suunnittelutaitoja."
+  },
+  "nav": {
+    "signIn": "Kirjaudu",
+    "startBuilding": "Aloita",
+    "dashboard": "Hallinta",
+    "signOut": "Kirjaudu ulos",
+    "openMenu": "Avaa valikko",
+    "closeMenu": "Sulje valikko",
+    "language": "Kieli"
+  },
+  "footer": {
+    "privacy": "Tietosuoja",
+    "terms": "Ehdot",
+    "tagline": "Kuvaile yrityksesi. Saat sivuston, jonka voit avata ja jakaa."
+  },
+  "hero": {
+    "titleBefore": "Valmis sivusto",
+    "titleAccent": "yhdellä lauseella",
+    "titleAfter": ".",
+    "subtitle": "Ei koodia. Ei suunnittelijaa. Kuvaile vain mitä tarvitset."
+  },
+  "composer": {
+    "suggestions": {
+      "0": "Sivusto aurinkopaneeliasentajalle",
+      "1": "Yksinkertainen portfolio valokuvaajalle",
+      "2": "Julkaisusivusto blogilla kahvipaahtimolle",
+      "3": "Varaussivu joogastudiolle"
+    }
+  },
+  "features": {
+    "title": "Ihmisille, jotka tarvitsevat sivuston — ei web-tiimiä.",
+    "description": "Kuvaile yrityksesi. Saat viimeistellyn sivuston, jota voit hiota keskustellen ja jakaa luottavaisin mielin.",
+    "asideTitle": "Ideasta johonkin, jonka voit avata.",
+    "asideBody": "Kirjoita yksi lause. Katso kun koko sivusto ilmestyy live-esikatseluun — ja jatka muokkaamista kunnes se tuntuu oikealta.",
+    "points": {
+      "looks": {
+        "title": "Tarkoituksellinen ulkoasu",
+        "body": "Selkeä rakenne, harkittu tilankäyttö ja yritykseesi sopiva design — ei geneerinen sapluuna."
+      },
+      "ready": {
+        "title": "Valmis näytettäväksi",
+        "body": "Jaa live-linkki samana päivänä. Asiakkaat näkevät oikean sivuston, ei luonnosta."
+      },
+      "easy": {
+        "title": "Helppo muuttaa",
+        "body": "Pyydä uutta otsikkoa, osiota tai sävyä. Chattaa kunnes se vastaa sitä mitä tarkoitit."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "Lauseesta sivustoksi.",
+    "description": "Ideasta live-esikatseluun ilman suunnittelutyökalua.",
+    "steps": {
+      "0": {
+        "title": "Kuvaile",
+        "body": "Kirjoita yksi lause yrityksestäsi, tarjouksestasi tai ideastasi. Floras valitsee sopivan ulkoasun."
+      },
+      "1": {
+        "title": "Näe live",
+        "body": "Hetkessä saat oikean sivuston, jota voit avata, klikata ja jakaa."
+      },
+      "2": {
+        "title": "Hiota",
+        "body": "Pyydä uutta tekstiä, osioita tai värejä chatissa. Esikatselu päivittyy mukana."
+      }
+    }
+  },
+  "logoWall": {
+    "title": "Tehty",
+    "audiences": {
+      "shops": "Paikallisille",
+      "creators": "Tekijöille",
+      "consultants": "Konsulteille",
+      "cafes": "Kahviloille"
+    }
+  },
+  "pricing": {
+    "title": "Yksinkertainen hinnoittelu.",
+    "description": "Kreditit, hosting ja SEO-valmis Astro — lataa lisää kun haluat jatkaa."
+  },
+  "cta": {
+    "title": "Seuraava sivustosi on yhden lauseen päässä.",
+    "description": "Kuvaile sivusto. Esikatsele live. Julkaise kun se tuntuu oikealta.",
+    "button": "Luo sivustosi"
+  },
+  "plans": {
+    "byok": [
+      "Oma Anthropic-avain",
+      "Live-esikatselu hiekkalaatikossa",
+      "ZIP-vienti (oma hosting)",
+      "Ei Floras-hostingia"
+    ],
+    "pro": [
+      "20 $ AI-kredittiä joka kuukausi",
+      "Hosting mukana",
+      "Lisää kredittejä muokkaukseen",
+      "SEO-valmis Astro joka sijoittuu"
+    ],
+    "proExtended": [
+      "20 $ AI-kredittiä joka kuukausi",
+      "Hosting mukana",
+      "Lisää kredittejä muokkaukseen",
+      "SEO-valmis Astro joka sijoittuu",
+      "ZIP-vienti milloin tahansa"
+    ]
+  },
+  "auth": {
+    "loginTitle": "Kirjaudu",
+    "signUpTitle": "Luo tili",
+    "email": "Sähköposti",
+    "password": "Salasana",
+    "name": "Nimi",
+    "continue": "Jatka",
+    "withGoogle": "Jatka Googlella",
+    "noAccount": "Ei tiliä?",
+    "hasAccount": "Onko sinulla jo tili?",
+    "signUpLink": "Rekisteröidy",
+    "signInLink": "Kirjaudu"
+  },
+  "dashboard": {
+    "newChat": "Uusi chat",
+    "inbox": "Postilaatikko",
+    "recentChats": "Viimeisimmät",
+    "searchChats": "Hae chatteja",
+    "searchPlaceholder": "Haku…",
+    "loading": "Ladataan…",
+    "noMatches": "Ei osumia",
+    "noChats": "Ei chatteja vielä",
+    "account": "Tili",
+    "settings": "Asetukset",
+    "signOut": "Kirjaudu ulos",
+    "noPlan": "Ei suunnitelmaa",
+    "expandSidebar": "Laajenna sivupalkki",
+    "collapseSidebar": "Pienennä sivupalkki",
+    "title": "Hallinta",
+    "emptyTitle": "Aloita sivusto",
+    "emptyDescription": "Kuvaile mitä tarvitset. Floras rakentaa sen ja avaa live-esikatselun."
+  },
+  "inbox": {
+    "title": "Postilaatikko",
+    "description": "Viestit sivustojesi yhteydenottolomakkeista.",
+    "site": "Sivusto",
+    "allSites": "Kaikki sivustot",
+    "showArchived": "Näytä arkisto",
+    "showingArchived": "Näytetään arkisto",
+    "emptyTitle": "Postilaatikko on tyhjä",
+    "emptyDescription": "Kun vierailijat lähettävät yhteydenottolomakkeen julkaistulla tai esikatselu-sivustolla, viestit näkyvät täällä.",
+    "emptyArchivedTitle": "Ei arkistoituja viestejä",
+    "emptyArchivedDescription": "Arkistoidut viestit näkyvät täällä.",
+    "loading": "Ladataan…",
+    "visitor": "Vierailija",
+    "archive": "Arkistoi",
+    "restore": "Palauta"
+  },
+  "useCase": {
+    "eyebrow": "Rakennettu yrityksellesi",
+    "cta": "Rakenna tämä sivusto",
+    "proof": "Kuvaile yritys kerran. Saat live-sivuston, jota voit hiota chatissa ja julkaista kun olet valmis."
+  }
+}
