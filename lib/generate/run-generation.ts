@@ -3,8 +3,8 @@ import { api } from "@/convex/_generated/api";
 import { asMessageId, asProjectId } from "@/lib/convex/ids";
 import { buildSiteAgent } from "@/lib/ai/agent";
 import { resolveGenerationModel } from "@/lib/billing/resolve-generation-model";
-import * as box from "@/lib/box/client";
-import { createSandboxSession } from "@/lib/box/sandbox-session";
+import * as sandbox from "@/lib/sandbox/client";
+import { createSandboxSession } from "@/lib/sandbox/session";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
 import { AppError } from "@/lib/errors";
 import type { SitePlan } from "@/lib/schema/site";
@@ -44,12 +44,12 @@ export async function runGeneration(projectId: string, token: string) {
     ));
 
   try {
-    if (!box.boxConfigured()) {
+    if (!sandbox.sandboxConfigured()) {
       throw new AppError("config");
     }
 
-    const initialBoxId =
-      typeof project.boxId === "string" ? project.boxId : undefined;
+    const initialSandboxName =
+      typeof project.sandboxName === "string" ? project.sandboxName : undefined;
     const previewUrl =
       typeof project.previewUrl === "string" ? project.previewUrl : null;
 
@@ -59,18 +59,15 @@ export async function runGeneration(projectId: string, token: string) {
       { token }
     );
 
-    const sandbox = createSandboxSession({
+    const session = createSandboxSession({
+      projectId,
       projectName: typeof project.name === "string" ? project.name : "site",
-      initialBoxId,
-      initialSubdomain:
-        typeof project.boxSubdomain === "string"
-          ? project.boxSubdomain
-          : undefined,
+      initialSandboxName,
       initialPreviewUrl: previewUrl,
-      onBox: async (boxId, subdomain) => {
+      onSandbox: async (sandboxName) => {
         await fetchMutation(
-          api.projects.setBox,
-          { projectId: pid, boxId, boxSubdomain: subdomain },
+          api.projects.setSandbox,
+          { projectId: pid, sandboxName },
           { token }
         );
       },
@@ -112,7 +109,7 @@ export async function runGeneration(projectId: string, token: string) {
     const formsSubmitUrl = `${getSiteUrl()}/api/forms/submit`;
 
     const agent = buildSiteAgent({
-      sandbox,
+      sandbox: session,
       projectId,
       token,
       model,

@@ -20,8 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   derivePreviewUi,
-  LIVE_BOX_STATES,
-  STARTING_BOX_STATES,
+  LIVE_SANDBOX_STATES,
 } from "@/lib/workspace/derive-preview-ui";
 
 const PROJECT_STATUS_LABEL: Record<string, string> = {
@@ -61,20 +60,20 @@ export function PreviewPane({
   projectId,
   status,
   previewUrl,
-  boxId,
+  sandboxName,
 }: {
   projectId: string;
   status?: string;
   previewUrl?: string;
-  boxId?: string;
+  sandboxName?: string;
 }) {
   const projectLabel = PROJECT_STATUS_LABEL[status ?? "draft"] ?? status;
   const busy = status === "provisioning" || status === "generating";
   const [restarting, setRestarting] = useState(false);
   const [starting, setStarting] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
-  const [boxState, setBoxState] = useState<string | null | "loading">(
-    boxId ? "loading" : null
+  const [sandboxState, setSandboxState] = useState<string | null | "loading">(
+    sandboxName ? "loading" : null
   );
   const [previewOk, setPreviewOk] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -83,7 +82,7 @@ export function PreviewPane({
   const waking = restarting || starting;
 
   useEffect(() => {
-    if (!boxId || busy) return;
+    if (!sandboxName || busy) return;
 
     let cancelled = false;
     setStarting(true);
@@ -112,11 +111,11 @@ export function PreviewPane({
     return () => {
       cancelled = true;
     };
-  }, [projectId, boxId, busy]);
+  }, [projectId, sandboxName, busy]);
 
   useEffect(() => {
-    if (!boxId) {
-      setBoxState(null);
+    if (!sandboxName) {
+      setSandboxState(null);
       setPreviewOk(false);
       setPreviewError(null);
       return;
@@ -136,10 +135,10 @@ export function PreviewPane({
         };
         if (cancelled) return;
         if (!res.ok) {
-          setBoxState((prev) => (prev === "loading" ? null : prev));
+          setSandboxState((prev) => (prev === "loading" ? null : prev));
           return;
         }
-        setBoxState(data.state ?? null);
+        setSandboxState(data.state ?? null);
         if (!waking) {
           const ok = Boolean(data.previewOk);
           if (ok) {
@@ -151,7 +150,7 @@ export function PreviewPane({
         }
       } catch {
         if (!cancelled) {
-          setBoxState((prev) => (prev === "loading" ? null : prev));
+          setSandboxState((prev) => (prev === "loading" ? null : prev));
         }
       }
     };
@@ -165,10 +164,10 @@ export function PreviewPane({
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [projectId, boxId, waking, previewOk]);
+  }, [projectId, sandboxName, waking, previewOk]);
 
   const onRestart = async () => {
-    if (!boxId || waking) return;
+    if (!sandboxName || waking) return;
     setRestarting(true);
     setPreviewOk(false);
     setPreviewError(null);
@@ -212,7 +211,7 @@ export function PreviewPane({
           <p className="text-sm font-medium">{projectLabel}</p>
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">
             {waiting
-              ? boxId
+              ? sandboxName
                 ? "Starting sandbox…"
                 : "Your live preview will appear here in a moment."
               : "Switch to Build and send a prompt to generate a live preview."}
@@ -222,11 +221,11 @@ export function PreviewPane({
     );
   }
 
-  const boxLive =
-    typeof boxState === "string" && LIVE_BOX_STATES.has(boxState);
-  const showOwnUi = waking || !boxLive || !previewOk || Boolean(previewError);
+  const sandboxLive =
+    typeof sandboxState === "string" && LIVE_SANDBOX_STATES.has(sandboxState);
+  const showOwnUi = waking || !sandboxLive || !previewOk || Boolean(previewError);
   const { screen, badge: badgeLabel } = derivePreviewUi({
-    state: boxState,
+    state: sandboxState,
     waking,
     restarting,
     previewOk,
@@ -244,7 +243,7 @@ export function PreviewPane({
         <Badge
           variant="outline"
           className={
-            boxLive && previewOk && !waking && !previewError
+            sandboxLive && previewOk && !waking && !previewError
               ? "border-brand/40 text-xs font-normal text-brand"
               : "border-border text-xs font-normal text-muted-foreground"
           }
@@ -266,7 +265,7 @@ export function PreviewPane({
         </WebPreviewNavigationButton>
         <WebPreviewNavigationButton
           tooltip={waking ? "Starting sandbox…" : "Restart sandbox"}
-          disabled={!boxId || waking || busy}
+          disabled={!sandboxName || waking || busy}
           onClick={() => void onRestart()}
           aria-label="Restart sandbox"
         >
@@ -291,7 +290,7 @@ export function PreviewPane({
                 {screen.body}
               </p>
             </div>
-            {screen.showRestart && boxId && !busy ? (
+            {screen.showRestart && sandboxName && !busy ? (
               <button
                 type="button"
                 onClick={() => void onRestart()}

@@ -62,7 +62,7 @@ export default function PrivacyPolicyPage() {
       <ul>
         <li>Convex (database and auth)</li>
         <li>Anthropic (AI models — platform or your BYOK key)</li>
-        <li>box.ascii.dev / Box sandboxes (live preview VMs)</li>
+        <li>Blaxel sandboxes (live preview VMs)</li>
         <li>Cloudflare (Pages hosting and DNS for published sites)</li>
         <li>Autumn (billing and subscriptions)</li>
         <li>Google (if you use Google sign-in)</li>

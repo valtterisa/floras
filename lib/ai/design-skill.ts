@@ -30,5 +30,5 @@ When SitePlan has a \`contact\` section (or the brief asks for contact/booking/i
 - Use fetch() from a small \`<script>\` in the page or component. No third-party form SaaS.
 
 ## Implement
-Edit site/ in place. Complete file writes. Short markdown summary when done.
+Edit the sandbox project root in place. Complete file writes. Short markdown summary when done.
 `;

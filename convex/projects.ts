@@ -147,7 +147,7 @@ export const claimPublish = authedMutation({
   handler: async (ctx, args) => {
     const { project } = await requireOwnedProject(ctx, args.projectId);
     if (isGenerationBusy(project)) return false;
-    if (!project.boxId) return false;
+    if (!project.sandboxName) return false;
     await ctx.db.patch(args.projectId, {
       publishStatus: "publishing",
       busyAt: Date.now(),
@@ -164,7 +164,7 @@ export const resetBusy = authedMutation({
     const { project } = await requireOwnedProject(ctx, args.projectId);
     const nextStatus =
       project.status === "provisioning" || project.status === "generating"
-        ? project.boxId
+        ? project.sandboxName
           ? "ready"
           : "draft"
         : project.status;
@@ -204,18 +204,16 @@ export const setStatus = authedMutation({
   },
 });
 
-export const setBox = authedMutation({
+export const setSandbox = authedMutation({
   args: {
     projectId: v.id("projects"),
-    boxId: v.string(),
-    boxSubdomain: v.optional(v.string()),
+    sandboxName: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
     await ctx.db.patch(args.projectId, {
-      boxId: args.boxId,
-      ...(args.boxSubdomain ? { boxSubdomain: args.boxSubdomain } : {}),
+      sandboxName: args.sandboxName,
     });
     return null;
   },

@@ -1,10 +1,5 @@
-const LIVE_BOX_STATES = new Set(["ready", "idle", "running"]);
-const STARTING_BOX_STATES = new Set([
-  "init",
-  "provisioning",
-  "provisioned",
-  "cloning",
-]);
+const LIVE_SANDBOX_STATES = new Set(["ready"]);
+const STARTING_SANDBOX_STATES = new Set(["starting"]);
 
 export type PreviewUi = {
   screen: {
@@ -26,18 +21,18 @@ export function derivePreviewUi(input: {
 }): PreviewUi {
   const { state, waking, restarting, previewOk, previewError, projectLabel } =
     input;
-  const boxLive = typeof state === "string" && LIVE_BOX_STATES.has(state);
+  const sandboxLive = typeof state === "string" && LIVE_SANDBOX_STATES.has(state);
 
   let badge = "Offline";
   if (previewError && !waking) badge = "Error";
-  else if (state === "archiving") badge = "Stopping";
-  else if (state === "archived") badge = waking ? "Starting" : "Stopped";
+  else if (state === "stopping") badge = "Stopping";
+  else if (state === "stopped") badge = waking ? "Starting" : "Stopped";
   else if (state === "loading") badge = "Checking";
   else if (state === "error") badge = "Error";
-  else if (typeof state === "string" && STARTING_BOX_STATES.has(state))
+  else if (typeof state === "string" && STARTING_SANDBOX_STATES.has(state))
     badge = "Starting";
-  else if (boxLive && previewOk && !waking) badge = projectLabel ?? "Live";
-  else if (waking || (boxLive && !previewOk))
+  else if (sandboxLive && previewOk && !waking) badge = projectLabel ?? "Live";
+  else if (waking || (sandboxLive && !previewOk))
     badge = restarting ? "Restarting" : "Starting";
 
   if (previewError && !waking) {
@@ -53,7 +48,7 @@ export function derivePreviewUi(input: {
   }
 
   if (waking) {
-    if (state === "archiving") {
+    if (state === "stopping") {
       return {
         badge,
         screen: {
@@ -64,7 +59,7 @@ export function derivePreviewUi(input: {
         },
       };
     }
-    if (boxLive) {
+    if (sandboxLive) {
       return {
         badge,
         screen: {
@@ -86,7 +81,7 @@ export function derivePreviewUi(input: {
     };
   }
 
-  if (boxLive && !previewOk) {
+  if (sandboxLive && !previewOk) {
     return {
       badge,
       screen: {
@@ -105,15 +100,15 @@ export function derivePreviewUi(input: {
       spinning: true,
       showRestart: false,
     },
-    archived: {
+    stopped: {
       title: "Sandbox stopped",
       body: "Preview is offline. Restart the preview to wake it up.",
       spinning: false,
       showRestart: true,
     },
-    archiving: {
+    stopping: {
       title: "Stopping sandbox",
-      body: "The machine is snapshotting and going offline.",
+      body: "Dev server is shutting down.",
       spinning: true,
       showRestart: false,
     },
@@ -128,7 +123,7 @@ export function derivePreviewUi(input: {
   if (state && screens[state]) {
     return { badge, screen: screens[state]! };
   }
-  if (typeof state === "string" && STARTING_BOX_STATES.has(state)) {
+  if (typeof state === "string" && STARTING_SANDBOX_STATES.has(state)) {
     return {
       badge,
       screen: {
@@ -161,4 +156,4 @@ export function derivePreviewUi(input: {
   };
 }
 
-export { LIVE_BOX_STATES, STARTING_BOX_STATES };
+export { LIVE_SANDBOX_STATES, STARTING_SANDBOX_STATES };

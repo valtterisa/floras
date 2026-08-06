@@ -7,6 +7,18 @@
       "skillPath": "skills/use-ai-sdk/SKILL.md",
       "computedHash": "0883204d11b055e968dee697c5858e68064c27dfd4deb6310212895daa65c5ad"
     },
+    "blaxel-cli": {
+      "source": "blaxel-ai/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/blaxel-cli/SKILL.md",
+      "computedHash": "49386d5e08f8d35289406b447e2bea3038ad443e68011bdc051ca6ff5f3d8ab7"
+    },
+    "blaxel-sdk": {
+      "source": "blaxel-ai/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/blaxel-sdk/SKILL.md",
+      "computedHash": "0765970de06abf704282e2b3333c960dbe49ad489d76eace77a8420be42206b4"
+    },
     "brandkit": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",

@@ -125,7 +125,7 @@ export function isRetryableWranglerError(error: unknown): boolean {
   return isRetryableNetworkError(error);
 }
 
-export function isRetryableBoxError(error: unknown): boolean {
+export function isRetryableSandboxError(error: unknown): boolean {
   const message =
     error instanceof Error
       ? error.message.toLowerCase()
@@ -134,7 +134,7 @@ export function isRetryableBoxError(error: unknown): boolean {
         : "";
 
   if (
-    /\b(timeout|timed out|provision|temporarily|unavailable|retry|box_securing)\b/.test(
+    /\b(timeout|timed out|provision|temporarily|unavailable|retry|standby)\b/.test(
       message
     )
   ) {

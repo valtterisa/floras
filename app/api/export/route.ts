@@ -4,7 +4,7 @@ import { z } from "zod";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
 import { appErrorResponse, AppError } from "@/lib/errors";
-import { boxConfigured, exportSiteZip } from "@/lib/box/client";
+import { sandboxConfigured, exportSiteZip } from "@/lib/sandbox/client";
 
 export const maxDuration = 300;
 export const runtime = "nodejs";
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     return appErrorResponse(new AppError("unknown"), 400);
   }
 
-  if (!boxConfigured()) {
+  if (!sandboxConfigured()) {
     return appErrorResponse(new AppError("config"), 503);
   }
 
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     return appErrorResponse(new AppError("not_found"), 404);
   }
 
-  if (!project.boxId || typeof project.boxId !== "string") {
+  if (!project.sandboxName || typeof project.sandboxName !== "string") {
     return appErrorResponse(
       new AppError(
         "preview",
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const blob = await exportSiteZip(project.boxId);
+    const blob = await exportSiteZip(project.sandboxName);
     const filename = zipFilename(project.name, parsed.data.projectId);
     return new Response(blob, {
       status: 200,

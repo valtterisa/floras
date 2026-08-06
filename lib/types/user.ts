@@ -12,7 +12,7 @@ export type WorkspaceProject = {
   status: string;
   busyAt?: number;
   previewUrl?: string;
-  boxId?: string;
+  sandboxName?: string;
   error?: string;
   modelId?: string;
   publishStatus?: string;

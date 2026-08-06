@@ -4,15 +4,15 @@ import { z } from "zod";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
 import {
-  boxConfigured,
-  getBoxState,
+  sandboxConfigured,
+  getSandboxLifecycle,
   probePublicPreview,
-} from "@/lib/box/client";
+} from "@/lib/sandbox/client";
 import { AppError } from "@/lib/errors";
 
 export const runtime = "nodejs";
 
-const LIVE_STATES = new Set(["ready", "idle", "running"]);
+const LIVE_STATES = new Set(["ready"]);
 
 const querySchema = z.object({
   projectId: z.string().min(1),
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
     );
   }
 
-  if (!boxConfigured()) {
+  if (!sandboxConfigured()) {
     return Response.json(
       { error: "Sandbox is not configured.", code: "config" },
       { status: 503 }
@@ -52,23 +52,27 @@ export async function GET(req: Request) {
     return Response.json({ error: "Not found", code: "not_found" }, { status: 404 });
   }
 
-  if (!project.boxId) {
+  if (!project.sandboxName) {
     return Response.json({
       state: null as string | null,
-      boxId: null as string | null,
+      sandboxName: null as string | null,
       previewOk: false,
     });
   }
 
   try {
-    const state = await getBoxState(project.boxId);
+    const state = await getSandboxLifecycle(project.sandboxName);
     const previewUrl =
       typeof project.previewUrl === "string" ? project.previewUrl : null;
     const previewOk =
       LIVE_STATES.has(state) && previewUrl
         ? await probePublicPreview(previewUrl)
         : false;
-    return Response.json({ state, boxId: project.boxId, previewOk });
+    return Response.json({
+      state,
+      sandboxName: project.sandboxName,
+      previewOk,
+    });
   } catch (err) {
     const error = err instanceof AppError ? err : AppError.from(err);
     console.error("preview status failed:", error.detail);

@@ -1,7 +1,7 @@
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
-import * as box from "@/lib/box/client";
+import * as sandbox from "@/lib/sandbox/client";
 import {
   deleteFlorasCname,
   upsertFlorasCname,
@@ -16,7 +16,7 @@ import {
 } from "@/lib/cloudflare/pages";
 import { AppError } from "@/lib/errors";
 import {
-  isRetryableBoxError,
+  isRetryableSandboxError,
   isRetryableCloudflareError,
   isRetryableWranglerError,
   withRetry,
@@ -35,9 +35,9 @@ export async function runPublish(projectId: string, token: string) {
   );
   if (!project) return;
 
-  const boxId =
-    typeof project.boxId === "string" ? project.boxId : undefined;
-  if (!boxId) {
+  const sandboxName =
+    typeof project.sandboxName === "string" ? project.sandboxName : undefined;
+  if (!sandboxName) {
     await fetchMutation(
       api.projects.setPublishError,
       {
@@ -52,7 +52,7 @@ export async function runPublish(projectId: string, token: string) {
     return;
   }
 
-  if (!box.boxConfigured()) {
+  if (!sandbox.sandboxConfigured()) {
     await fetchMutation(
       api.projects.setPublishError,
       { projectId: asProjectId(projectId), error: new AppError("config").message },
@@ -84,12 +84,12 @@ export async function runPublish(projectId: string, token: string) {
   if (!claimed) return;
 
   try {
-    await withRetry(() => box.ensureBoxReady(boxId), {
+    await withRetry(() => sandbox.ensureSandboxReady(sandboxName), {
       attempts: 3,
       initialDelayMs: 1000,
       maxDelayMs: 8000,
-      label: "ensureBoxReady",
-      retryable: isRetryableBoxError,
+      label: "ensureSandboxReady",
+      retryable: isRetryableSandboxError,
     });
 
     const ensured = await withRetry(() => ensurePagesProject(name), {
@@ -101,13 +101,13 @@ export async function runPublish(projectId: string, token: string) {
     });
     createdProjectThisRun = ensured.created;
 
-    await box.buildSite(boxId);
-    await box.assertDistPresent(boxId);
+    await sandbox.buildSite(sandboxName);
+    await sandbox.assertDistPresent(sandboxName);
 
     const creds = getCloudflareConfig();
     await withRetry(
       () =>
-        box.deployDistWithWrangler(boxId, {
+        sandbox.deployDistWithWrangler(sandboxName, {
           projectName: name,
           apiToken: creds.apiToken,
           accountId: creds.accountId,
@@ -217,7 +217,7 @@ export async function runPublish(projectId: string, token: string) {
       console.error("Failed to set publish error", secondary);
     });
   } finally {
-    await box.scrubCfEnv(boxId).catch((error) => {
+    await sandbox.scrubCfEnv(sandboxName).catch((error) => {
       console.error("Failed to scrub CF env", error);
     });
   }

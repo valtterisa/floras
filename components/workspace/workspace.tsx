@@ -25,7 +25,7 @@ export function Workspace({
     project?.status === "generating" ||
     project?.publishStatus === "publishing";
 
-  useStopSandboxOnLeave(projectId, project?.boxId, { enabled: !busy });
+  useStopSandboxOnLeave(projectId, project?.sandboxName, { enabled: !busy });
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden">
@@ -44,7 +44,7 @@ export function Workspace({
             projectId={projectId}
             status={project?.status}
             previewUrl={project?.previewUrl}
-            boxId={project?.boxId}
+            sandboxName={project?.sandboxName}
           />
         </section>
       </div>

@@ -2,7 +2,7 @@
 
 Floras turns a plain-English prompt into a production-ready Astro site with a live
 preview. It is a Next.js 16 (App Router) frontend backed by Convex, generating
-sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
+sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
 
 ## Architecture
 
@@ -20,14 +20,16 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
   summaries stream back into Convex tables, so the UI updates reactively.
   Pro uses the platform Anthropic key + Autumn metering; BYOK uses the user's
   encrypted Anthropic key (no Autumn credit metering).
-- **Template:** New Boxes fork the golden Box from `BOX_GOLDEN_BOX_ID` via
-  `box.fork({ noEnv: true })` (template + deps already on the golden snapshot).
-  The agent stores a zod `SitePlan` (`lib/schema/site.ts`) then edits the site in place.
-- **Sandbox/preview:** `lib/box/client.ts` wraps `@asciidev/box-sdk`. Each project
-  gets a Box VM running `astro dev` exposed on a public URL via the in-box `host` command.
-  User Boxes are created with `noEnv: true`.
+- **Template:** New sandboxes use `SandboxInstance.createIfNotExists` from
+  `BL_SANDBOX_IMAGE` (deployed Blaxel Astro template with deps). Site files live
+  under `/app` in the sandbox. The agent stores a zod `SitePlan`
+  (`lib/schema/site.ts`) then edits the site in place.
+- **Sandbox/preview:** `lib/sandbox/client.ts` wraps `@blaxel/core`. Each project gets
+  a named Blaxel sandbox (`floras-{projectId}`) running the Astro (or bun/pnpm) dev
+  server on port 4321, exposed via Blaxel preview URLs (`*.preview.bl.run`).
+  Convex stores `sandboxName` on the project; there is no separate subdomain field.
 - **Publish / domains:** Next.js routes `app/api/publish` and `app/api/domains`. Build +
-  Wrangler Direct Upload run **inside** the Box; Pages project/domain CRUD uses the
+  Wrangler Direct Upload run **inside** the sandbox; Pages project/domain CRUD uses the
   official `cloudflare` SDK. Because Pages has no wildcard custom domains, publish
   also upserts a DNS CNAME for `{id}.floras.app` → the project `*.pages.dev` host.
   Live URL is the floras.app hostname (custom domains optional afterward).
@@ -45,37 +47,38 @@ sites inside box.ascii.dev sandboxes via an AI SDK agent, with Autumn billing.
 - **Convex is required for the app to function.** `NEXT_PUBLIC_CONVEX_URL` and
   `CONVEX_DEPLOYMENT` are written to `.env.local` by `convex dev`. Without a running
   deployment, client queries stay in a loading state.
-- **Keep heavy SDKs out of Convex.** AI SDK, Box SDK, and `autumn-js` run in
+- **Keep heavy SDKs out of Convex.** AI SDK, Blaxel SDK, and `autumn-js` run in
   Next.js API routes — not Convex actions — so pushes stay under the 64MB
   module-load limit. Do not reintroduce those packages into `convex/`.
-- **Secrets for generation/Box/billing/CF live in Next.js `.env.local`:**
-  `ANTHROPIC_API_KEY`, `BYOK_ENCRYPTION_SECRET`, `BOX_API_KEY`, `BOX_GOLDEN_BOX_ID`,
-  `AUTUMN_SECRET_KEY`, Cloudflare publish vars below. Optional: `AGENT_MODEL`
-  (defaults to `claude-sonnet-5`), `BOX_BASE_URL`. New Boxes always fork
-  `BOX_GOLDEN_BOX_ID` (required).
-- **Cloudflare publish (Next.js `.env.local` / host secrets, not Box dashboard):**
+- **Secrets for generation/sandbox/billing/CF live in Next.js `.env.local`:**
+  `ANTHROPIC_API_KEY`, `BYOK_ENCRYPTION_SECRET`, `BL_API_KEY`, `BL_WORKSPACE`,
+  `BL_SANDBOX_IMAGE`, `AUTUMN_SECRET_KEY`, Cloudflare publish vars below. Optional:
+  `AGENT_MODEL` (defaults to `claude-sonnet-5`), `BL_SANDBOX_REGION`,
+  `BL_SANDBOX_MEMORY_MB`, `BL_SITE_ROOT` (defaults to `/app`), `BL_PREVIEW_PORT`
+  (defaults to `4321`). New sandboxes always use `BL_SANDBOX_IMAGE` (required).
+- **Cloudflare publish (Next.js `.env.local` / host secrets, not sandbox env):**
   `CLOUDFLARE_API_TOKEN` (User token: Account → Cloudflare Pages → Edit **and**
   Zone → DNS → Edit on `floras.app`), `CLOUDFLARE_ACCOUNT_ID`, and
   `CLOUDFLARE_ZONE_ID` (floras.app zone). Pages does not support wildcard custom
   domains, so publish upserts a per-site CNAME `{id}.floras.app` → `*.pages.dev`.
-  Do **not** put these in Box Dashboard → Secrets — user Boxes are `noEnv` and
-  must not receive Floras hosting credentials. Publish injects them into the Box
-  only for the Wrangler deploy command, then scrubs the temp file.
+  Do **not** put these permanently in sandbox env — publish injects them into the
+  sandbox only for the Wrangler deploy command, then scrubs the temp file.
 - **Cloudflare Email Sending (form notifications, Next.js only):** Onboard
   `floras.app` under Dashboard → Compute → Email Service → Email Sending (Workers
   Paid). Token needs Account → Email Sending → Edit (`CLOUDFLARE_API_TOKEN` or
   `CLOUDFLARE_EMAIL_API_TOKEN`). Set `EMAIL_FROM` (e.g. `Floras <noreply@floras.app>`).
   Client: `lib/email/send.ts` → REST `POST .../email/sending/send`. Never inject
-  email credentials into Boxes.
+  email credentials into sandboxes.
 - **Convex deployment env** (set with `npx convex env set`): Convex Auth keys via
   `npx @convex-dev/auth` (`JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`), plus Google OAuth
   `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`. Redirect URI:
-  `{CONVEX_SITE_URL}/api/auth/callback/google`. Not the Anthropic/Box/CF keys.
+  `{CONVEX_SITE_URL}/api/auth/callback/google`. Not the Anthropic/Blaxel/CF keys.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).
   Includes `byok` ($5/mo), `pro`, `pro_yearly`, and `credit_top_up`.
-- **Preview iframes** load the sandbox Astro dev server over `*.on.ascii.dev`; the
-  template should set Vite `server.allowedHosts: true` and bind `0.0.0.0` so those
-  hosts are not blocked.
+- **Preview iframes** load Blaxel preview URLs (`*.preview.bl.run`); the Astro
+  template must set `server.allowedHosts: true` and bind `0.0.0.0` (or `HOST=0.0.0.0`)
+  so those hosts are not blocked. Declare port `4321` at sandbox creation
+  (ports cannot be added later).
 - **Typecheck:** `pnpm typecheck` / `next build` both enforce TypeScript. Auth gating
   lives in `proxy.ts` (Next.js 16 network proxy).
 - **Busy jobs:** generate/publish use atomic `claimGeneration` / `claimPublish`. Stuck

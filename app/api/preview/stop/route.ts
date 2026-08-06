@@ -5,11 +5,10 @@ import { z } from "zod";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
 import {
-  BoxStateEnum,
-  boxConfigured,
-  getBoxState,
+  sandboxConfigured,
+  getSandboxLifecycle,
   stopSandbox,
-} from "@/lib/box/client";
+} from "@/lib/sandbox/client";
 import { AppError } from "@/lib/errors";
 
 export const maxDuration = 300;
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!boxConfigured()) {
+  if (!sandboxConfigured()) {
     return Response.json({ ok: true as const, skipped: true });
   }
 
@@ -50,11 +49,11 @@ export async function POST(req: Request) {
     { token }
   );
 
-  if (!project?.boxId) {
+  if (!project?.sandboxName) {
     return Response.json({ ok: true as const, skipped: true });
   }
 
-  const boxId = project.boxId as string;
+  const sandboxName = project.sandboxName;
   const projectId = parsed.data.projectId;
   const status = typeof project.status === "string" ? project.status : "";
   const publishStatus =
@@ -68,26 +67,26 @@ export async function POST(req: Request) {
   }
 
   try {
-    const state = await getBoxState(boxId);
-    if (
-      state === BoxStateEnum.Archived ||
-      state === BoxStateEnum.Archiving
-    ) {
+    const lifecycle = await getSandboxLifecycle(sandboxName);
+    if (lifecycle === "stopped" || lifecycle === "stopping") {
       return Response.json({ ok: true as const, skipped: true });
     }
 
     after(() =>
-      stopSandbox(boxId, { scrub: false })
+      stopSandbox(sandboxName)
         .then(() => {
-          if (process.env.DEBUG_BOX === "1") {
-            console.info("[preview:stop] background ok", { projectId, boxId });
+          if (process.env.DEBUG_SANDBOX === "1") {
+            console.info("[preview:stop] background ok", {
+              projectId,
+              sandboxName,
+            });
           }
         })
         .catch((err) => {
           const error = AppError.from(err);
           console.error("[preview:stop] background failed", {
             projectId,
-            boxId,
+            sandboxName,
             detail: error.detail,
             message: error.message,
           });
@@ -99,7 +98,7 @@ export async function POST(req: Request) {
     const error = AppError.from(err);
     console.error("[preview:stop] failed", {
       projectId,
-      boxId,
+      sandboxName,
       detail: error.detail,
       message: error.message,
     });

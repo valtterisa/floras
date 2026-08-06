@@ -40,7 +40,7 @@ function isAllowedPreviewOrigin(origin: string): boolean {
   try {
     const host = new URL(origin).hostname;
     if (host === "localhost" || host === "127.0.0.1") return true;
-    if (host.endsWith(".on.ascii.dev")) return true;
+    if (host.endsWith(".preview.bl.run") || host.endsWith(".bl.run")) return true;
     const sitesDomain =
       process.env.FLORAS_SITES_DOMAIN?.trim() || "floras.app";
     if (host === sitesDomain || host.endsWith(`.${sitesDomain}`)) return true;

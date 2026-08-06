@@ -37,7 +37,7 @@ export function WorkspaceHeader({
   const awaitingResult = useRef(false);
 
   const name = project?.name;
-  const boxId = project?.boxId;
+  const sandboxName = project?.sandboxName;
   const publishStatus =
     (project?.publishStatus as PublishStatus | undefined) ?? "idle";
   const publishedUrl = project?.publishedUrl;
@@ -86,10 +86,10 @@ export function WorkspaceHeader({
   const isPublishing = publishing || publishStatus === "publishing";
   const isPublished = publishStatus === "published";
   const busy = isPublishing || unpublishing || exporting;
-  const canOpenPublish = Boolean(boxId);
+  const canOpenPublish = Boolean(sandboxName);
 
   async function handlePublish() {
-    if (!boxId || busy) return;
+    if (!sandboxName || busy) return;
     setPublishing(true);
     awaitingResult.current = true;
     try {
@@ -132,7 +132,7 @@ export function WorkspaceHeader({
   }
 
   async function handleExport() {
-    if (!boxId || busy) return;
+    if (!sandboxName || busy) return;
     setExporting(true);
     try {
       const res = await fetch("/api/export", {

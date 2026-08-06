@@ -3,7 +3,7 @@ import { fetchQuery } from "convex/nextjs";
 import { z } from "zod";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
-import { boxConfigured } from "@/lib/box/client";
+import { sandboxConfigured } from "@/lib/sandbox/client";
 import { appErrorResponse, AppError } from "@/lib/errors";
 
 const requestSchema = z.object({
@@ -12,7 +12,7 @@ const requestSchema = z.object({
 
 export type PreviewProject = {
   projectId: string;
-  boxId: string;
+  sandboxName: string;
   previewUrl?: string;
   token: string;
 };
@@ -40,7 +40,7 @@ export async function withPreviewProject(
     );
   }
 
-  if (!boxConfigured()) {
+  if (!sandboxConfigured()) {
     return appErrorResponse(new AppError("config"), 503);
   }
 
@@ -54,7 +54,7 @@ export async function withPreviewProject(
     return appErrorResponse(new AppError("not_found"), 404);
   }
 
-  if (!project.boxId || typeof project.boxId !== "string") {
+  if (!project.sandboxName || typeof project.sandboxName !== "string") {
     return Response.json(
       { error: "No sandbox for this project yet.", code: "preview" },
       { status: 400 }
@@ -63,7 +63,7 @@ export async function withPreviewProject(
 
   return {
     projectId: parsed.data.projectId,
-    boxId: project.boxId,
+    sandboxName: project.sandboxName,
     previewUrl:
       typeof project.previewUrl === "string" ? project.previewUrl : undefined,
     token,

@@ -2,7 +2,7 @@ import { fetchMutation } from "convex/nextjs";
 import { withPreviewProject } from "@/lib/api/with-preview-project";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
-import { restartPreview } from "@/lib/box/client";
+import { restartPreview } from "@/lib/sandbox/client";
 import { appErrorResponse, AppError } from "@/lib/errors";
 
 export const maxDuration = 800;
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (ctx instanceof Response) return ctx;
 
   try {
-    const previewUrl = await restartPreview(ctx.boxId);
+    const previewUrl = await restartPreview(ctx.sandboxName);
     if (previewUrl !== ctx.previewUrl) {
       await fetchMutation(
         api.projects.setPreview,

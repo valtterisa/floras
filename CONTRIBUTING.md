@@ -38,13 +38,11 @@ pnpm dev          # terminal 2 — Next.js on :3000
 Set Convex secrets (see README / `.env.example`):
 
 ```bash
-npx convex env set ANTHROPIC_API_KEY <key>
-npx convex env set BOX_API_KEY <key>
-npx convex env set AUTUMN_SECRET_KEY <key>
 npx @convex-dev/auth
 ```
 
-Put `AUTUMN_SECRET_KEY` in `.env.local` as well for the Next.js Autumn route.
+Put Blaxel + Autumn + Anthropic keys in `.env.local` (see `.env.example`):
+`BL_API_KEY`, `BL_WORKSPACE`, `BL_SANDBOX_IMAGE`, `AUTUMN_SECRET_KEY`, `ANTHROPIC_API_KEY`.
 
 ## Development workflow
 
@@ -74,7 +72,7 @@ pnpm typecheck
 | --- | --- |
 | Agent / tools | `lib/ai/agent.ts`, `convex/generate.ts` |
 | Astro scaffold | `lib/schema/site.ts`, `lib/astro/scaffold.ts` |
-| Sandbox preview | `lib/box/client.ts` |
+| Sandbox preview | `lib/sandbox/client.ts` |
 | Auth / users | `convex/auth.ts`, `convex/users.ts` |
 | Billing | `convex/autumn.ts`, `autumn.config.ts`, `app/api/autumn/` |
 | Chat / workspace UI | `components/workspace/`, `components/ai-elements/` |
