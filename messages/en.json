@@ -339,23 +339,20 @@
     "stepsMany": "{count} steps"
   },
   "publish": {
-    "eyebrowExport": "Export",
-    "eyebrowLive": "Live site",
-    "eyebrowGoLive": "Go live",
     "titleExport": "Export your site",
     "titleLive": "Your site is live",
     "titlePublish": "Publish",
-    "descByok": "BYOK includes export. Upgrade to Pro for floras.app hosting.",
-    "descLive": "Open the public URL, update the live build, or take it down.",
-    "descConfirm": "Confirm where this site will live, then publish.",
+    "descByok": "BYOK includes export. Upgrade to Pro for floras.app hosting and custom domains.",
+    "descLive": "Open the public URL, push an update, or take the site down.",
+    "descConfirm": "Build and host on floras.app. Connect a custom domain afterward from Account.",
     "liveUrl": "Live URL",
     "yourUrl": "Your URL",
     "copyUrl": "Copy URL",
     "openLive": "Open live site",
-    "uniqueAddress": "A unique address is assigned on first publish. You can connect your own domain afterward.",
+    "uniqueAddress": "A unique address is assigned on first publish.",
     "pendingCustom": "Custom domain pending:",
     "alsoAt": "Also at {url}",
-    "manageDomainsBefore": "Manage domains in",
+    "manageDomainsBefore": "Custom domains:",
     "manageDomainsLink": "Account → Domains",
     "openSite": "Open site",
     "updateLive": "Update live",
@@ -363,26 +360,9 @@
     "unpublish": "Unpublish",
     "unpublishing": "Unpublishing…",
     "publishSite": "Publish site",
-    "upgradeHosting": "Upgrade to Pro for hosting",
-    "exportZip": "Export as ZIP",
-    "exporting": "Exporting…",
-    "factsExport": {
-      "0": "Export as ZIP to host the Astro project yourself",
-      "1": "Floras hosting and custom domains require Pro",
-      "2": "Live preview still works in the workspace"
-    },
-    "factsPublished": {
-      "0": "Anyone with the link can open this site",
-      "1": "Update live to replace the current build",
-      "2": "Unpublish removes the Cloudflare project and floras.app DNS",
-      "3": "Export as ZIP to host the Astro project elsewhere"
-    },
-    "factsPublish": {
-      "0": "Builds the site and puts it on the public web",
-      "1": "Includes a unique {domain} address",
-      "2": "Custom domains can be connected after publish",
-      "3": "Export as ZIP to host the Astro project elsewhere"
-    }
+    "upgradeHosting": "Upgrade to Pro",
+    "exportZip": "Export ZIP",
+    "exporting": "Exporting…"
   },
   "preview": {
     "status": {

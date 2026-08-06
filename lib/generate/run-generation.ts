@@ -154,10 +154,54 @@ export async function runGeneration(projectId: string, token: string) {
         content: m.content,
       }));
 
-    const result = await agent.generate({ messages: convo });
+    const result = await agent.stream({ messages: convo });
+
+    let full = "";
+    let reasoning = "";
+    let lastContentPatch = 0;
+    let lastReasoningPatch = 0;
+
+    for await (const part of result.stream) {
+      if (part.type === "error") {
+        const message =
+          part.error instanceof Error
+            ? part.error.message
+            : typeof part.error === "string"
+              ? part.error
+              : "Generation stream failed";
+        throw new Error(message);
+      }
+      if (part.type === "reasoning-delta") {
+        reasoning += part.text;
+        const now = Date.now();
+        if (now - lastReasoningPatch >= 120) {
+          lastReasoningPatch = now;
+          await fetchMutation(
+            api.messages.setReasoning,
+            { messageId: asMessageId(assistantId), reasoning },
+            { token }
+          );
+        }
+      } else if (part.type === "text-start") {
+        if (full.trim().length > 0 && !/\n\n$/.test(full)) {
+          full = `${full.replace(/\s*$/, "")}\n\n`;
+        }
+      } else if (part.type === "text-delta") {
+        full += part.text;
+        const now = Date.now();
+        if (now - lastContentPatch >= 120) {
+          lastContentPatch = now;
+          await fetchMutation(
+            api.messages.setContent,
+            { messageId: asMessageId(assistantId), content: full },
+            { token }
+          );
+        }
+      }
+    }
 
     const reasoningText =
-      typeof result.reasoningText === "string" ? result.reasoningText.trim() : "";
+      reasoning.trim() || ((await result.reasoningText) ?? "").trim();
     if (reasoningText) {
       await fetchMutation(
         api.messages.setReasoning,
@@ -166,11 +210,12 @@ export async function runGeneration(projectId: string, token: string) {
       );
     }
 
+    const finalText = full || (await result.text) || "Done.";
     await fetchMutation(
       api.messages.finish,
       {
         messageId: asMessageId(assistantId),
-        content: result.text || "Done.",
+        content: finalText,
         status: "complete",
       },
       { token }

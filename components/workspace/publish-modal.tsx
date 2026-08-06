@@ -18,6 +18,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { FLORAS_SITES_DOMAIN, type DomainStatus } from "@/lib/publish/types";
 import { cn } from "@/lib/utils";
 
@@ -86,258 +87,301 @@ export function PublishModal({
     window.setTimeout(() => setCopied(false), 1500);
   }
 
-  const facts = !canPublish
-    ? ([0, 1, 2] as const).map((i) => t(`factsExport.${i}`))
+  const title = !canPublish
+    ? t("titleExport")
     : isPublished
-      ? ([0, 1, 2, 3] as const).map((i) => t(`factsPublished.${i}`))
-      : ([0, 1, 2, 3] as const).map((i) =>
-          i === 1
-            ? t(`factsPublish.1`, { domain: FLORAS_SITES_DOMAIN })
-            : t(`factsPublish.${i}`)
-        );
+      ? t("titleLive")
+      : t("titlePublish");
+
+  const description = !canPublish
+    ? t("descByok")
+    : isPublished
+      ? t("descLive")
+      : t("descConfirm");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
-        <div className="border-b border-border px-6 py-5 pr-14">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            {!canPublish
-              ? t("eyebrowExport")
-              : isPublished
-                ? t("eyebrowLive")
-                : t("eyebrowGoLive")}
-          </p>
-          <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight">
-            {!canPublish
-              ? t("titleExport")
-              : isPublished
-                ? t("titleLive")
-                : t("titlePublish")}
+        <div className="space-y-2 px-6 pb-5 pt-6 pr-14">
+          <DialogTitle className="text-xl font-semibold tracking-tight">
+            {title}
           </DialogTitle>
-          <DialogDescription className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
-            {!canPublish
-              ? t("descByok")
-              : isPublished
-                ? t("descLive")
-                : t("descConfirm")}
+          <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+            {description}
           </DialogDescription>
         </div>
 
         {canPublish ? (
-        <div className="border-b border-border px-6 py-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            {liveUrl ? t("liveUrl") : t("yourUrl")}
-          </p>
-          {liveUrl ? (
-            <div className="mt-2 flex items-start gap-2">
-              <a
-                href={liveUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="min-w-0 flex-1 break-all font-mono text-sm text-foreground underline-offset-4 hover:underline"
-              >
-                {stripProtocol(liveUrl)}
-              </a>
-              <div className="flex shrink-0 gap-1">
-                <button
-                  type="button"
-                  onClick={() => void copyUrl()}
-                  className="inline-flex size-8 cursor-pointer items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                  aria-label={t("copyUrl")}
-                >
-                  {copied ? (
-                    <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
-                  ) : (
-                    <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
-                  )}
-                </button>
+          <div className="mx-6 mb-5 border border-border bg-background p-4">
+            <p className="text-xs text-muted-foreground">
+              {liveUrl ? t("liveUrl") : t("yourUrl")}
+            </p>
+            {liveUrl ? (
+              <div className="mt-2 flex items-center gap-2">
                 <a
                   href={liveUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex size-8 items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                  aria-label={t("openLive")}
+                  className="min-w-0 flex-1 truncate font-mono text-sm text-foreground underline-offset-4 hover:underline"
                 >
-                  <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
+                  {stripProtocol(liveUrl)}
                 </a>
-              </div>
-            </div>
-          ) : (
-            <p className="mt-2 font-mono text-sm text-foreground">
-              *.{FLORAS_SITES_DOMAIN}
-            </p>
-          )}
-          {!liveUrl ? (
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {t("uniqueAddress")}
-            </p>
-          ) : null}
-          {pendingCustom ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              {t("pendingCustom")}{" "}
-              <span className="font-mono text-foreground">{pendingCustom}</span>
-            </p>
-          ) : null}
-          {customActive && florasUrl ? (
-            <p className="mt-3 truncate font-mono text-[11px] text-muted-foreground">
-              {t("alsoAt", { url: stripProtocol(florasUrl) })}
-            </p>
-          ) : null}
-        </div>
-        ) : null}
-
-        <ul>
-          {facts.map((item) => (
-            <li
-              key={item}
-              className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0"
-            >
-              {item}
-            </li>
-          ))}
-          {canPublish ? (
-          <li className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0">
-            {t("manageDomainsBefore")}{" "}
-            <Link
-              href="/dashboard/account"
-              className="text-foreground underline-offset-4 hover:underline"
-              onClick={() => {
-                onOpenChange(false);
-                queueMicrotask(() => {
-                  window.location.hash = "domains";
-                });
-              }}
-            >
-              {t("manageDomainsLink")}
-            </Link>
-          </li>
-          ) : null}
-        </ul>
-
-        <div className="border-t border-border p-0">
-          {canPublish && isPublished ? (
-            <>
-              {liveUrl ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2">
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => void copyUrl()}
+                    className="inline-flex size-8 cursor-pointer items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+                    aria-label={t("copyUrl")}
+                  >
+                    {copied ? (
+                      <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
+                    ) : (
+                      <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
+                    )}
+                  </button>
                   <a
                     href={liveUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
+                    className="inline-flex size-8 items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+                    aria-label={t("openLive")}
                   >
-                    <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
+                    <HugeiconsIcon
+                      icon={LinkSquare02Icon}
+                      className="size-3.5"
+                    />
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-2 font-mono text-sm text-foreground">
+                *.{FLORAS_SITES_DOMAIN}
+              </p>
+            )}
+            {!liveUrl ? (
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                {t("uniqueAddress")}
+              </p>
+            ) : null}
+            {pendingCustom ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                {t("pendingCustom")}{" "}
+                <span className="font-mono text-foreground">
+                  {pendingCustom}
+                </span>
+              </p>
+            ) : null}
+            {customActive && florasUrl ? (
+              <p className="mt-3 truncate font-mono text-[11px] text-muted-foreground">
+                {t("alsoAt", { url: stripProtocol(florasUrl) })}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="space-y-3 border-t border-border px-6 py-5">
+          {canPublish && isPublished ? (
+            <>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {liveUrl ? (
+                  <a
+                    href={liveUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={cn(
+                      buttonVariants({ variant: "brand" }),
+                      "h-11 w-full"
+                    )}
+                  >
+                    <HugeiconsIcon
+                      icon={LinkSquare02Icon}
+                      className="size-3.5"
+                    />
                     {t("openSite")}
                   </a>
-                  <button
-                    type="button"
-                    onClick={onConfirm}
-                    disabled={busy}
-                    className={cn(
-                      "inline-flex h-12 cursor-pointer items-center justify-center gap-2 border-t border-border bg-background px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card active:scale-[0.99] sm:border-t-0 sm:border-l",
-                      "disabled:cursor-not-allowed disabled:opacity-40"
-                    )}
-                  >
-                    {publishing ? (
-                      <>
-                        <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                        {t("publishing")}
-                      </>
-                    ) : (
-                      t("updateLive")
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <button
+                ) : null}
+                <Button
                   type="button"
+                  variant={liveUrl ? "outline" : "brand"}
+                  className={cn("h-11 w-full", !liveUrl && "sm:col-span-2")}
                   onClick={onConfirm}
                   disabled={busy}
-                  className={cn(
-                    "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] active:scale-[0.99]",
-                    "hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
-                  )}
                 >
                   {publishing ? (
                     <>
-                      <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
+                      <HugeiconsIcon
+                        icon={Loading03Icon}
+                        className="size-3.5 animate-spin"
+                      />
                       {t("publishing")}
                     </>
                   ) : (
                     t("updateLive")
                   )}
-                </button>
-              )}
-              {onUnpublish ? (
-                <button
-                  type="button"
-                  onClick={onUnpublish}
-                  disabled={busy}
-                  className={cn(
-                    "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 border-t border-border bg-background px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-destructive transition-colors hover:bg-destructive/5 active:scale-[0.99]",
-                    "disabled:cursor-not-allowed disabled:opacity-40"
-                  )}
-                >
-                  {unpublishing ? (
-                    <>
-                      <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                      {t("unpublishing")}
-                    </>
-                  ) : (
-                    t("unpublish")
-                  )}
-                </button>
-              ) : null}
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {onExport ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-0 text-muted-foreground"
+                    onClick={onExport}
+                    disabled={busy}
+                  >
+                    {exporting ? (
+                      <>
+                        <HugeiconsIcon
+                          icon={Loading03Icon}
+                          className="size-3.5 animate-spin"
+                        />
+                        {t("exporting")}
+                      </>
+                    ) : (
+                      <>
+                        <HugeiconsIcon
+                          icon={Download01Icon}
+                          className="size-3.5"
+                        />
+                        {t("exportZip")}
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                {onUnpublish ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-0 text-destructive hover:bg-transparent hover:text-destructive"
+                    onClick={onUnpublish}
+                    disabled={busy}
+                  >
+                    {unpublishing ? (
+                      <>
+                        <HugeiconsIcon
+                          icon={Loading03Icon}
+                          className="size-3.5 animate-spin"
+                        />
+                        {t("unpublishing")}
+                      </>
+                    ) : (
+                      t("unpublish")
+                    )}
+                  </Button>
+                ) : null}
+              </div>
             </>
           ) : canPublish ? (
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={busy}
-              className={cn(
-                "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] active:scale-[0.99]",
-                "hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
-              )}
-            >
-              {publishing ? (
-                <>
-                  <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                  {t("publishing")}
-                </>
-              ) : (
-                t("publishSite")
-              )}
-            </button>
-          ) : onUpgrade ? (
-            <button
-              type="button"
-              onClick={onUpgrade}
-              className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.99]"
-            >
-              {t("upgradeHosting")}
-            </button>
-          ) : null}
-          {onExport ? (
-            <button
-              type="button"
-              onClick={onExport}
-              disabled={busy}
-              className={cn(
-                "inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 border-t border-border bg-background px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-card active:scale-[0.99]",
-                "disabled:cursor-not-allowed disabled:opacity-40"
-              )}
-            >
-              {exporting ? (
-                <>
-                  <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                  {t("exporting")}
-                </>
-              ) : (
-                <>
-                  <HugeiconsIcon icon={Download01Icon} className="size-3.5" />
-                  {t("exportZip")}
-                </>
-              )}
-            </button>
+            <>
+              <Button
+                type="button"
+                variant="brand"
+                className="h-11 w-full"
+                onClick={onConfirm}
+                disabled={busy}
+              >
+                {publishing ? (
+                  <>
+                    <HugeiconsIcon
+                      icon={Loading03Icon}
+                      className="size-3.5 animate-spin"
+                    />
+                    {t("publishing")}
+                  </>
+                ) : (
+                  t("publishSite")
+                )}
+              </Button>
+              {onExport ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full"
+                  onClick={onExport}
+                  disabled={busy}
+                >
+                  {exporting ? (
+                    <>
+                      <HugeiconsIcon
+                        icon={Loading03Icon}
+                        className="size-3.5 animate-spin"
+                      />
+                      {t("exporting")}
+                    </>
+                  ) : (
+                    <>
+                      <HugeiconsIcon
+                        icon={Download01Icon}
+                        className="size-3.5"
+                      />
+                      {t("exportZip")}
+                    </>
+                  )}
+                </Button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              {onUpgrade ? (
+                <Button
+                  type="button"
+                  variant="brand"
+                  className="h-11 w-full"
+                  onClick={onUpgrade}
+                >
+                  {t("upgradeHosting")}
+                </Button>
+              ) : null}
+              {onExport ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full"
+                  onClick={onExport}
+                  disabled={busy}
+                >
+                  {exporting ? (
+                    <>
+                      <HugeiconsIcon
+                        icon={Loading03Icon}
+                        className="size-3.5 animate-spin"
+                      />
+                      {t("exporting")}
+                    </>
+                  ) : (
+                    <>
+                      <HugeiconsIcon
+                        icon={Download01Icon}
+                        className="size-3.5"
+                      />
+                      {t("exportZip")}
+                    </>
+                  )}
+                </Button>
+              ) : null}
+            </>
+          )}
+
+          {canPublish ? (
+            <p className="pt-1 text-xs text-muted-foreground">
+              {t("manageDomainsBefore")}{" "}
+              <Link
+                href="/dashboard/account"
+                className="text-foreground underline-offset-4 hover:underline"
+                onClick={() => {
+                  onOpenChange(false);
+                  queueMicrotask(() => {
+                    window.location.hash = "domains";
+                  });
+                }}
+              >
+                {t("manageDomainsLink")}
+              </Link>
+            </p>
           ) : null}
         </div>
       </DialogContent>
