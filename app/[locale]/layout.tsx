@@ -6,7 +6,6 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import Script from "next/script";
 import { hasLocale } from "next-intl";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
@@ -61,18 +60,16 @@ export default async function LocaleLayout({
         suppressHydrationWarning
       >
         <head>
-          <Script
+          <script
             id="theme-cookie-sync"
-            strategy="beforeInteractive"
             dangerouslySetInnerHTML={{ __html: themeCookieScript() }}
           />
-          {process.env.NODE_ENV === "development" && (
-            <Script
+          {process.env.NODE_ENV === "development" ? (
+            <script
               src="//unpkg.com/react-grab/dist/index.global.js"
               crossOrigin="anonymous"
-              strategy="beforeInteractive"
             />
-          )}
+          ) : null}
         </head>
         <body className="min-h-[100dvh] bg-background font-sans text-foreground antialiased">
           <NextIntlClientProvider messages={messages}>

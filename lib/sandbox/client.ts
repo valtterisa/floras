@@ -6,7 +6,11 @@ import {
   DEV_PROCESS_NAME,
   PREVIEW_NAME,
   PREVIEW_RESPONSE_HEADERS,
-  requireSandboxImage,
+  sandboxImage,
+  requireTemplateRepo,
+  templateRef,
+  templateGithubToken,
+  authenticatedCloneUrl,
   sandboxMemoryMb,
   sandboxRegion,
   sandboxLog,
@@ -45,7 +49,7 @@ export { sandboxNameForProject };
 
 export function sandboxConfigured(): boolean {
   return Boolean(
-    process.env.BL_API_KEY?.trim() && process.env.BL_SANDBOX_IMAGE?.trim()
+    process.env.BL_API_KEY?.trim() && process.env.BL_TEMPLATE_REPO?.trim()
   );
 }
 
@@ -90,14 +94,17 @@ export async function createOrResumeSandbox(opts: {
   }
 
   const { sandboxName, displayName = sandboxName } = opts;
+  const image = sandboxImage();
   sandboxLog(sandboxName, "create", "createIfNotExists", {
-    image: requireSandboxImage(),
+    image,
     displayName,
+    templateRepo: requireTemplateRepo(),
+    templateRef: templateRef(),
   });
 
   const createArgs: Parameters<typeof SandboxInstance.createIfNotExists>[0] = {
     name: sandboxName,
-    image: requireSandboxImage(),
+    image,
     memory: sandboxMemoryMb(),
     ports: [{ target: PREVIEW_PORT, protocol: "HTTP" }],
     labels: {
@@ -121,6 +128,7 @@ export async function createOrResumeSandbox(opts: {
     });
   }
 
+  await ensureTemplateCloned(sandboxName);
   sandboxLog(sandboxName, "create", "ready");
   return sandboxName;
 }
@@ -155,6 +163,64 @@ export async function ensureSandboxReady(sandboxName: string): Promise<void> {
     return;
   }
   await loadSandbox(sandboxName);
+  await ensureTemplateCloned(sandboxName);
+}
+
+async function ensureTemplateCloned(sandboxName: string): Promise<void> {
+  const present = await runCommand(
+    sandboxName,
+    `test -f ${shellQuote(`${SITE_ROOT}/package.json`)}`,
+    { cwd: "/", timeoutSeconds: 30, retries: 1 }
+  );
+  if (present.success && present.exitCode === 0) {
+    sandboxLog(sandboxName, "template", "already present");
+    return;
+  }
+
+  const repo = requireTemplateRepo();
+  const ref = templateRef();
+  const cloneUrl = authenticatedCloneUrl(repo, templateGithubToken());
+  sandboxLog(sandboxName, "template", "cloning", {
+    repo,
+    ref,
+    authenticated: Boolean(templateGithubToken()),
+  });
+
+  const script = [
+    "set -euo pipefail",
+    `ROOT=${shellQuote(SITE_ROOT)}`,
+    `REF=${shellQuote(ref)}`,
+    `URL=${shellQuote(cloneUrl)}`,
+    'if [ -f "$ROOT/package.json" ]; then exit 0; fi',
+    'command -v git >/dev/null 2>&1 || { echo "git is required in the sandbox image" >&2; exit 1; }',
+    "TMP=$(mktemp -d)",
+    'trap \'rm -rf "$TMP"\' EXIT',
+    'git clone --depth 1 --branch "$REF" "$URL" "$TMP/repo"',
+    'mkdir -p "$ROOT"',
+    'find "$ROOT" -mindepth 1 -maxdepth 1 -exec rm -rf {} +',
+    'cp -a "$TMP/repo/." "$ROOT/"',
+    'rm -rf "$ROOT/.git"',
+  ].join("\n");
+
+  const clone = await runCommand(sandboxName, script, {
+    cwd: "/",
+    timeoutSeconds: 180,
+    retries: 1,
+  });
+  if (!clone.success || clone.exitCode !== 0) {
+    throw new AppError("preview", "Could not clone the site template repo.", {
+      detail: redactSecrets(
+        clone.stderr || clone.stdout || `exit ${clone.exitCode}`
+      ),
+    });
+  }
+  sandboxLog(sandboxName, "template", "cloned");
+}
+
+function redactSecrets(text: string): string {
+  const token = templateGithubToken();
+  if (!token) return text;
+  return text.split(token).join("[redacted]");
 }
 
 export async function writeFiles(

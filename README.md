@@ -103,7 +103,9 @@ Also put Blaxel + Autumn keys in `.env.local`:
 # .env.local
 BL_API_KEY=...
 BL_WORKSPACE=...
-BL_SANDBOX_IMAGE=...   # deployed Astro template image
+BL_TEMPLATE_REPO=https://github.com/org/floras-template.git
+# BL_TEMPLATE_REF=main
+# BL_SANDBOX_IMAGE=blaxel/node:latest
 AUTUMN_SECRET_KEY=...
 ANTHROPIC_API_KEY=...
 ```
@@ -140,7 +142,9 @@ Full reference: [`.env.example`](.env.example).
 | `ANTHROPIC_API_KEY` | Platform Anthropic key (Pro generation) |
 | `BL_API_KEY` | Blaxel API key |
 | `BL_WORKSPACE` | Blaxel workspace |
-| `BL_SANDBOX_IMAGE` | Deployed Astro sandbox template image |
+| `BL_TEMPLATE_REPO` | Astro template Git URL cloned into new sandboxes |
+| `BL_TEMPLATE_REF` | Optional branch/tag (default `main`) |
+| `BL_SANDBOX_IMAGE` | Optional base image (default `blaxel/node:latest`) |
 | `CLOUDFLARE_API_TOKEN` | Pages Edit + Zone DNS Edit (floras.app) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account for Pages projects |
 | `CLOUDFLARE_ZONE_ID` | floras.app zone ID (per-subdomain CNAMEs) |
@@ -156,7 +160,7 @@ Full reference: [`.env.example`](.env.example).
 ## Development notes
 
 - **Heavy SDKs:** AI SDK + Blaxel + Autumn run in Next.js API routes — keep them out of Convex.
-- **Preview hosts:** Sandbox Astro servers load over Blaxel `*.preview.bl.run`; templates must allow those hosts and bind `0.0.0.0`.
+- **Preview hosts:** Sandbox Astro servers load over Blaxel `*.preview.bl.run`; the cloned template must allow those hosts and bind `0.0.0.0`.
 - **Typecheck:** Use `pnpm typecheck` for real checking. Auth gating is in `proxy.ts`.
 
 ## Project structure

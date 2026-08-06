@@ -4,15 +4,51 @@ export const PREVIEW_PORT = Number(
 );
 export const DEV_PROCESS_NAME = "astro-dev";
 export const PREVIEW_NAME = "floras-preview";
+export const DEFAULT_SANDBOX_IMAGE = "blaxel/node:latest";
 
-export function requireSandboxImage(): string {
-  const image = process.env.BL_SANDBOX_IMAGE?.trim();
-  if (!image) {
+export function sandboxImage(): string {
+  return process.env.BL_SANDBOX_IMAGE?.trim() || DEFAULT_SANDBOX_IMAGE;
+}
+
+export function requireTemplateRepo(): string {
+  const repo = process.env.BL_TEMPLATE_REPO?.trim();
+  if (!repo) {
     throw new Error(
-      "BL_SANDBOX_IMAGE is not set. Deploy an Astro sandbox template and set its image id."
+      "BL_TEMPLATE_REPO is not set. Point it at the Astro template Git URL (e.g. https://github.com/org/floras-template.git)."
     );
   }
-  return image;
+  return repo;
+}
+
+export function templateRef(): string {
+  return process.env.BL_TEMPLATE_REF?.trim() || "main";
+}
+
+export function templateGithubToken(): string | undefined {
+  const token = process.env.BL_TEMPLATE_GITHUB_TOKEN?.trim();
+  return token || undefined;
+}
+
+/** Embed a GitHub token into an https clone URL without logging it. */
+export function authenticatedCloneUrl(
+  repoUrl: string,
+  token?: string
+): string {
+  if (!token) return repoUrl;
+  try {
+    const url = new URL(repoUrl);
+    if (
+      url.protocol !== "https:" ||
+      (url.hostname !== "github.com" && !url.hostname.endsWith(".github.com"))
+    ) {
+      return repoUrl;
+    }
+    url.username = "x-access-token";
+    url.password = token;
+    return url.toString();
+  } catch {
+    return repoUrl;
+  }
 }
 
 export function sandboxMemoryMb(): number {

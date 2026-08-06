@@ -20,9 +20,10 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
   summaries stream back into Convex tables, so the UI updates reactively.
   Pro uses the platform Anthropic key + Autumn metering; BYOK uses the user's
   encrypted Anthropic key (no Autumn credit metering).
-- **Template:** New sandboxes use `SandboxInstance.createIfNotExists` from
-  `BL_SANDBOX_IMAGE` (deployed Blaxel Astro template with deps). Site files live
-  under `/app` in the sandbox. The agent stores a zod `SitePlan`
+- **Template:** New sandboxes boot from `BL_SANDBOX_IMAGE` (default
+  `blaxel/node:latest`), then shallow-clone `BL_TEMPLATE_REPO` (optional
+  `BL_TEMPLATE_REF`, default `main`) into `/app` when the site root is empty.
+  Private repos: set `BL_TEMPLATE_GITHUB_TOKEN`. The agent stores a zod `SitePlan`
   (`lib/schema/site.ts`) then edits the site in place.
 - **Sandbox/preview:** `lib/sandbox/client.ts` wraps `@blaxel/core`. Each project gets
   a named Blaxel sandbox (`floras-{projectId}`) running the Astro (or bun/pnpm) dev
@@ -52,10 +53,12 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
   module-load limit. Do not reintroduce those packages into `convex/`.
 - **Secrets for generation/sandbox/billing/CF live in Next.js `.env.local`:**
   `ANTHROPIC_API_KEY`, `BYOK_ENCRYPTION_SECRET`, `BL_API_KEY`, `BL_WORKSPACE`,
-  `BL_SANDBOX_IMAGE`, `AUTUMN_SECRET_KEY`, Cloudflare publish vars below. Optional:
-  `AGENT_MODEL` (defaults to `claude-sonnet-5`), `BL_SANDBOX_REGION`,
-  `BL_SANDBOX_MEMORY_MB`, `BL_SITE_ROOT` (defaults to `/app`), `BL_PREVIEW_PORT`
-  (defaults to `4321`). New sandboxes always use `BL_SANDBOX_IMAGE` (required).
+  `BL_TEMPLATE_REPO`, `AUTUMN_SECRET_KEY`, Cloudflare publish vars below. Optional:
+  `AGENT_MODEL` (defaults to `claude-sonnet-5`), `BL_TEMPLATE_REF` (default `main`),
+  `BL_TEMPLATE_GITHUB_TOKEN`, `BL_SANDBOX_IMAGE` (default `blaxel/node:latest`),
+  `BL_SANDBOX_REGION`, `BL_SANDBOX_MEMORY_MB`, `BL_SITE_ROOT` (defaults to `/app`),
+  `BL_PREVIEW_PORT` (defaults to `4321`). New sandboxes clone `BL_TEMPLATE_REPO`
+  once into the site root when empty.
 - **Cloudflare publish (Next.js `.env.local` / host secrets, not sandbox env):**
   `CLOUDFLARE_API_TOKEN` (User token: Account → Cloudflare Pages → Edit **and**
   Zone → DNS → Edit on `floras.app`), `CLOUDFLARE_ACCOUNT_ID`, and
@@ -75,10 +78,10 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
   `{CONVEX_SITE_URL}/api/auth/callback/google`. Not the Anthropic/Blaxel/CF keys.
 - **Autumn pricing:** push plans with `npx atmn push` (config in `autumn.config.ts`).
   Includes `byok` ($5/mo), `pro`, `pro_yearly`, and `credit_top_up`.
-- **Preview iframes** load Blaxel preview URLs (`*.preview.bl.run`); the Astro
-  template must set `server.allowedHosts: true` and bind `0.0.0.0` (or `HOST=0.0.0.0`)
-  so those hosts are not blocked. Declare port `4321` at sandbox creation
-  (ports cannot be added later).
+- **Preview iframes** load Blaxel preview URLs (`*.preview.bl.run`); the cloned
+  Astro template must set `server.allowedHosts: true` and bind `0.0.0.0` (or
+  `HOST=0.0.0.0`) so those hosts are not blocked. Declare port `4321` at sandbox
+  creation (ports cannot be added later).
 - **Typecheck:** `pnpm typecheck` / `next build` both enforce TypeScript. Auth gating
   lives in `proxy.ts` (Next.js 16 network proxy).
 - **Busy jobs:** generate/publish use atomic `claimGeneration` / `claimPublish`. Stuck

@@ -42,7 +42,7 @@ npx @convex-dev/auth
 ```
 
 Put Blaxel + Autumn + Anthropic keys in `.env.local` (see `.env.example`):
-`BL_API_KEY`, `BL_WORKSPACE`, `BL_SANDBOX_IMAGE`, `AUTUMN_SECRET_KEY`, `ANTHROPIC_API_KEY`.
+`BL_API_KEY`, `BL_WORKSPACE`, `BL_TEMPLATE_REPO`, `AUTUMN_SECRET_KEY`, `ANTHROPIC_API_KEY`.
 
 ## Development workflow
 

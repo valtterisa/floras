@@ -3,10 +3,18 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowDown01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { EmptyState } from "@/components/site/empty-state";
 import { PageHeader } from "@/components/site/page-header";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 type Submission = {
@@ -86,21 +94,76 @@ export function InboxView() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          Site
-          <select
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(e.target.value)}
-            className="h-9 border border-border bg-background px-2 text-foreground"
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="Site"
+            className={cn(
+              "inline-flex h-9 min-w-0 max-w-full cursor-pointer items-center gap-2 border border-border bg-background px-2.5 text-left text-muted-foreground transition-colors",
+              "hover:bg-card hover:text-foreground",
+              "focus:outline-none data-[state=open]:bg-card data-[state=open]:text-foreground"
+            )}
           >
-            <option value="all">All sites</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            <span className="text-xs text-muted-foreground">Site</span>
+            <span className="min-w-0 truncate text-xs font-medium text-foreground">
+              {projectFilter === "all"
+                ? "All sites"
+                : (projects.find((p) => p.id === projectFilter)?.name ??
+                  "All sites")}
+            </span>
+            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 shrink-0" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="min-w-48 rounded-none border-border p-0 shadow-none"
+          >
+            <DropdownMenuItem
+              onSelect={() => setProjectFilter("all")}
+              className={cn(
+                "cursor-pointer gap-3 rounded-none px-3 py-2.5 focus:bg-card",
+                projects.length > 0 && "border-b border-border",
+                projectFilter === "all" && "bg-card"
+              )}
+            >
+              <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                All sites
+              </span>
+              {projectFilter === "all" ? (
+                <HugeiconsIcon
+                  icon={Tick02Icon}
+                  className="size-4 shrink-0 text-brand"
+                />
+              ) : (
+                <span className="size-4 shrink-0" aria-hidden />
+              )}
+            </DropdownMenuItem>
+            {projects.map((p, i) => {
+              const active = projectFilter === p.id;
+              return (
+                <DropdownMenuItem
+                  key={p.id}
+                  onSelect={() => setProjectFilter(p.id)}
+                  className={cn(
+                    "cursor-pointer gap-3 rounded-none px-3 py-2.5 focus:bg-card",
+                    i < projects.length - 1 && "border-b border-border",
+                    active && "bg-card"
+                  )}
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                    {p.name}
+                  </span>
+                  {active ? (
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
+                      className="size-4 shrink-0 text-brand"
+                    />
+                  ) : (
+                    <span className="size-4 shrink-0" aria-hidden />
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           onClick={() => setShowArchived((v) => !v)}
