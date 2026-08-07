@@ -7,7 +7,8 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { formatCredits } from "@/lib/billing/constants";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import type { DomainStatus, PublishStatus } from "@/lib/publish/types";
+import { isFlorasHostname } from "@/lib/publish/types";
 import type { WorkspaceProject } from "@/lib/types/user";
 
 export function WorkspaceHeader({
@@ -29,6 +31,7 @@ export function WorkspaceHeader({
   projectId: string;
   project: WorkspaceProject | null;
 }) {
+  const t = useTranslations("workspace");
   const gates = useBillingGates();
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -37,7 +40,7 @@ export function WorkspaceHeader({
   const awaitingResult = useRef(false);
 
   const name = project?.name;
-  const boxId = project?.boxId;
+  const sandboxName = project?.sandboxName;
   const publishStatus =
     (project?.publishStatus as PublishStatus | undefined) ?? "idle";
   const publishedUrl = project?.publishedUrl;
@@ -63,7 +66,13 @@ export function WorkspaceHeader({
     if (publishStatus === "published") {
       awaitingResult.current = false;
       setPublishing(false);
-      setPublishOpen(true);
+      if (publishError) {
+        toast.error(
+          AppError.from({ error: publishError, code: "publish" }).message
+        );
+      } else {
+        setPublishOpen(true);
+      }
       return;
     }
 
@@ -84,12 +93,15 @@ export function WorkspaceHeader({
 
   const creditLabel = formatCredits(gates.balance);
   const isPublishing = publishing || publishStatus === "publishing";
-  const isPublished = publishStatus === "published";
+  const isPublished =
+    publishStatus === "published" ||
+    Boolean(publishedUrl) ||
+    (typeof cfSubdomain === "string" && isFlorasHostname(cfSubdomain));
   const busy = isPublishing || unpublishing || exporting;
-  const canOpenPublish = Boolean(boxId);
+  const canOpenPublish = Boolean(sandboxName);
 
   async function handlePublish() {
-    if (!boxId || busy) return;
+    if (!sandboxName || busy) return;
     setPublishing(true);
     awaitingResult.current = true;
     try {
@@ -132,7 +144,7 @@ export function WorkspaceHeader({
   }
 
   async function handleExport() {
-    if (!boxId || busy) return;
+    if (!sandboxName || busy) return;
     setExporting(true);
     try {
       const res = await fetch("/api/export", {
@@ -147,7 +159,7 @@ export function WorkspaceHeader({
 
       const disposition = res.headers.get("Content-Disposition");
       const match = disposition?.match(/filename="([^"]+)"/);
-      const filename = match?.[1] ?? `${name ?? "site"}.zip`;
+      const filename = match?.[1] ?? `${name ?? "site"}.tar.gz`;
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -157,7 +169,7 @@ export function WorkspaceHeader({
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      toast.success("Project exported");
+      toast.success(t("exported"));
     } catch (error) {
       toast.error(AppError.from(error).message);
     } finally {
@@ -172,7 +184,7 @@ export function WorkspaceHeader({
           <Button asChild variant="ghost" size="icon-sm" className="shrink-0">
             <Link href="/dashboard">
               <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-              <span className="sr-only">Back to dashboard</span>
+              <span className="sr-only">{t("backToDashboard")}</span>
             </Link>
           </Button>
           <Logo />
@@ -198,28 +210,28 @@ export function WorkspaceHeader({
               className="inline-flex h-8 cursor-pointer items-center gap-2 border border-border bg-background px-2.5 transition-colors hover:bg-card"
               aria-label={
                 !gates.hasSubscription
-                  ? "Choose a plan"
+                  ? t("choosePlan")
                   : gates.hasByokPlan && !gates.hasProPlan
                     ? gates.hasApiKey
-                      ? "Manage Anthropic API key"
-                      : "Add Anthropic API key"
-                    : `AI credit ${creditLabel}. Top up`
+                      ? t("manageApiKey")
+                      : t("addApiKey")
+                    : t("creditAria", { credit: creditLabel })
               }
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                 {!gates.hasSubscription
-                  ? "Plan"
+                  ? t("plan")
                   : gates.hasByokPlan && !gates.hasProPlan
-                    ? "BYOK"
-                    : "Credit"}
+                    ? t("byok")
+                    : t("credit")}
               </span>
               <span className="font-mono text-[11px] tabular-nums text-foreground">
                 {!gates.hasSubscription
                   ? "—"
                   : gates.hasByokPlan && !gates.hasProPlan
                     ? gates.hasApiKey
-                      ? "Key"
-                      : "Add key"
+                      ? t("key")
+                      : t("addKey")
                     : creditLabel}
               </span>
             </button>
@@ -237,24 +249,24 @@ export function WorkspaceHeader({
             {isPublishing ? (
               <>
                 <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                <span className="hidden sm:inline">Publishing</span>
+                <span className="hidden sm:inline">{t("publishing")}</span>
               </>
             ) : unpublishing ? (
               <>
                 <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                <span className="hidden sm:inline">Unpublishing</span>
+                <span className="hidden sm:inline">{t("unpublishing")}</span>
               </>
             ) : exporting ? (
               <>
                 <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-                <span className="hidden sm:inline">Exporting</span>
+                <span className="hidden sm:inline">{t("exporting")}</span>
               </>
             ) : gates.billingReady && !gates.canPublish ? (
-              "Export"
+              t("export")
             ) : isPublished ? (
-              "Live"
+              t("live")
             ) : (
-              "Publish"
+              t("publish")
             )}
           </button>
         </div>

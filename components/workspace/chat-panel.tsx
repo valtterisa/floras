@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { asMessageId, asProjectId } from "@/lib/convex/ids";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ import {
 } from "@/lib/ai/models";
 import { triggerAsk, triggerGeneration } from "@/lib/generate/trigger-api";
 import { errorCode, userFacingError } from "@/lib/errors";
+import { onPreviewFixRequest } from "@/lib/workspace/detect-preview-errors";
 
 function ChatBillingBanner({
   billingReady,
@@ -45,10 +47,12 @@ function ChatBillingBanner({
   onTopUp: () => void;
   onAddKey: () => void;
 }) {
+  const t = useTranslations("workspace");
+
   if (billingReady && !hasSubscription) {
     return (
       <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
-        <span>A plan is required to chat with the AI.</span>
+        <span>{t("needPlan")}</span>
         <Button
           type="button"
           variant="outline"
@@ -56,7 +60,7 @@ function ChatBillingBanner({
           className="h-7 rounded-none font-mono text-[10px] uppercase tracking-[0.14em]"
           onClick={onUpgrade}
         >
-          Choose plan
+          {t("choosePlanCta")}
         </Button>
       </div>
     );
@@ -64,7 +68,7 @@ function ChatBillingBanner({
   if (billingReady && hasByokPlan && !hasProPlan && !hasApiKey) {
     return (
       <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
-        <span>Add your Anthropic API key to generate on BYOK.</span>
+        <span>{t("needApiKey")}</span>
         <Button
           type="button"
           variant="outline"
@@ -72,7 +76,7 @@ function ChatBillingBanner({
           className="h-7 rounded-none font-mono text-[10px] uppercase tracking-[0.14em]"
           onClick={onAddKey}
         >
-          Add key
+          {t("addKeyCta")}
         </Button>
       </div>
     );
@@ -82,8 +86,8 @@ function ChatBillingBanner({
       <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
         <span>
           {balance < MIN_CREDIT_BALANCE
-            ? "Out of credit."
-            : `${formatCredits(balance)} credit left.`}
+            ? t("outOfCredit")
+            : t("creditLeft", { credit: formatCredits(balance) })}
         </span>
         <Button
           type="button"
@@ -92,7 +96,7 @@ function ChatBillingBanner({
           className="h-7 rounded-none font-mono text-[10px] uppercase tracking-[0.14em]"
           onClick={onTopUp}
         >
-          Top up
+          {t("topUp")}
         </Button>
       </div>
     );
@@ -115,6 +119,8 @@ export function ChatPanel({
   busy: boolean;
   defaultMode?: ComposerMode;
 }) {
+  const t = useTranslations("workspace");
+  const tComposer = useTranslations("composer");
   const pid = asProjectId(projectId);
   const messages = useQuery(api.messages.list, { projectId: pid }) as
     | ChatMessage[]
@@ -170,10 +176,30 @@ export function ChatPanel({
       }
       setSubmitting(false);
       if (gates.handleDenyCode(errorCode(e))) return false;
-      toast.error(userFacingError(e, "Could not send message"));
+      toast.error(userFacingError(e, tComposer("couldNotSend")));
       return false;
     }
   };
+
+  const handleRef = useRef(handle);
+  handleRef.current = handle;
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
+
+  useEffect(() => {
+    return onPreviewFixRequest((prompt) => {
+      if (pendingRef.current) {
+        toast.message(t("fixQueuedBusy"));
+        return;
+      }
+      setMode("build");
+      void handleRef
+        .current(prompt, resolveAgentModelId(project?.modelId ?? null), "build")
+        .then((ok) => {
+          if (ok) toast.success(t("fixSent"));
+        });
+    });
+  }, [project?.modelId, t]);
 
   return (
     <div className="flex h-full flex-col">
@@ -181,7 +207,7 @@ export function ChatPanel({
       <div className="border-t border-border p-3">
         {showReset ? (
           <div className="mb-2 flex items-center justify-between gap-2 border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
-            <span>Looks stuck. Reset so you can try again.</span>
+            <span>{t("stuck")}</span>
             <Button
               type="button"
               variant="outline"
@@ -192,15 +218,15 @@ export function ChatPanel({
                 setResetting(true);
                 try {
                   await resetBusy({ projectId: pid });
-                  toast.success("Reset. You can send again.");
+                  toast.success(t("resetSuccess"));
                 } catch (e) {
-                  toast.error(userFacingError(e, "Could not reset"));
+                  toast.error(userFacingError(e, t("couldNotReset")));
                 } finally {
                   setResetting(false);
                 }
               }}
             >
-              {resetting ? "Resetting…" : "Reset"}
+              {resetting ? t("resetting") : t("reset")}
             </Button>
           </div>
         ) : null}

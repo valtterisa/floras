@@ -1,0 +1,568 @@
+{
+  "meta": {
+    "tagline": "Verkkosivut yhdellä lauseella",
+    "description": "Kuvaile yrityksesi selkeällä suomen kielellä. Floras rakentaa oikean sivuston, jota voit esikatsella, muokata chatissa ja jakaa — ilman koodia tai suunnittelutaitoja."
+  },
+  "nav": {
+    "signIn": "Kirjaudu",
+    "startBuilding": "Aloita",
+    "dashboard": "Hallinta",
+    "signOut": "Kirjaudu ulos",
+    "openMenu": "Avaa valikko",
+    "closeMenu": "Sulje valikko",
+    "language": "Kieli"
+  },
+  "footer": {
+    "privacy": "Tietosuoja",
+    "terms": "Ehdot",
+    "useCases": "Käyttötapaukset",
+    "comparisons": "Vertailut",
+    "sitemap": "Sivukartta",
+    "home": "Etusivu",
+    "product": "Tuote",
+    "viewAll": "Näytä kaikki",
+    "tagline": "Kuvaile yrityksesi. Saat sivuston, jonka voit avata ja jakaa."
+  },
+  "hero": {
+    "titleBefore": "Valmis sivusto",
+    "titleAccent": "yhdellä lauseella",
+    "titleAfter": ".",
+    "subtitle": "Ei koodia. Ei suunnittelijaa. Kuvaile vain mitä tarvitset."
+  },
+  "composer": {
+    "suggestions": {
+      "0": "Sivusto aurinkopaneeliasentajalle",
+      "1": "Yksinkertainen portfolio valokuvaajalle",
+      "2": "Julkaisusivusto blogilla kahvipaahtimolle",
+      "3": "Varaussivu joogastudiolle",
+      "4": "Boutique-hotelli huoneilla ja hinnoilla",
+      "5": "Kotisivu paikalliselle leipomolle"
+    },
+    "askSuggestions": {
+      "0": "Mitä leipomon etusivun pitäisi sisältää?",
+      "1": "Auta valitsemaan sävy joogastudiolle",
+      "2": "Kuinka monta sivua hotellisivusto tarvitsee?",
+      "3": "Luo yhden lauseen brief valokuvaajalle",
+      "4": "Mitkä osiot kuuluvat kahvipaahtimon sivustolle?",
+      "5": "Mikä CTA toimii aurinkopaneeliasentajalle?"
+    },
+    "placeholderAsk": "Kysy rakenteesta, sävystä, sivuista…",
+    "placeholderBuild": "Pyydä muutoksia: teksti, osiot, värit, blogi…",
+    "placeholderLanding": "Kuvaile sivusto, jonka haluat rakentaa…",
+    "placeholderDashboardBuild": "Kuvaile sivusto, jonka haluat rakentaa…",
+    "submitAsk": "Kysy",
+    "submitBuild": "Rakenna",
+    "pendingAsk": "Kysytään…",
+    "pendingBuild": "Rakennetaan…",
+    "srAsk": "Kysy Florasilta",
+    "srBuild": "Kuvaile rakennettava sivusto",
+    "modeAria": "Composer-tila (vaihda Shift+Tab)",
+    "modeTitle": "Vaihda Kysy / Rakenna Shift+Tabilla",
+    "modeBuild": "Rakenna",
+    "modeBuildHint": "Luo tai muokkaa sivustoa",
+    "modeAsk": "Kysy",
+    "modeAskHint": "Suunnittele ilman rakentamista",
+    "toggleMode": "Vaihda tilaa",
+    "couldNotCreate": "Sivustoa ei voitu luoda",
+    "couldNotStart": "Generointia ei voitu aloittaa",
+    "couldNotSend": "Viestiä ei voitu lähettää"
+  },
+  "features": {
+    "title": "Ihmisille, jotka tarvitsevat sivuston — ei web-tiimiä.",
+    "description": "Kuvaile yrityksesi. Saat viimeistellyn sivuston, jota voit hiota keskustellen ja jakaa luottavaisin mielin.",
+    "asideTitle": "Ideasta johonkin, jonka voit avata.",
+    "asideBody": "Kirjoita yksi lause. Katso kun koko sivusto ilmestyy live-esikatseluun — ja jatka muokkaamista kunnes se tuntuu oikealta.",
+    "points": {
+      "looks": {
+        "title": "Tarkoituksellinen ulkoasu",
+        "body": "Selkeä rakenne, harkittu tilankäyttö ja yritykseesi sopiva design — ei geneerinen sapluuna."
+      },
+      "ready": {
+        "title": "Valmis näytettäväksi",
+        "body": "Jaa live-linkki samana päivänä. Asiakkaat näkevät oikean sivuston, ei luonnosta."
+      },
+      "easy": {
+        "title": "Helppo muuttaa",
+        "body": "Pyydä uutta otsikkoa, osiota tai sävyä. Chattaa kunnes se vastaa sitä mitä tarkoitit."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "Lauseesta sivustoksi.",
+    "description": "Ideasta live-esikatseluun ilman suunnittelutyökalua.",
+    "steps": {
+      "0": {
+        "title": "Kuvaile",
+        "body": "Kirjoita yksi lause yrityksestäsi, tarjouksestasi tai ideastasi. Floras valitsee sopivan ulkoasun."
+      },
+      "1": {
+        "title": "Näe live",
+        "body": "Hetkessä saat oikean sivuston, jota voit avata, klikata ja jakaa."
+      },
+      "2": {
+        "title": "Hiota",
+        "body": "Pyydä uutta tekstiä, osioita tai värejä chatissa. Esikatselu päivittyy mukana."
+      }
+    }
+  },
+  "logoWall": {
+    "title": "Tehty",
+    "audiences": {
+      "shops": "Paikallisille",
+      "creators": "Tekijöille",
+      "consultants": "Konsulteille",
+      "cafes": "Kahviloille"
+    }
+  },
+  "pricing": {
+    "title": "Yksinkertainen hinnoittelu.",
+    "description": "Kreditit, hosting ja SEO-valmis Astro — lataa lisää kun haluat jatkaa."
+  },
+  "cta": {
+    "title": "Seuraava sivustosi on yhden lauseen päässä.",
+    "description": "Kuvaile sivusto. Esikatsele live. Julkaise kun se tuntuu oikealta.",
+    "button": "Luo sivustosi"
+  },
+  "plans": {
+    "byok": [
+      "Oma Anthropic-avain",
+      "Live-esikatselu hiekkalaatikossa",
+      "ZIP-vienti (oma hosting)",
+      "Ei Floras-hostingia"
+    ],
+    "pro": [
+      "20 $ AI-kredittiä joka kuukausi",
+      "Hosting mukana",
+      "Lisää kredittejä muokkaukseen",
+      "SEO-valmis Astro joka sijoittuu"
+    ],
+    "proExtended": [
+      "20 $ AI-kredittiä joka kuukausi",
+      "Hosting mukana",
+      "Lisää kredittejä muokkaukseen",
+      "SEO-valmis Astro joka sijoittuu",
+      "ZIP-vienti milloin tahansa"
+    ],
+    "enterprise": [
+      "Floras omalla infrastruktuurillasi",
+      "White-label-brändäys alusta loppuun",
+      "Omat mallit, rajat ja SSO",
+      "Oma tuki ja käyttöönotto",
+      "Tiimipaikat ja hallinta"
+    ],
+    "getByok": "Hanki BYOK",
+    "getPro": "Hanki Pro",
+    "getProYearly": "Hanki Pro vuosittain",
+    "talkToFounder": "Keskustele perustajan kanssa",
+    "popular": "Suosittu",
+    "billedMonthly": "Laskutetaan kuukausittain",
+    "saveYearly": "Säästä 20 % vs kuukausi",
+    "customPrice": "Räätälöity",
+    "currentPlan": "Nykyinen suunnitelma",
+    "billingPeriod": "Laskutusjakso",
+    "monthly": "Kuukausi",
+    "yearly": "Vuosi",
+    "yearlyDiscount": "−20 %",
+    "openingCheckout": "Avataan kassaa…",
+    "signInToUpgrade": "Kirjaudu päivittääksesi suunnitelman.",
+    "alreadyOnPlan": "Olet jo tällä suunnitelmalla.",
+    "planUpdated": "Suunnitelma päivitetty.",
+    "couldNotCheckout": "Kassaa ei voitu avata."
+  },
+  "auth": {
+    "loginTitle": "Kirjaudu",
+    "signUpTitle": "Luo tili",
+    "email": "Sähköposti",
+    "password": "Salasana",
+    "name": "Nimi",
+    "continue": "Jatka",
+    "withGoogle": "Jatka Googlella",
+    "noAccount": "Ei tiliä?",
+    "hasAccount": "Onko sinulla jo tili?",
+    "signUpLink": "Rekisteröidy",
+    "signInLink": "Kirjaudu",
+    "modalEyebrow": "Tili",
+    "modalSignUpTitle": "Luo tili",
+    "modalSignInTitle": "Kirjaudu jatkaaksesi",
+    "modalDescWithPrompt": "Luo tili tai kirjaudu aloittaaksesi sivuston generoinnin.",
+    "modalDesc": "Luo tili tai kirjaudu jatkaaksesi.",
+    "emailExists": "Tällä sähköpostilla on jo tili. Kirjaudu Googlella tai sillä tavalla jolla rekisteröidyit.",
+    "signUpFailed": "Tiliä ei voitu luoda. Tarkista sähköposti ja salasana.",
+    "authFailed": "Kirjautuminen epäonnistui. Tarkista sähköposti ja salasana.",
+    "googleFailed": "Google-kirjautuminen epäonnistui. Yritä uudelleen.",
+    "subtitlePrompt": "Kirjaudu aloittaaksesi sivuston luonnin.",
+    "subtitleDefault": "Luo verkkosivuja live-esikatselulla — ilman koodia.",
+    "starting": "Aloitetaan…",
+    "pleaseWait": "Odota…",
+    "agreeBefore": "Jatkamalla hyväksyt",
+    "agreeAnd": "ja",
+    "agreeTerms": "käyttöehdot",
+    "agreePrivacy": "tietosuojaselosteen",
+    "agreeAfter": "."
+  },
+  "dashboard": {
+    "newChat": "Uusi chat",
+    "inbox": "Postilaatikko",
+    "recentChats": "Viimeisimmät",
+    "searchChats": "Hae chatteja",
+    "searchPlaceholder": "Haku…",
+    "loading": "Ladataan…",
+    "noMatches": "Ei osumia",
+    "noChats": "Ei chatteja vielä",
+    "account": "Tili",
+    "settings": "Asetukset",
+    "signOut": "Kirjaudu ulos",
+    "noPlan": "Ei suunnitelmaa",
+    "expandSidebar": "Laajenna sivupalkki",
+    "collapseSidebar": "Pienennä sivupalkki",
+    "title": "Hallinta",
+    "emptyTitle": "Aloita sivusto",
+    "emptyDescription": "Kuvaile mitä tarvitset. Floras rakentaa sen ja avaa live-esikatselun.",
+    "yourSites": "Sivustosi",
+    "noSitesTitle": "Ei sivustoja vielä",
+    "noSitesDescription": "Ensimmäinen generointisi näkyy täällä.",
+    "previewPending": "Esikatselu odottaa",
+    "status": {
+      "draft": "Luonnos",
+      "provisioning": "Valmistellaan",
+      "generating": "Rakennetaan",
+      "ready": "Valmis",
+      "error": "Virhe"
+    }
+  },
+  "inbox": {
+    "title": "Postilaatikko",
+    "description": "Viestit sivustojesi yhteydenottolomakkeista.",
+    "site": "Sivusto",
+    "allSites": "Kaikki sivustot",
+    "showArchived": "Näytä arkisto",
+    "showingArchived": "Näytetään arkisto",
+    "emptyTitle": "Postilaatikko on tyhjä",
+    "emptyDescription": "Kun vierailijat lähettävät yhteydenottolomakkeen julkaistulla tai esikatselu-sivustolla, viestit näkyvät täällä.",
+    "emptyArchivedTitle": "Ei arkistoituja viestejä",
+    "emptyArchivedDescription": "Arkistoidut viestit näkyvät täällä.",
+    "loading": "Ladataan…",
+    "visitor": "Vierailija",
+    "archive": "Arkistoi",
+    "restore": "Palauta",
+    "submission": "Lähetys"
+  },
+  "useCase": {
+    "eyebrow": "Rakennettu yrityksellesi",
+    "cta": "Rakenna tämä sivusto",
+    "proof": "Kuvaile yritys kerran. Saat live-sivuston, jota voit hiota chatissa ja julkaista kun olet valmis.",
+    "more": "Lisää",
+    "allUseCases": "Katso kaikki yritystyypit"
+  },
+  "useCaseIndex": {
+    "eyebrow": "Käyttötapaukset",
+    "title": "Tee verkkosivut Floraksella",
+    "description": "Valitse yritystyyppi. Floras muuttaa lyhyen kuvauksen live-sivustoksi, jota voit hiota chatissa ja julkaista.",
+    "seeComparisons": "Vertaa Florasta muihin rakentajiin →"
+  },
+  "comparison": {
+    "eyebrow": "Vertailu",
+    "cta": "Kokeile Florasta",
+    "allComparisons": "Kaikki vertailut",
+    "florasWins": "Missä Floras voittaa",
+    "competitorWins": "Missä {competitor} voittaa",
+    "chooseFloras": "Valitse Floras jos",
+    "chooseCompetitor": "Valitse {competitor} jos",
+    "more": "Lisää vertailuja"
+  },
+  "comparisonIndex": {
+    "eyebrow": "Vertailut",
+    "title": "Floras vs muut sivustonrakentajat",
+    "description": "Rehelliset vertailut: milloin Floras sopii paremmin, ja milloin toinen työkalu voittaa yhä.",
+    "seeUseCases": "Selaa yritysten käyttötapauksia →"
+  },
+  "htmlSitemap": {
+    "eyebrow": "Hakemisto",
+    "title": "Sivukartta",
+    "description": "Kaikki Floraksen julkiset sivut — yritysten käyttötapaukset, vertailut ja ydinsivut.",
+    "xmlSitemap": "XML-sivukartta",
+    "core": "Ydinsivut",
+    "useCases": "Yritysten käyttötapaukset",
+    "comparisons": "Vertailut"
+  },
+  "theme": {
+    "label": "Väriteema",
+    "light": "Vaalea",
+    "dark": "Tumma",
+    "switchLight": "Vaihda vaaleaan tilaan",
+    "switchDark": "Vaihda tummaan tilaan"
+  },
+  "common": {
+    "loading": "Ladataan…",
+    "saving": "Tallennetaan…",
+    "cancel": "Peruuta",
+    "remove": "Poista",
+    "open": "Avaa",
+    "copy": "Kopioi"
+  },
+  "workspace": {
+    "backToDashboard": "Takaisin hallintaan",
+    "publish": "Julkaise",
+    "live": "Live",
+    "export": "Vie",
+    "publishing": "Julkaistaan",
+    "unpublishing": "Poistetaan julkaisua",
+    "exporting": "Viedään",
+    "exported": "Projekti viety",
+    "plan": "Suunnitelma",
+    "byok": "BYOK",
+    "credit": "Kreditti",
+    "key": "Avain",
+    "addKey": "Lisää avain",
+    "choosePlan": "Valitse suunnitelma",
+    "manageApiKey": "Hallitse Anthropic-API-avainta",
+    "addApiKey": "Lisää Anthropic-API-avain",
+    "creditAria": "AI-kreditti {credit}. Lataa lisää",
+    "needPlan": "AI-chattiin tarvitaan suunnitelma.",
+    "choosePlanCta": "Valitse suunnitelma",
+    "needApiKey": "Lisää Anthropic-API-avaimesi generoidaksesi BYOK-tilillä.",
+    "addKeyCta": "Lisää avain",
+    "outOfCredit": "Kreditit loppu.",
+    "creditLeft": "{credit} kredittiä jäljellä.",
+    "topUp": "Lataa",
+    "stuck": "Näyttää jumittuneelta. Nollaa ja yritä uudelleen.",
+    "reset": "Nollaa",
+    "resetting": "Nollataan…",
+    "resetSuccess": "Nollattu. Voit lähettää uudelleen.",
+    "couldNotReset": "Nollaaminen epäonnistui",
+    "fixSent": "Esikatseluvirhe lähetetty chattiin.",
+    "fixQueuedBusy": "Odota vuoron päättymistä, sitten yritä Korjaa chatissa uudelleen.",
+    "thinking": "Ajatellaan",
+    "thoughtForOne": "Ajateltiin 1 sekunti",
+    "thoughtForMany": "Ajateltiin {seconds} sekuntia",
+    "stepsOne": "1 askel",
+    "stepsMany": "{count} askelta"
+  },
+  "publish": {
+    "titleExport": "Vie sivustosi",
+    "titleLive": "Sivustosi on live",
+    "titlePublish": "Julkaise",
+    "descByok": "BYOK sisältää viennin. Päivitä Prohon floras.app-hostingia ja omia domaineja varten.",
+    "descLive": "Avaa julkinen URL, päivitä live-build tai poista julkaisu.",
+    "descConfirm": "Rakenna ja hostaa floras.appissa. Yhdistä oma domain myöhemmin Tilistä.",
+    "liveUrl": "Live-URL",
+    "yourUrl": "URL-osoitteesi",
+    "copyUrl": "Kopioi URL",
+    "openLive": "Avaa live-sivusto",
+    "uniqueAddress": "Uniikki osoite annetaan ensimmäisellä julkaisulla.",
+    "pendingCustom": "Oma domain odottaa:",
+    "alsoAt": "Myös osoitteessa {url}",
+    "manageDomainsBefore": "Omat domainit:",
+    "manageDomainsLink": "Tili → Domainit",
+    "openSite": "Avaa sivusto",
+    "updateLive": "Päivitä live",
+    "publishing": "Julkaistaan…",
+    "unpublish": "Poista julkaisu",
+    "unpublishing": "Poistetaan julkaisua…",
+    "publishSite": "Julkaise sivusto",
+    "upgradeHosting": "Päivitä Prohon",
+    "exportZip": "Vie ZIP",
+    "exporting": "Viedään…"
+  },
+  "preview": {
+    "status": {
+      "draft": "Jonossa",
+      "provisioning": "Valmistellaan",
+      "generating": "Rakennetaan",
+      "ready": "Live",
+      "error": "Virhe"
+    },
+    "badge": {
+      "offline": "Offline",
+      "error": "Virhe",
+      "stopping": "Pysäytetään",
+      "starting": "Käynnistetään",
+      "stopped": "Pysäytetty",
+      "checking": "Tarkistetaan",
+      "live": "Live",
+      "restarting": "Käynnistetään uudelleen"
+    },
+    "screen": {
+      "previewFailed": "Esikatselu epäonnistui",
+      "stoppingTitle": "Hiekkalaatikkoa pysäytetään",
+      "stoppingBody": "Odotetaan edellisen pysäytyksen valmistumista.",
+      "startingPreviewTitle": "Esikatselua käynnistetään",
+      "startingPreviewBody": "Odotetaan kunnes julkinen esikatselu-URL vastaa.",
+      "startingSandboxTitle": "Hiekkalaatikkoa käynnistetään",
+      "startingSandboxBody": "Tämä voi kestää minuutin. Odota hetki.",
+      "previewOfflineTitle": "Esikatselu offline",
+      "previewOfflineBody": "Hiekkalaatikko on käynnissä, mutta sivuston esikatselu ei vastaa.",
+      "checkingTitle": "Tarkistetaan hiekkalaatikkoa",
+      "checkingBody": "Luetaan koneen tilaa.",
+      "stoppedTitle": "Hiekkalaatikko pysäytetty",
+      "stoppedBody": "Esikatselu on offline. Käynnistä esikatselu uudelleen herättääksesi sen.",
+      "stoppingDevTitle": "Hiekkalaatikkoa pysäytetään",
+      "stoppingDevBody": "Dev-palvelin sammuu.",
+      "errorTitle": "Hiekkalaatikon virhe",
+      "errorBody": "Jotain meni pieleen koneessa. Kokeile käynnistää esikatselu uudelleen.",
+      "startingOnlineTitle": "Hiekkalaatikkoa käynnistetään",
+      "startingOnlineBody": "Kone tulee vielä verkkoon.",
+      "noSandboxTitle": "Ei hiekkalaatikkoa",
+      "noSandboxBody": "Generoi sivusto luodaksesi esikatselukoneen.",
+      "unavailableTitle": "Hiekkalaatikko ei saatavilla",
+      "unavailableBody": "Esikatselu ei ole vielä valmis. Kokeile käynnistää uudelleen."
+    },
+    "starting": "Käynnistetään hiekkalaatikkoa…",
+    "willAppear": "Live-esikatselu ilmestyy tähän hetken kuluttua.",
+    "switchToBuild": "Vaihda Rakenna-tilaan ja lähetä prompti luodaksesi live-esikatselun.",
+    "openInNewTab": "Avaa esikatselu uudessa välilehdessä",
+    "restart": "Käynnistä hiekkalaatikko uudelleen",
+    "restartPreview": "Käynnistä esikatselu uudelleen",
+    "restarted": "Hiekkalaatikko käynnistetty uudelleen.",
+    "couldNotStart": "Hiekkalaatikkoa ei voitu käynnistää.",
+    "couldNotRestart": "Hiekkalaatikkoa ei voitu käynnistää uudelleen.",
+    "console": {
+      "title": "Konsoli",
+      "empty": "Ei prosessitulostetta vielä.",
+      "clear": "Tyhjennä",
+      "fixInChat": "Korjaa chatissa",
+      "dismiss": "Hylkää",
+      "resize": "Muuta konsolin kokoa"
+    }
+  },
+  "account": {
+    "title": "Tili",
+    "description": "Hallitse profiilia, laskutusta, API-avainta, domaineja ja miten Floras kirjoittaa sivustosi.",
+    "nav": {
+      "settings": "Asetukset",
+      "profile": "Profiili",
+      "billing": "Laskutus",
+      "apiKey": "API-avain",
+      "domains": "Domainit",
+      "instructions": "Ohjeet"
+    },
+    "profile": {
+      "title": "Profiili",
+      "description": "Näyttönimesi näkyy Florasissa. Sähköposti on sidottu kirjautumiseen.",
+      "name": "Nimi",
+      "namePlaceholder": "Nimesi",
+      "email": "Sähköposti",
+      "save": "Tallenna profiili",
+      "saved": "Profiili tallennettu",
+      "saveFailed": "Profiilia ei voitu tallentaa"
+    },
+    "billing": {
+      "title": "Laskutus",
+      "description": "Suunnitelma, käyttö ja maksuasetukset sivustojen luontiin.",
+      "signIn": "Kirjaudu nähdäksesi laskutuksen.",
+      "loading": "Ladataan laskutusta… Jos tämä jää tyhjäksi, Autumnia ei ehkä ole määritetty.",
+      "currentPlan": "Nykyinen suunnitelma",
+      "noPlan": "Ei suunnitelmaa",
+      "creditsLeft": "Kredittejä jäljellä",
+      "yourKey": "Oma avain",
+      "ofIncluded": "sisältyvästä {amount}",
+      "billedByAnthropic": "Laskuttaa Anthropic",
+      "topUpCredits": "Lataa kredittejä",
+      "manageBilling": "Hallitse laskutusta",
+      "portalFailed": "Laskutusportaalia ei voitu avata."
+    },
+    "apiKey": {
+      "title": "API-avain",
+      "descByok": "BYOK käyttää Anthropic-avaintasi generointiin. Käyttö laskutetaan Anthropicilta.",
+      "descPro": "Valinnainen. Pro käyttää oletuksena Floras-kredittejä; tallennettu avain on käyttämättä kunnes vaihdat suunnitelmaa.",
+      "descDefault": "Pakollinen BYOK-suunnitelmalla. Pro käyttää Floras AI-kredittejä.",
+      "onFile": "Avain tiedostossa päättyen",
+      "replace": "Vaihda avain",
+      "remove": "Poista",
+      "removing": "Poistetaan…",
+      "label": "Anthropic API-avain",
+      "hint": "Tallennetaan salattuna. Hanki avain osoitteesta",
+      "hintAfter": ". Käyttö laskutetaan Anthropicilta.",
+      "save": "Tallenna avain",
+      "saved": "Anthropic API-avain tallennettu.",
+      "saveFailed": "API-avainta ei voitu tallentaa.",
+      "removed": "API-avain poistettu.",
+      "removeFailed": "API-avainta ei voitu poistaa."
+    },
+    "domains": {
+      "title": "Domainit",
+      "description": "Yhdistä omat hostnamet Cloudflare Pages -julkaisuihin.",
+      "publishedSite": "Julkaistu sivusto",
+      "customDomain": "Oma domain",
+      "connect": "Yhdistä domain",
+      "connecting": "Yhdistetään…",
+      "checkStatus": "Tarkista tila",
+      "dnsRecords": "DNS-tietueet",
+      "dnsHint": "Osoita domainisi Floras-subdomainiin. Apex tarvitsee ALIAS/ANAME- tai CNAME-flatteningin.",
+      "cnameName": "Nimi",
+      "cnameValue": "Arvo",
+      "copyCname": "Kopioi CNAME-tietue",
+      "requirePro": "Omat domainit vaativat Pron.",
+      "requireProByok": "Omat domainit vaativat Pron. BYOK sisältää vain viennin.",
+      "upgradePro": "Päivitä Prohon",
+      "nonePublished": "Ei julkaistuja sivustoja vielä. Julkaise sivusto workspacesta, sitten yhdistä domain täällä.",
+      "status": {
+        "active": "Aktiivinen",
+        "pending": "DNS odottaa",
+        "error": "Virhe",
+        "blocked": "Estetty",
+        "deactivated": "Pois"
+      }
+    },
+    "instructions": {
+      "title": "Chatin omat ohjeet",
+      "description": "Käytössä Kysy- ja Rakenna-tiloissa. Suosi brändiääntä, puhuttelutapaa, visuaalista suuntaa ja kovia rajoitteita (esim. aina tumma, ei koskaan violettia).",
+      "label": "Ohjeet",
+      "placeholder": "Esimerkki: Käytä aina lämpimiä neutraaleja, editorial-serif-otsikoita ja full-bleed-valokuvaa. Älä käytä violetteja gradientteja tai pyöreitä nappeja.",
+      "save": "Tallenna ohjeet",
+      "saved": "Omat ohjeet tallennettu",
+      "saveFailed": "Ohjeita ei voitu tallentaa"
+    }
+  },
+  "billing": {
+    "upgrade": {
+      "eyebrow": "Vaaditaan jatkaaksesi",
+      "title": "Valitse suunnitelma",
+      "description": "BYOK kattaa hiekkalaatikot Anthropic-avaimellasi. Pro sisältää Floras AI-kreditit ja hostingin.",
+      "planAria": "Suunnitelma",
+      "periodAria": "Laskutusjakso",
+      "monthly": "Kuukausi",
+      "yearlyDiscount": "Vuosi −20 %",
+      "getByok": "Hanki BYOK",
+      "getPro": "Hanki Pro",
+      "openingCheckout": "Avataan kassaa…",
+      "signIn": "Kirjaudu jatkaaksesi.",
+      "byokActive": "BYOK on aktiivinen.",
+      "proActive": "Pro on aktiivinen.",
+      "checkoutFailed": "Kassaa ei voitu avata."
+    },
+    "topUp": {
+      "title": "Lataa",
+      "description": "Lisää kredittiä kysymiseen, rakentamiseen ja chat-muokkauksiin.",
+      "packAria": "Kredittipaketti",
+      "pack": "Paketti",
+      "currentBalance": "Nykyinen saldo",
+      "facts": {
+        "0": "Kreditit eivät vanhene",
+        "1": "Lisätään suunnitelman saldon päälle",
+        "2": "Käytetään kysymiseen, rakentamiseen ja hiontaan"
+      },
+      "cta": "Lataa · {price}",
+      "openingCheckout": "Avataan kassaa…",
+      "signIn": "Kirjaudu ladataksesi kredittiä.",
+      "added": "Lisätty ${credits} kredittiä.",
+      "failed": "Latausta ei voitu aloittaa. Varmista että laskutus on määritetty."
+    }
+  },
+  "notFound": {
+    "title": "Sivua ei löydy",
+    "eyebrow": "Virhe 404",
+    "headingBefore": "Tämä sivu ei koskaan",
+    "headingAccent": "kukkinut.",
+    "body": "Reitti on poissa — tai sitä ei ollut. Palaa kotiin ja kuvaile sivusto, jonka aioit rakentaa.",
+    "backHome": "Takaisin kotiin",
+    "startBuilding": "Aloita rakentaminen"
+  },
+  "legal": {
+    "privacyTitle": "Tietosuojaseloste",
+    "privacyDescription": "Miten Floras kerää, käyttää ja säilyttää tietojasi.",
+    "termsTitle": "Käyttöehdot",
+    "termsDescription": "Ehdot, jotka koskevat Florasin käyttöä.",
+    "updated": "Päivitetty {date}"
+  }
+}

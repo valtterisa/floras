@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { getTranslations } from "next-intl/server";
 import { MarketingLayout } from "@/components/site/marketing-layout";
 
 function AuthFloralPanel() {
@@ -40,7 +41,9 @@ function AuthFloralMobile() {
   );
 }
 
-export function AuthPageShell({ children }: { children: ReactNode }) {
+export async function AuthPageShell({ children }: { children: ReactNode }) {
+  const t = await getTranslations("common");
+
   return (
     <MarketingLayout>
       <div className="flex flex-1 flex-col border-b border-border">
@@ -50,7 +53,7 @@ export function AuthPageShell({ children }: { children: ReactNode }) {
           <div className="flex flex-col justify-center bg-card/40 px-6 py-10 md:px-8 md:py-14">
             <Suspense
               fallback={
-                <p className="text-sm text-muted-foreground">Loading…</p>
+                <p className="text-sm text-muted-foreground">{t("loading")}</p>
               }
             >
               {children}

@@ -118,7 +118,10 @@ export const createAssistant = authedMutation({
 });
 
 export const addStep = authedMutation({
-  args: { messageId: v.id("messages"), step: agentStep },
+  args: {
+    messageId: v.id("messages"),
+    step: agentStep,
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { message: msg } = await requireOwnedMessage(ctx, args.messageId);

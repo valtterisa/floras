@@ -54,8 +54,8 @@ export const projectDocValidator = v.object({
   modelId: v.optional(v.string()),
   status: projectStatus,
   busyAt: v.optional(v.number()),
-  boxId: v.optional(v.string()),
-  boxSubdomain: v.optional(v.string()),
+  sandboxName: v.optional(v.string()),
+  snapshotKey: v.optional(v.string()),
   previewUrl: v.optional(v.string()),
   plan: v.optional(v.any()),
   error: v.optional(v.string()),
@@ -69,6 +69,7 @@ export const projectDocValidator = v.object({
   customDomainStatus: v.optional(domainStatus),
   customDomainError: v.optional(v.string()),
   customDomainUpdatedAt: v.optional(v.number()),
+  formPublicKey: v.optional(v.string()),
 });
 
 export const messageDocValidator = v.object({

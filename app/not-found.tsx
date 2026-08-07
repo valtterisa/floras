@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MarketingLayout } from "@/components/site/marketing-layout";
-import { Reveal } from "@/components/site/reveal";
 import { FlorasLogoMark } from "@/components/brand/floras-logo";
 import { Floral } from "@/components/brand/floral";
-import { SectionGutter } from "@/components/landing/section-gutter";
+import { routing } from "@/i18n/routing";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -12,26 +11,26 @@ export const metadata: Metadata = {
 };
 
 export default function NotFoundPage() {
-  return (
-    <MarketingLayout>
-      <section className="relative flex flex-1 flex-col overflow-hidden border-b border-border">
-        <Floral
-          kind="sprig"
-          className="pointer-events-none absolute -left-4 top-10 w-28 opacity-70 md:left-6 md:w-36"
-        />
-        <Floral
-          kind="bloom"
-          className="pointer-events-none absolute -right-6 bottom-8 w-32 rotate-[18deg] opacity-70 md:right-8 md:w-40"
-        />
+  const homeHref = `/${routing.defaultLocale}`;
 
-        <div className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-6 py-16 md:px-8 md:py-24">
-          <Reveal>
+  return (
+    <html lang={routing.defaultLocale}>
+      <body className="min-h-[100dvh] bg-background font-sans text-foreground antialiased">
+        <div className="relative flex min-h-[100dvh] flex-col overflow-hidden">
+          <Floral
+            kind="sprig"
+            className="pointer-events-none absolute -left-4 top-10 w-28 opacity-70 md:left-6 md:w-36"
+          />
+          <Floral
+            kind="bloom"
+            className="pointer-events-none absolute -right-6 bottom-8 w-32 rotate-[18deg] opacity-70 md:right-8 md:w-40"
+          />
+
+          <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-6 py-16 md:px-8 md:py-24">
             <div className="mb-8 flex justify-center text-5xl md:text-6xl">
               <FlorasLogoMark />
             </div>
-          </Reveal>
 
-          <Reveal delay={0.05}>
             <p className="text-center font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               Error 404
             </p>
@@ -59,28 +58,18 @@ export default function NotFoundPage() {
               The route is gone — or it never existed. Head home and describe the
               site you meant to build.
             </p>
-          </Reveal>
 
-          <Reveal delay={0.1}>
-            <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+            <div className="mt-10 flex justify-center">
               <Link
-                href="/"
+                href={homeHref}
                 className="inline-flex h-11 items-center justify-center bg-brand px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-foreground transition-[filter] hover:brightness-110 active:scale-[0.98]"
               >
                 Back home
               </Link>
-              <Link
-                href="/sign-up"
-                className="inline-flex h-11 items-center justify-center border border-border bg-card px-7 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-background active:scale-[0.98]"
-              >
-                Start building
-              </Link>
             </div>
-          </Reveal>
+          </main>
         </div>
-
-        <SectionGutter />
-      </section>
-    </MarketingLayout>
+      </body>
+    </html>
   );
 }

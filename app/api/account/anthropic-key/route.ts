@@ -1,6 +1,7 @@
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
+import { assertRateLimit } from "@/lib/api/rate-limit";
 import {
   apiKeyLast4,
   encryptApiKey,
@@ -56,6 +57,14 @@ export async function PUT(req: Request) {
   }
 
   try {
+    const me = await fetchQuery(api.users.me, {}, { token });
+    if (!me?.id) {
+      return appErrorResponse(new AppError("auth"), 401);
+    }
+    await assertRateLimit({
+      name: "anthropicKey",
+      key: me.id,
+    });
     const ciphertext = encryptApiKey(key);
     const last4 = apiKeyLast4(key);
     await fetchMutation(
@@ -65,6 +74,9 @@ export async function PUT(req: Request) {
     );
     return Response.json({ configured: true, last4 });
   } catch (error) {
+    if (error instanceof AppError && error.code === "rate_limit") {
+      return appErrorResponse(error, 429);
+    }
     console.error("[byok] failed to save key", error);
     return Response.json(
       { error: "Could not save API key. Check server configuration." },
@@ -79,6 +91,10 @@ export async function DELETE() {
     return appErrorResponse(new AppError("auth"), 401);
   }
 
-  await fetchMutation(api.users.clearAnthropicKey, {}, { token });
+  await fetchMutation(
+    api.users.clearAnthropicKey,
+    {},
+    { token }
+  );
   return Response.json({ configured: false, last4: null });
 }

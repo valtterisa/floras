@@ -1,8 +1,9 @@
 import { ToolLoopAgent, isStepCount, tool, type LanguageModel } from "ai";
 import { z } from "zod";
 import { sitePlanSchema, type SitePlan } from "@/lib/schema/site";
-import * as box from "@/lib/box/client";
-import type { SandboxSession } from "@/lib/box/sandbox-session";
+import * as sandboxClient from "@/lib/sandbox/client";
+import { assertSafeSiteRelativePath } from "@/lib/sandbox/config";
+import type { SandboxSession } from "@/lib/sandbox/session";
 import { DESIGN_SKILL } from "@/lib/ai/design-skill";
 import { anthropicThinkingOptions } from "@/lib/ai/anthropic-options";
 import { AppError } from "@/lib/errors";
@@ -33,6 +34,7 @@ export interface BuildAgentOptions {
   sandbox: SandboxSession;
   projectId: string;
   token: string;
+  customerId: string;
   onStep: (step: AgentStep) => Promise<void> | void;
   onPlan: (plan: SitePlan) => Promise<void> | void;
   hasPreview: boolean;
@@ -41,15 +43,17 @@ export interface BuildAgentOptions {
   projectName?: string;
   customInstructions?: string;
   model: LanguageModel;
+  formPublicKey?: string;
+  formsSubmitUrl?: string;
 }
 
 function siteAlreadyKnown(opts: BuildAgentOptions): boolean {
   return opts.hasPreview || Boolean(opts.sitePlan);
 }
 
-async function listSiteFiles(boxId: string): Promise<string[]> {
-  const res = await box.runCommand(
-    boxId,
+async function listSiteFiles(sandboxName: string): Promise<string[]> {
+  const res = await sandboxClient.runCommand(
+    sandboxName,
     "find . -type f -not -path './node_modules/*' -not -path './.astro/*' -not -path './.git/*' | sort"
   );
   return res.stdout.split("\n").filter(Boolean);
@@ -66,18 +70,11 @@ function detectGeneratedSite(files: string[]): boolean {
 }
 
 function assertSafeSitePath(path: string): string {
-  const cleaned = path.replace(/^\/+/, "").trim();
-  if (!cleaned || cleaned.includes("\0")) {
-    throw new AppError("unknown", "Invalid file path.");
-  }
-  if (
-    cleaned.startsWith("..") ||
-    cleaned.includes("/../") ||
-    cleaned.includes("\\")
-  ) {
+  try {
+    return assertSafeSiteRelativePath(path);
+  } catch {
     throw new AppError("unknown", "Path must stay inside site/.");
   }
-  return cleaned;
 }
 
 function assertAllowedCommand(command: string): string {
@@ -88,7 +85,11 @@ function assertAllowedCommand(command: string): string {
   if (/[;&|`$(){}]|<<|>>|>|<|\n|\r|\$\(|\$\{/.test(trimmed)) {
     throw new AppError("unknown", "Command rejected: unsafe shell syntax.");
   }
-  if (/\.\.|\/etc\/|floras-cf\.env|CLOUDFLARE_|AUTUMN_|ANTHROPIC_/i.test(trimmed)) {
+  if (
+    /\.\.|\/etc\/|\/proc\/|\/sys\/|environ|printenv|floras-cf|\.floras-cf|CLOUDFLARE_|AUTUMN_|ANTHROPIC_|BYOK_/i.test(
+      trimmed
+    )
+  ) {
     throw new AppError("unknown", "Command rejected: forbidden path or secret.");
   }
 
@@ -103,10 +104,15 @@ function assertAllowedCommand(command: string): string {
   if (/^rm\b/.test(trimmed) && /(-rf|--no-preserve-root|\/)\b/.test(trimmed)) {
     throw new AppError("unknown", "Command rejected: destructive rm.");
   }
+  if (/^find\b/.test(trimmed) && /(\/proc|\/sys|\/etc)\b/.test(trimmed)) {
+    throw new AppError("unknown", "Command rejected: forbidden path.");
+  }
   return trimmed;
 }
 
-const INSTRUCTIONS = `You are an expert Astro web engineer. Sites live in site/ inside a Linux sandbox. Edit in place. Do not recreate package.json or reinstall the framework unless something is broken. Never restart the Astro dev server manually.
+const INSTRUCTIONS = `You are an expert Astro web engineer. Sites live in the sandbox project root (paths like src/, public/, package.json). Edit in place. Do not recreate package.json or reinstall the framework unless something is broken. Never restart the Astro dev server manually.
+
+If the live preview is blank, 502, or failing to boot, call read_preview_logs and fix the reported Astro/build errors.
 
 FIRST TOOL CALL (mandatory)
 Call inspect_site before any other tool. Follow the returned mode exactly:
@@ -136,8 +142,11 @@ ensure_sandbox creates or resumes the Box VM and starts the live preview.
 CUSTOM DOMAINS
 Use setup_domain / check_domain / remove_domain when asked. Site must already be published. List real DNS records only.
 
-Never dump large explanations between tool calls. User-facing text must stay short markdown.
-Write flowing paragraphs. Do not hard-wrap or insert line breaks mid-sentence. Use a blank line only between paragraphs or list blocks.
+Never dump large explanations between tool calls. Do not narrate before or between tool calls — save user-facing text for one short markdown summary after tools finish.
+Separate paragraphs with a blank line. Do not hard-wrap or insert line breaks mid-sentence.
+
+CONTACT / LOCAL BUSINESS
+For local businesses, service trades, restaurants, salons, clinics, and any brief that wants contact or bookings: include a \`contact\` section in plan_site and implement a working Floras-backed form (see design skill). Do not use mailto as the only contact path.
 
 ${DESIGN_SKILL}`;
 
@@ -151,14 +160,24 @@ Honor these preferences in every reply (including how you address the user) when
 ${custom}`
     : "";
 
-  return `${INSTRUCTIONS}${customBlock}`;
+  const formBlock =
+    opts.formPublicKey && opts.formsSubmitUrl
+      ? `
+
+FORMS (wire contact sections to these exact values)
+FORM_PUBLIC_KEY=${opts.formPublicKey}
+FORMS_SUBMIT_URL=${opts.formsSubmitUrl}
+Use these when implementing contact forms. Do not invent other endpoints.`
+      : "";
+
+  return `${INSTRUCTIONS}${formBlock}${customBlock}`;
 }
 
 export function buildSiteAgent(opts: BuildAgentOptions) {
-  const { sandbox, projectId, token, onStep, onPlan } = opts;
+  const { sandbox, projectId, token, customerId, onStep, onPlan } = opts;
   const knownExisting = siteAlreadyKnown(opts);
 
-  const requireBox = async (): Promise<string> => {
+  const requireSandbox = async (): Promise<string> => {
     if (sandbox.isProvisioned()) {
       return sandbox.ensureReady();
     }
@@ -173,8 +192,8 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       "Call first on every turn. Inspects site/ when a sandbox exists, otherwise reports a new-site session.",
     inputSchema: z.object({}),
     execute: async () => {
-      const boxId = sandbox.currentBoxId();
-      if (!boxId) {
+      const sandboxName = sandbox.currentSandboxName();
+      if (!sandboxName) {
         await onStep({
           kind: "inspect",
           label: "New site session",
@@ -197,7 +216,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       let generatedOnDisk = false;
       try {
         await sandbox.ensureReady();
-        files = await listSiteFiles(boxId);
+        files = await listSiteFiles(sandboxName);
         generatedOnDisk = detectGeneratedSite(files);
       } catch {
         files = [];
@@ -242,7 +261,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
           : "Creating sandbox",
       });
 
-      const boxId = await sandbox.ensureReady();
+      const sandboxName = await sandbox.ensureReady();
       const previewUrl = await sandbox.ensurePreview({ force: true });
       if (previewUrl) {
         await onStep({
@@ -255,12 +274,12 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       await onStep({
         kind: "sandbox",
         label: "Sandbox ready",
-        detail: boxId,
+        detail: sandboxName,
       });
 
       return {
         status: "ready" as const,
-        boxId,
+        sandboxName,
         previewUrl,
         next: "Sandbox is running. Continue with write_file if building, or stop if the user only asked to start it.",
       };
@@ -279,9 +298,9 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         content: z.string(),
       }),
       execute: async ({ path, content }) => {
-        const boxId = await requireBox();
+        const sandboxName = await requireSandbox();
         const safePath = assertSafeSitePath(path);
-        await box.writeFiles(boxId, [{ path: safePath, content }]);
+        await sandboxClient.writeFiles(sandboxName, [{ path: safePath, content }]);
         await onStep({ kind: "write", label: `Edited ${safePath}` });
         return { ok: true };
       },
@@ -290,9 +309,9 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       description: "Read one file from the site project. Requires ensure_sandbox first on new sites.",
       inputSchema: z.object({ path: z.string() }),
       execute: async ({ path }) => {
-        const boxId = await requireBox();
+        const sandboxName = await requireSandbox();
         const safePath = assertSafeSitePath(path);
-        const content = await box.readFile(boxId, safePath);
+        const content = await sandboxClient.readFile(sandboxName, safePath);
         await onStep({ kind: "read", label: `Read ${safePath}` });
         return { content };
       },
@@ -301,8 +320,8 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
       description: "List the files in the site project. Requires ensure_sandbox first on new sites.",
       inputSchema: z.object({}),
       execute: async () => {
-        const boxId = await requireBox();
-        const files = await listSiteFiles(boxId);
+        const sandboxName = await requireSandbox();
+        const files = await listSiteFiles(sandboxName);
         await onStep({ kind: "command", label: "Listed project files" });
         return { files };
       },
@@ -312,9 +331,11 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         "Run an allowlisted shell command in the site project (pnpm add/exec, ls, cat, etc.).",
       inputSchema: z.object({ command: z.string() }),
       execute: async ({ command }) => {
-        const boxId = await requireBox();
+        const sandboxName = await requireSandbox();
         const safe = assertAllowedCommand(command);
-        const res = await box.runCommand(boxId, safe, { timeoutSeconds: 120 });
+        const res = await sandboxClient.runCommand(sandboxName, safe, {
+          timeoutSeconds: 120,
+        });
         await onStep({
           kind: "command",
           label: safe,
@@ -336,7 +357,12 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
           .describe("Hostname to connect, e.g. www.example.com"),
       }),
       execute: async ({ domain }) => {
-        const result = await connectCustomDomain(projectId, domain, token);
+        const result = await connectCustomDomain(
+          projectId,
+          domain,
+          token,
+          customerId
+        );
         await onStep({
           kind: "domain",
           label: `Connected ${result.domain?.name ?? domain}`,
@@ -354,7 +380,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         "Refresh custom domain status and DNS records for this published site.",
       inputSchema: z.object({}),
       execute: async () => {
-        const result = await getCustomDomain(projectId, token);
+        const result = await getCustomDomain(projectId, token, customerId);
         await onStep({
           kind: "domain",
           label: result.domain
@@ -373,12 +399,35 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         "Disconnect the custom domain from this site (does not change the user's DNS records).",
       inputSchema: z.object({}),
       execute: async () => {
-        const result = await disconnectCustomDomain(projectId, token);
+        const result = await disconnectCustomDomain(
+          projectId,
+          token,
+          customerId
+        );
         await onStep({ kind: "domain", label: "Removed custom domain" });
         return {
           ok: true,
           publishedUrl: result.publishedUrl,
           domain: null,
+        };
+      },
+    }),
+    read_preview_logs: tool({
+      description:
+        "Read the Astro preview server (astro-dev) stdout/stderr. Use when the preview is blank, 502, or the site fails to start.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const sandboxName = await requireSandbox();
+        const result = await sandboxClient.getDevProcessLogs(sandboxName);
+        await onStep({
+          kind: "command",
+          label: result.found
+            ? "Read preview console"
+            : "Preview process not running",
+        });
+        return {
+          found: result.found,
+          logs: result.logs.slice(-12_000),
         };
       },
     }),

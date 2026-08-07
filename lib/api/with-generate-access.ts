@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
+import { assertRateLimit } from "@/lib/api/rate-limit";
 import { asProjectId } from "@/lib/convex/ids";
 import { getAccess } from "@/lib/billing/get-access";
 import { AppError, appErrorResponse } from "@/lib/errors";
@@ -11,8 +12,9 @@ export async function withGenerateAccess(
   opts: {
     busyStatuses?: string[];
     noPlanMessage: string;
+    rateLimitName?: "generate" | "ask";
   }
-): Promise<{ projectId: string; token: string } | Response> {
+): Promise<{ projectId: string; token: string; userId: string } | Response> {
   const token = await convexAuthNextjsToken();
   if (!token) {
     return appErrorResponse(new AppError("auth"), 401);
@@ -59,6 +61,18 @@ export async function withGenerateAccess(
     return appErrorResponse(new AppError("auth"), 401);
   }
 
+  try {
+    await assertRateLimit({
+      name: opts.rateLimitName ?? "generate",
+      key: me.id,
+    });
+  } catch (error) {
+    if (error instanceof AppError && error.code === "rate_limit") {
+      return appErrorResponse(error, 429);
+    }
+    throw error;
+  }
+
   const access = await getAccess(me.id);
   if (!access.hasSubscription) {
     return Response.json(
@@ -78,7 +92,7 @@ export async function withGenerateAccess(
         { status: 402 }
       );
     }
-    return { projectId, token };
+    return { projectId, token, userId: me.id };
   }
 
   if (!access.creditAllowed) {
@@ -91,7 +105,7 @@ export async function withGenerateAccess(
     );
   }
 
-  return { projectId, token };
+  return { projectId, token, userId: me.id };
 }
 
 export function acceptBackgroundWork(work: () => Promise<void>) {

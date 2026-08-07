@@ -3,11 +3,12 @@ import { api } from "@/convex/_generated/api";
 import { asMessageId, asProjectId } from "@/lib/convex/ids";
 import { buildSiteAgent } from "@/lib/ai/agent";
 import { resolveGenerationModel } from "@/lib/billing/resolve-generation-model";
-import * as box from "@/lib/box/client";
-import { createSandboxSession } from "@/lib/box/sandbox-session";
+import * as sandbox from "@/lib/sandbox/client";
+import { createSandboxSession } from "@/lib/sandbox/session";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
 import { AppError } from "@/lib/errors";
 import type { SitePlan } from "@/lib/schema/site";
+import { getSiteUrl } from "@/lib/seo";
 
 export async function runGeneration(projectId: string, token: string) {
   const pid = asProjectId(projectId);
@@ -43,12 +44,12 @@ export async function runGeneration(projectId: string, token: string) {
     ));
 
   try {
-    if (!box.boxConfigured()) {
+    if (!sandbox.sandboxConfigured()) {
       throw new AppError("config");
     }
 
-    const initialBoxId =
-      typeof project.boxId === "string" ? project.boxId : undefined;
+    const initialSandboxName =
+      typeof project.sandboxName === "string" ? project.sandboxName : undefined;
     const previewUrl =
       typeof project.previewUrl === "string" ? project.previewUrl : null;
 
@@ -58,18 +59,16 @@ export async function runGeneration(projectId: string, token: string) {
       { token }
     );
 
-    const sandbox = createSandboxSession({
+    const session = createSandboxSession({
+      projectId,
       projectName: typeof project.name === "string" ? project.name : "site",
-      initialBoxId,
-      initialSubdomain:
-        typeof project.boxSubdomain === "string"
-          ? project.boxSubdomain
-          : undefined,
+      token,
+      initialSandboxName,
       initialPreviewUrl: previewUrl,
-      onBox: async (boxId, subdomain) => {
+      onSandbox: async ({ sandboxName }) => {
         await fetchMutation(
-          api.projects.setBox,
-          { projectId: pid, boxId, boxSubdomain: subdomain },
+          api.projects.setSandbox,
+          { projectId: pid, sandboxName },
           { token }
         );
       },
@@ -103,10 +102,18 @@ export async function runGeneration(projectId: string, token: string) {
         ? (project.plan as SitePlan)
         : null;
 
+    const formPublicKey = await fetchMutation(
+      api.forms.ensureFormPublicKey,
+      { projectId: pid },
+      { token }
+    );
+    const formsSubmitUrl = `${getSiteUrl()}/api/forms/submit`;
+
     const agent = buildSiteAgent({
-      sandbox,
+      sandbox: session,
       projectId,
       token,
+      customerId: me.id,
       model,
       hasPreview: Boolean(previewUrl),
       previewUrl,
@@ -116,6 +123,8 @@ export async function runGeneration(projectId: string, token: string) {
         typeof me.customInstructions === "string"
           ? me.customInstructions
           : undefined,
+      formPublicKey,
+      formsSubmitUrl,
       onStep: async (step) => {
         await fetchMutation(
           api.messages.addStep,
@@ -146,10 +155,54 @@ export async function runGeneration(projectId: string, token: string) {
         content: m.content,
       }));
 
-    const result = await agent.generate({ messages: convo });
+    const result = await agent.stream({ messages: convo });
+
+    let full = "";
+    let reasoning = "";
+    let lastContentPatch = 0;
+    let lastReasoningPatch = 0;
+
+    for await (const part of result.stream) {
+      if (part.type === "error") {
+        const message =
+          part.error instanceof Error
+            ? part.error.message
+            : typeof part.error === "string"
+              ? part.error
+              : "Generation stream failed";
+        throw new Error(message);
+      }
+      if (part.type === "reasoning-delta") {
+        reasoning += part.text;
+        const now = Date.now();
+        if (now - lastReasoningPatch >= 120) {
+          lastReasoningPatch = now;
+          await fetchMutation(
+            api.messages.setReasoning,
+            { messageId: asMessageId(assistantId), reasoning },
+            { token }
+          );
+        }
+      } else if (part.type === "text-start") {
+        if (full.trim().length > 0 && !/\n\n$/.test(full)) {
+          full = `${full.replace(/\s*$/, "")}\n\n`;
+        }
+      } else if (part.type === "text-delta") {
+        full += part.text;
+        const now = Date.now();
+        if (now - lastContentPatch >= 120) {
+          lastContentPatch = now;
+          await fetchMutation(
+            api.messages.setContent,
+            { messageId: asMessageId(assistantId), content: full },
+            { token }
+          );
+        }
+      }
+    }
 
     const reasoningText =
-      typeof result.reasoningText === "string" ? result.reasoningText.trim() : "";
+      reasoning.trim() || ((await result.reasoningText) ?? "").trim();
     if (reasoningText) {
       await fetchMutation(
         api.messages.setReasoning,
@@ -158,11 +211,12 @@ export async function runGeneration(projectId: string, token: string) {
       );
     }
 
+    const finalText = full || (await result.text) || "Done.";
     await fetchMutation(
       api.messages.finish,
       {
         messageId: asMessageId(assistantId),
-        content: result.text || "Done.",
+        content: finalText,
         status: "complete",
       },
       { token }
@@ -172,6 +226,21 @@ export async function runGeneration(projectId: string, token: string) {
       { projectId: pid, status: "ready" },
       { token }
     );
+
+    const sandboxName = session.currentSandboxName();
+    if (sandboxName) {
+      try {
+        const { snapshotSiteToR2 } = await import(
+          "@/lib/sandbox/site-persistence"
+        );
+        await snapshotSiteToR2(sandboxName, projectId, token);
+      } catch (error) {
+        console.error("[r2] post-generation snapshot failed", {
+          projectId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
   } catch (err) {
     const error = AppError.from(err);
     console.error("Generation failed:", error.detail);

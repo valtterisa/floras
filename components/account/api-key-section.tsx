@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import { AccountSection } from "@/components/account/account-section";
@@ -12,6 +13,8 @@ import { useGenerationAccess } from "@/lib/hooks/use-generation-access";
 import { assertOk } from "@/lib/errors";
 
 export function ApiKeySection() {
+  const t = useTranslations("account.apiKey");
+  const tCommon = useTranslations("common");
   const meta = useQuery(api.users.getAnthropicKeyMeta);
   const { hasByokPlan, hasProPlan } = useGenerationAccess();
   const [apiKey, setApiKey] = useState("");
@@ -33,10 +36,10 @@ export function ApiKeySection() {
       await assertOk(res);
       setApiKey("");
       setReplacing(false);
-      toast.success("Anthropic API key saved.");
+      toast.success(t("saved"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not save API key."
+        error instanceof Error ? error.message : t("saveFailed")
       );
     } finally {
       setSaving(false);
@@ -51,10 +54,10 @@ export function ApiKeySection() {
       });
       await assertOk(res);
       setReplacing(false);
-      toast.success("API key removed.");
+      toast.success(t("removed"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not remove API key."
+        error instanceof Error ? error.message : t("removeFailed")
       );
     } finally {
       setRemoving(false);
@@ -64,21 +67,21 @@ export function ApiKeySection() {
   return (
     <AccountSection
       id="api-key"
-      title="API key"
+      title={t("title")}
       description={
         hasByokPlan && !hasProPlan
-          ? "BYOK uses your Anthropic key for generation. Usage is billed by Anthropic."
+          ? t("descByok")
           : hasProPlan
-            ? "Optional. Pro uses Floras credits by default; a saved key is unused unless you switch plans."
-            : "Required on the BYOK plan. Pro uses Floras AI credits instead."
+            ? t("descPro")
+            : t("descDefault")
       }
     >
       {meta === undefined ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
       ) : configured && !replacing ? (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
-            Key on file ending in{" "}
+            {t("onFile")}{" "}
             <span className="font-mono text-foreground">••••{last4}</span>
           </p>
           <div className="flex flex-wrap gap-3">
@@ -87,7 +90,7 @@ export function ApiKeySection() {
               className="rounded-none"
               onClick={() => setReplacing(true)}
             >
-              Replace key
+              {t("replace")}
             </Button>
             <Button
               variant="outline"
@@ -95,14 +98,14 @@ export function ApiKeySection() {
               disabled={removing}
               onClick={() => void remove()}
             >
-              {removing ? "Removing…" : "Remove"}
+              {removing ? t("removing") : t("remove")}
             </Button>
           </div>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="anthropic-key">Anthropic API key</Label>
+            <Label htmlFor="anthropic-key">{t("label")}</Label>
             <Input
               id="anthropic-key"
               type="password"
@@ -112,7 +115,7 @@ export function ApiKeySection() {
               onChange={(e) => setApiKey(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Stored encrypted. Get a key from{" "}
+              {t("hint")}{" "}
               <a
                 href="https://console.anthropic.com/"
                 target="_blank"
@@ -121,7 +124,7 @@ export function ApiKeySection() {
               >
                 console.anthropic.com
               </a>
-              . Usage is billed by Anthropic.
+              {t("hintAfter")}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -131,7 +134,7 @@ export function ApiKeySection() {
               disabled={saving || !apiKey.trim()}
               onClick={() => void save()}
             >
-              {saving ? "Saving…" : "Save key"}
+              {saving ? tCommon("saving") : t("save")}
             </Button>
             {replacing ? (
               <Button
@@ -142,7 +145,7 @@ export function ApiKeySection() {
                   setApiKey("");
                 }}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
             ) : null}
           </div>

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { ConvexError } from "convex/values";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,12 +34,11 @@ function buildAuthHref(
     modelId?: string | null;
   }
 ) {
-  const params = new URLSearchParams();
-  if (opts.prompt) params.set("prompt", opts.prompt);
-  if (opts.nextPath) params.set("next", opts.nextPath);
-  if (opts.modelId) params.set("modelId", opts.modelId);
-  const qs = params.toString();
-  return qs ? `${path}?${qs}` : path;
+  const query: Record<string, string> = {};
+  if (opts.prompt) query.prompt = opts.prompt;
+  if (opts.nextPath) query.next = opts.nextPath;
+  if (opts.modelId) query.modelId = opts.modelId;
+  return Object.keys(query).length > 0 ? { pathname: path, query } : path;
 }
 
 function buildRedirectTo(opts: {
@@ -55,7 +54,27 @@ function buildRedirectTo(opts: {
   return "/dashboard";
 }
 
-function passwordAuthErrorMessage(error: unknown, flow: AuthFlow): string {
+function buildRedirectHref(opts: {
+  prompt?: string | null;
+  nextPath?: string | null;
+}) {
+  if (opts.prompt) {
+    return {
+      pathname: "/dashboard" as const,
+      query: { prompt: opts.prompt },
+    };
+  }
+  if (opts.nextPath?.startsWith("/") && !opts.nextPath.startsWith("//")) {
+    return opts.nextPath as "/dashboard";
+  }
+  return "/dashboard" as const;
+}
+
+function passwordAuthErrorMessage(
+  error: unknown,
+  flow: AuthFlow,
+  messages: { emailExists: string; signUpFailed: string; authFailed: string }
+): string {
   const parts: string[] = [];
   if (error instanceof ConvexError) {
     parts.push(
@@ -72,12 +91,12 @@ function passwordAuthErrorMessage(error: unknown, flow: AuthFlow): string {
     raw.includes("EMAIL_ALREADY_REGISTERED") ||
     /Account .+ already exists/i.test(raw)
   ) {
-    return "An account with this email already exists. Sign in with Google or use the method you signed up with.";
+    return messages.emailExists;
   }
   if (flow === "signUp") {
-    return "Could not create account. Check your email and password.";
+    return messages.signUpFailed;
   }
-  return "Authentication failed. Check your email and password.";
+  return messages.authFailed;
 }
 
 function GoogleMark({ className }: { className?: string }) {
@@ -116,13 +135,14 @@ export function AuthForm({
   variant = "page",
   className,
 }: AuthFormProps) {
+  const t = useTranslations("auth");
   const { signIn } = useAuthActions();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   async function finishAuthenticated() {
-    router.push(buildRedirectTo({ prompt: pendingPrompt, nextPath }));
+    router.push(buildRedirectHref({ prompt: pendingPrompt, nextPath }));
   }
 
   async function onPasswordSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -134,7 +154,13 @@ export function AuthForm({
       await signIn("password", formData);
       await finishAuthenticated();
     } catch (error) {
-      toast.error(passwordAuthErrorMessage(error, flow));
+      toast.error(
+        passwordAuthErrorMessage(error, flow, {
+          emailExists: t("emailExists"),
+          signUpFailed: t("signUpFailed"),
+          authFailed: t("authFailed"),
+        })
+      );
       setLoading(false);
     }
   }
@@ -146,7 +172,7 @@ export function AuthForm({
         redirectTo: buildRedirectTo({ prompt: pendingPrompt, nextPath }),
       });
     } catch {
-      toast.error("Google sign-in failed. Try again.");
+      toast.error(t("googleFailed"));
       setGoogleLoading(false);
     }
   }
@@ -179,12 +205,10 @@ export function AuthForm({
             isModal ? "text-xl" : "text-2xl md:text-3xl"
           )}
         >
-          {isSignUp ? "Create your account" : "Welcome back"}
+          {isSignUp ? t("signUpTitle") : t("loginTitle")}
         </h1>
         <p className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
-          {pendingPrompt
-            ? "Sign in to start creating your site."
-            : "Create websites with a live preview — no coding needed."}
+          {pendingPrompt ? t("subtitlePrompt") : t("subtitleDefault")}
         </p>
       </div>
 
@@ -200,9 +224,7 @@ export function AuthForm({
           <GoogleMark className="size-4" />
           {googleLoading
             ? "Redirecting…"
-            : isSignUp
-              ? "Sign up with Google"
-              : "Continue with Google"}
+            : t("withGoogle")}
         </Button>
 
         <div className="flex items-center gap-3">
@@ -215,7 +237,7 @@ export function AuthForm({
 
         <form onSubmit={onPasswordSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input
               id="email"
               name="email"
@@ -226,7 +248,7 @@ export function AuthForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Input
               id="password"
               name="password"
@@ -245,40 +267,40 @@ export function AuthForm({
           >
             {loading
               ? pendingPrompt
-                ? "Starting…"
-                : "Please wait…"
+                ? t("starting")
+                : t("pleaseWait")
               : isSignUp
-                ? "Create account"
-                : "Sign in"}
+                ? t("signUpTitle")
+                : t("loginTitle")}
           </Button>
         </form>
       </div>
 
       <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-        By continuing, you agree to our{" "}
+        {t("agreeBefore")}{" "}
         <Link
           href="/terms"
           className="underline underline-offset-4 hover:text-foreground"
         >
-          Terms
+          {t("agreeTerms")}
         </Link>{" "}
-        and{" "}
+        {t("agreeAnd")}{" "}
         <Link
           href="/privacy"
           className="underline underline-offset-4 hover:text-foreground"
         >
-          Privacy Policy
+          {t("agreePrivacy")}
         </Link>
-        .
+        {t("agreeAfter")}
       </p>
 
       <p className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
-        {isSignUp ? "Already have an account?" : "New to Floras?"}{" "}
+        {isSignUp ? t("hasAccount") : t("noAccount")}{" "}
         <Link
           href={switchHref}
           className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground underline underline-offset-4 transition-colors hover:text-brand"
         >
-          {isSignUp ? "Sign in" : "Create one"}
+          {isSignUp ? t("signInLink") : t("signUpLink")}
         </Link>
       </p>
     </div>

@@ -11,6 +11,7 @@ export async function POST(req: Request) {
   const ctx = await withGenerateAccess(req, {
     busyStatuses: ["provisioning", "generating", "publishing"],
     noPlanMessage: "Pro plan required to ask Floras.",
+    rateLimitName: "ask",
   });
   if (ctx instanceof Response) return ctx;
   return acceptBackgroundWork(() => runAsk(ctx.projectId, ctx.token));

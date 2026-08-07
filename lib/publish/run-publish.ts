@@ -1,24 +1,24 @@
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
-import * as box from "@/lib/box/client";
+import * as sandbox from "@/lib/sandbox/client";
+import { isCanonicalSandboxName } from "@/lib/sandbox/config";
 import {
   deleteFlorasCname,
   upsertFlorasCname,
 } from "@/lib/cloudflare/dns";
+import { deployDistArchive } from "@/lib/cloudflare/deploy-dist";
 import {
   addDomain,
   cloudflareConfigured,
   deletePagesProject,
   ensurePagesProject,
-  getCloudflareConfig,
   getProjectPublishInfo,
 } from "@/lib/cloudflare/pages";
 import { AppError } from "@/lib/errors";
 import {
-  isRetryableBoxError,
+  isRetryableSandboxError,
   isRetryableCloudflareError,
-  isRetryableWranglerError,
   withRetry,
 } from "@/lib/publish/retry";
 import {
@@ -35,9 +35,9 @@ export async function runPublish(projectId: string, token: string) {
   );
   if (!project) return;
 
-  const boxId =
-    typeof project.boxId === "string" ? project.boxId : undefined;
-  if (!boxId) {
+  const sandboxName =
+    typeof project.sandboxName === "string" ? project.sandboxName : undefined;
+  if (!sandboxName) {
     await fetchMutation(
       api.projects.setPublishError,
       {
@@ -52,7 +52,22 @@ export async function runPublish(projectId: string, token: string) {
     return;
   }
 
-  if (!box.boxConfigured()) {
+  if (!isCanonicalSandboxName(projectId, sandboxName)) {
+    await fetchMutation(
+      api.projects.setPublishError,
+      {
+        projectId: asProjectId(projectId),
+        error: new AppError(
+          "publish",
+          "Invalid sandbox binding for this project."
+        ).message,
+      },
+      { token }
+    );
+    return;
+  }
+
+  if (!sandbox.sandboxConfigured()) {
     await fetchMutation(
       api.projects.setPublishError,
       { projectId: asProjectId(projectId), error: new AppError("config").message },
@@ -84,13 +99,20 @@ export async function runPublish(projectId: string, token: string) {
   if (!claimed) return;
 
   try {
-    await withRetry(() => box.ensureBoxReady(boxId), {
-      attempts: 3,
-      initialDelayMs: 1000,
-      maxDelayMs: 8000,
-      label: "ensureBoxReady",
-      retryable: isRetryableBoxError,
-    });
+    await withRetry(
+      () =>
+        sandbox.ensureSandboxReady(sandboxName, {
+          projectId,
+          token,
+        }),
+      {
+        attempts: 3,
+        initialDelayMs: 1000,
+        maxDelayMs: 8000,
+        label: "ensureSandboxReady",
+        retryable: isRetryableSandboxError,
+      }
+    );
 
     const ensured = await withRetry(() => ensurePagesProject(name), {
       attempts: 3,
@@ -101,31 +123,25 @@ export async function runPublish(projectId: string, token: string) {
     });
     createdProjectThisRun = ensured.created;
 
-    await box.buildSite(boxId);
-    await box.assertDistPresent(boxId);
+    await sandbox.buildSite(sandboxName);
+    await sandbox.assertDistPresent(sandboxName);
 
-    const creds = getCloudflareConfig();
-    await withRetry(
-      () =>
-        box.deployDistWithWrangler(boxId, {
-          projectName: name,
-          apiToken: creds.apiToken,
-          accountId: creds.accountId,
-        }),
+    const distArchive = await withRetry(
+      () => sandbox.exportDistArchive(sandboxName),
       {
-        attempts: 3,
-        initialDelayMs: 1500,
-        maxDelayMs: 10000,
-        label: "deployDistWithWrangler",
-        retryable: isRetryableWranglerError,
+        attempts: 2,
+        initialDelayMs: 800,
+        maxDelayMs: 4000,
+        label: "exportDistArchive",
+        retryable: isRetryableSandboxError,
       }
     );
 
-    const publishInfo = await withRetry(() => getProjectPublishInfo(name), {
-      attempts: 4,
-      initialDelayMs: 500,
-      maxDelayMs: 4000,
-      label: "getProjectPublishInfo",
+    await withRetry(() => deployDistArchive(distArchive, name), {
+      attempts: 3,
+      initialDelayMs: 1500,
+      maxDelayMs: 10000,
+      label: "deployDistArchive",
       retryable: isRetryableCloudflareError,
     });
 
@@ -137,24 +153,34 @@ export async function runPublish(projectId: string, token: string) {
       : existingSubdomain;
     florasHost = host;
 
-    await withRetry(() => addDomain(name, host), {
-      attempts: 3,
-      initialDelayMs: 800,
-      maxDelayMs: 6000,
-      label: "addFlorasSubdomain",
-      retryable: isRetryableCloudflareError,
-    });
+    if (florasHostIsNew) {
+      const publishInfo = await withRetry(() => getProjectPublishInfo(name), {
+        attempts: 4,
+        initialDelayMs: 500,
+        maxDelayMs: 4000,
+        label: "getProjectPublishInfo",
+        retryable: isRetryableCloudflareError,
+      });
 
-    await withRetry(
-      () => upsertFlorasCname(host, publishInfo.subdomain),
-      {
+      await withRetry(() => addDomain(name, host), {
         attempts: 3,
         initialDelayMs: 800,
         maxDelayMs: 6000,
-        label: "upsertFlorasCname",
+        label: "addFlorasSubdomain",
         retryable: isRetryableCloudflareError,
-      }
-    );
+      });
+
+      await withRetry(
+        () => upsertFlorasCname(host, publishInfo.subdomain),
+        {
+          attempts: 3,
+          initialDelayMs: 800,
+          maxDelayMs: 6000,
+          label: "upsertFlorasCname",
+          retryable: isRetryableCloudflareError,
+        }
+      );
+    }
 
     await withRetry(
       () =>
@@ -215,10 +241,6 @@ export async function runPublish(projectId: string, token: string) {
       { token }
     ).catch((secondary) => {
       console.error("Failed to set publish error", secondary);
-    });
-  } finally {
-    await box.scrubCfEnv(boxId).catch((error) => {
-      console.error("Failed to scrub CF env", error);
     });
   }
 }

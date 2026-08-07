@@ -12,6 +12,8 @@ import {
   requireOwnedProject,
 } from "./lib/auth";
 import { authedMutation } from "./lib/customFunctions";
+import { sandboxNameForProject } from "./lib/sandboxName";
+import { r2 } from "./siteSnapshots";
 
 export const create = authedMutation({
   args: {
@@ -22,6 +24,7 @@ export const create = authedMutation({
   returns: v.id("projects"),
   handler: async (ctx, args) => {
     const name = args.name?.trim() || deriveName(args.prompt);
+    const formPublicKey = makeFormPublicKey();
     const projectId = await ctx.db.insert("projects", {
       userId: ctx.userId,
       name,
@@ -29,6 +32,7 @@ export const create = authedMutation({
       modelId: args.modelId,
       status: "draft",
       publishStatus: "idle",
+      formPublicKey,
     });
 
     await ctx.db.insert("messages", {
@@ -42,6 +46,18 @@ export const create = authedMutation({
     return projectId;
   },
 });
+
+function makeFormPublicKey(): string {
+  const alphabet =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (const b of bytes) {
+    out += alphabet[b % alphabet.length]!;
+  }
+  return out;
+}
 
 export const list = query({
   args: {},
@@ -73,7 +89,10 @@ export const remove = authedMutation({
   args: { projectId: v.id("projects") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireOwnedProject(ctx, args.projectId);
+    const { project } = await requireOwnedProject(ctx, args.projectId);
+    if (project.snapshotKey) {
+      await r2.deleteObject(ctx, project.snapshotKey);
+    }
     const msgs = await ctx.db
       .query("messages")
       .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
@@ -133,7 +152,7 @@ export const claimPublish = authedMutation({
   handler: async (ctx, args) => {
     const { project } = await requireOwnedProject(ctx, args.projectId);
     if (isGenerationBusy(project)) return false;
-    if (!project.boxId) return false;
+    if (!project.sandboxName) return false;
     await ctx.db.patch(args.projectId, {
       publishStatus: "publishing",
       busyAt: Date.now(),
@@ -150,7 +169,7 @@ export const resetBusy = authedMutation({
     const { project } = await requireOwnedProject(ctx, args.projectId);
     const nextStatus =
       project.status === "provisioning" || project.status === "generating"
-        ? project.boxId
+        ? project.sandboxName
           ? "ready"
           : "draft"
         : project.status;
@@ -176,7 +195,10 @@ export const resetBusy = authedMutation({
 });
 
 export const setStatus = authedMutation({
-  args: { projectId: v.id("projects"), status: projectStatus },
+  args: {
+    projectId: v.id("projects"),
+    status: projectStatus,
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
@@ -190,25 +212,32 @@ export const setStatus = authedMutation({
   },
 });
 
-export const setBox = authedMutation({
+export const setSandbox = authedMutation({
   args: {
     projectId: v.id("projects"),
-    boxId: v.string(),
-    boxSubdomain: v.optional(v.string()),
+    sandboxName: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
+    const expected = sandboxNameForProject(args.projectId);
+    if (args.sandboxName !== expected) {
+      throw new Error(
+        `sandboxName must be ${expected} for this project`
+      );
+    }
     await ctx.db.patch(args.projectId, {
-      boxId: args.boxId,
-      ...(args.boxSubdomain ? { boxSubdomain: args.boxSubdomain } : {}),
+      sandboxName: args.sandboxName,
     });
     return null;
   },
 });
 
 export const setPreview = authedMutation({
-  args: { projectId: v.id("projects"), previewUrl: v.string() },
+  args: {
+    projectId: v.id("projects"),
+    previewUrl: v.string(),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
@@ -218,7 +247,10 @@ export const setPreview = authedMutation({
 });
 
 export const setPlan = authedMutation({
-  args: { projectId: v.id("projects"), plan: sitePlanValidator },
+  args: {
+    projectId: v.id("projects"),
+    plan: sitePlanValidator,
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
@@ -228,7 +260,10 @@ export const setPlan = authedMutation({
 });
 
 export const setError = authedMutation({
-  args: { projectId: v.id("projects"), error: v.string() },
+  args: {
+    projectId: v.id("projects"),
+    error: v.string(),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
@@ -290,9 +325,9 @@ export const setPublishError = authedMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { project } = await requireOwnedProject(ctx, args.projectId);
-    const wasPublished = project.publishStatus === "published";
+    const stillLive = Boolean(project.publishedUrl || project.cfSubdomain);
     await ctx.db.patch(args.projectId, {
-      publishStatus: wasPublished ? "published" : "error",
+      publishStatus: stillLive ? "published" : "error",
       publishError: args.error,
       busyAt: undefined,
     });

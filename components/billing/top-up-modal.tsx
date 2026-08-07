@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useConvexAuth } from "convex/react";
 import { useCustomer } from "autumn-js/react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -25,13 +26,8 @@ export type TopUpModalProps = {
   onPurchased?: () => void;
 };
 
-const FACTS = [
-  "Credit never expires",
-  "Stacks on top of your plan balance",
-  "Used for ask, build, and refinements",
-];
-
 export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps) {
+  const t = useTranslations("billing.topUp");
   const { isAuthenticated } = useConvexAuth();
   const { attach, data, refetch } = useCustomer({
     errorOnNotFound: false,
@@ -41,10 +37,11 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
   const [pending, setPending] = useState(false);
 
   const balance = data?.balances?.[AI_CREDITS_FEATURE]?.remaining ?? null;
+  const factItems = [t("facts.0"), t("facts.1"), t("facts.2")];
 
   const purchase = async () => {
     if (!isAuthenticated) {
-      toast.error("Sign in to top up credit.");
+      toast.error(t("signIn"));
       return;
     }
     setPending(true);
@@ -68,9 +65,9 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
       await refetch();
       onPurchased?.();
       onOpenChange(false);
-      toast.success(`Added $${selected.credits} credit.`);
+      toast.success(t("added", { credits: selected.credits }));
     } catch {
-      toast.error("Could not start top-up. Make sure billing is configured.");
+      toast.error(t("failed"));
     } finally {
       setPending(false);
     }
@@ -81,16 +78,16 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
       <DialogContent className="gap-0 overflow-hidden rounded-none border-border p-0 sm:max-w-md">
         <div className="border-b border-border px-6 py-5 pr-14">
           <DialogTitle className="text-2xl font-semibold tracking-tight">
-            Top up
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
-            Add credit for ask, build, and chat refinements.
+            {t("description")}
           </DialogDescription>
         </div>
 
         <div
           role="group"
-          aria-label="Credit pack"
+          aria-label={t("packAria")}
           className="grid grid-cols-3 border-b border-border"
         >
           {TOP_UP_PACKS.map((pack, index) => {
@@ -109,7 +106,7 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
               >
                 <span className="flex items-center justify-between gap-1">
                   <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {pack.hint ?? "Pack"}
+                    {pack.hint ?? t("pack")}
                   </span>
                 </span>
                 <span className="mt-1 flex items-baseline gap-1">
@@ -128,13 +125,13 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
         <ul>
           {typeof balance === "number" ? (
             <li className="border-b border-border px-6 py-3 text-sm text-muted-foreground">
-              Current balance{" "}
+              {t("currentBalance")}{" "}
               <span className="font-mono tabular-nums text-foreground">
                 {formatCredits(balance)}
               </span>
             </li>
           ) : null}
-          {FACTS.map((item) => (
+          {factItems.map((item) => (
             <li
               key={item}
               className="border-b border-border px-6 py-3 text-sm text-muted-foreground last:border-b-0"
@@ -155,8 +152,8 @@ export function TopUpModal({ open, onOpenChange, onPurchased }: TopUpModalProps)
             )}
           >
             {pending
-              ? "Opening checkout…"
-              : `Top up · ${selected.priceLabel}`}
+              ? t("openingCheckout")
+              : t("cta", { price: selected.priceLabel })}
           </button>
         </div>
       </DialogContent>

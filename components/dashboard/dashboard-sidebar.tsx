@@ -9,10 +9,12 @@ import {
   Search01Icon,
   Settings01Icon,
   PencilEdit02Icon,
+  Mail01Icon,
 } from "@hugeicons/core-free-icons";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -43,8 +45,10 @@ export function DashboardSidebar({
   onToggleCollapsed: () => void;
   onNewChat: () => void;
 }) {
+  const t = useTranslations("dashboard");
   const { signOut } = useAuthActions();
   const me = useQuery(api.users.me, {}) as UserMe | null | undefined;
+  const unread = useQuery(api.forms.unreadCount, {});
   const { balance, hasProPlan, hasByokPlan, hasSubscription, billingReady } =
     useGenerationAccess();
   const [query, setQuery] = useState("");
@@ -56,13 +60,13 @@ export function DashboardSidebar({
     return projects.filter((p) => p.name.toLowerCase().includes(q));
   }, [projects, query]);
 
-  const displayName = me?.name?.trim() || me?.email?.split("@")[0] || "Account";
+  const displayName = me?.name?.trim() || me?.email?.split("@")[0] || t("account");
   const initials = displayName.slice(0, 2).toUpperCase();
   const creditLabel = formatCredits(balance);
   const planLabel = !billingReady
     ? "…"
     : !hasSubscription
-      ? "No plan"
+      ? t("noPlan")
       : hasByokPlan && !hasProPlan
         ? "BYOK"
         : `${creditLabel} credit`;
@@ -85,7 +89,7 @@ export function DashboardSidebar({
           type="button"
           onClick={onToggleCollapsed}
           className="inline-flex size-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
         >
           {collapsed ? (
             <HugeiconsIcon icon={SidebarLeft01Icon} className="size-4" />
@@ -103,21 +107,42 @@ export function DashboardSidebar({
             "inline-flex h-9 cursor-pointer items-center gap-2 bg-foreground px-3 text-sm font-medium text-background transition-[filter] hover:brightness-110 active:scale-[0.98]",
             collapsed ? "size-9 justify-center px-0" : "w-full"
           )}
-          aria-label="New chat"
+          aria-label={t("newChat")}
         >
           <HugeiconsIcon icon={PencilEdit02Icon} className="size-4 shrink-0" />
-          {!collapsed ? <span>New chat</span> : null}
+          {!collapsed ? <span>{t("newChat")}</span> : null}
         </button>
+        <Link
+          href="/dashboard/inbox"
+          className={cn(
+            "inline-flex h-9 items-center gap-2 px-3 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+            collapsed ? "size-9 justify-center px-0" : "w-full"
+          )}
+          aria-label={t("inbox")}
+          title={t("inbox")}
+        >
+          <HugeiconsIcon icon={Mail01Icon} className="size-4 shrink-0" />
+          {!collapsed ? (
+            <span className="flex flex-1 items-center justify-between gap-2">
+              {t("inbox")}
+              {typeof unread === "number" && unread > 0 ? (
+                <span className="rounded-sm bg-brand/15 px-1.5 font-mono text-[10px] text-brand">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+        </Link>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
         {!collapsed ? (
           <div className="px-3 pt-3 pb-2">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              Recent chats
+              {t("recentChats")}
             </p>
             <label htmlFor="dashboard-chat-search" className="sr-only">
-              Search chats
+              {t("searchChats")}
             </label>
             <div className="relative mt-2">
               <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -125,14 +150,14 @@ export function DashboardSidebar({
                 id="dashboard-chat-search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search…"
+                placeholder={t("searchPlaceholder")}
                 className="h-8 w-full border border-border bg-background pr-3 pl-8 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-brand"
               />
             </div>
           </div>
         ) : null}
 
-        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-2" aria-label="Recent chats">
+        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-2" aria-label={t("recentChats")}>
           {filtered === undefined ? (
             <p
               className={cn(
@@ -140,7 +165,7 @@ export function DashboardSidebar({
                 collapsed && "sr-only"
               )}
             >
-              Loading…
+              {t("loading")}
             </p>
           ) : filtered.length === 0 ? (
             <p
@@ -149,14 +174,17 @@ export function DashboardSidebar({
                 collapsed && "sr-only"
               )}
             >
-              {query ? "No matches" : "No chats yet"}
+              {query ? t("noMatches") : t("noChats")}
             </p>
           ) : (
             <ul className="flex flex-col gap-0.5">
               {filtered.map((project) => (
                 <li key={project._id}>
                   <Link
-                    href={`/build/${project._id}`}
+                    href={{
+                      pathname: "/build/[projectId]",
+                      params: { projectId: project._id },
+                    }}
                     title={project.name}
                     className={cn(
                       "group flex items-center gap-2 px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
@@ -227,7 +255,7 @@ export function DashboardSidebar({
             <DropdownMenuItem asChild>
               <Link href="/dashboard/account" className="cursor-pointer gap-2">
                 <HugeiconsIcon icon={Settings01Icon} className="size-4" />
-                Account
+                {t("account")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -236,7 +264,7 @@ export function DashboardSidebar({
               onClick={() => void signOut()}
             >
               <HugeiconsIcon icon={Logout01Icon} className="size-4" />
-              Sign out
+              {t("signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

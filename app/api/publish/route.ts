@@ -10,7 +10,7 @@ import {
   publishRequestSchema,
 } from "@/lib/publish/types";
 import { cloudflareConfigured } from "@/lib/cloudflare/pages";
-import { boxConfigured } from "@/lib/box/client";
+import { sandboxConfigured } from "@/lib/sandbox/client";
 import { getAccess } from "@/lib/billing/get-access";
 import { AppError, appErrorResponse } from "@/lib/errors";
 
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     return appErrorResponse(new AppError("not_found"), 404);
   }
 
-  if (!project.boxId) {
+  if (!project.sandboxName) {
     return appErrorResponse(
       new AppError(
         "publish",
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!boxConfigured() || !cloudflareConfigured()) {
+  if (!sandboxConfigured() || !cloudflareConfigured()) {
     return appErrorResponse(new AppError("config"), 503);
   }
 

@@ -54,6 +54,12 @@ export const agentStep = v.object({
   detail: v.optional(v.string()),
 });
 
+export const formSubmissionStatus = v.union(
+  v.literal("new"),
+  v.literal("read"),
+  v.literal("archived")
+);
+
 export const sitePlanValidator = v.object({
   siteName: v.string(),
   tagline: v.string(),
@@ -106,8 +112,8 @@ export default defineSchema({
     modelId: v.optional(v.string()),
     status: projectStatus,
     busyAt: v.optional(v.number()),
-    boxId: v.optional(v.string()),
-    boxSubdomain: v.optional(v.string()),
+    sandboxName: v.optional(v.string()),
+    snapshotKey: v.optional(v.string()),
     previewUrl: v.optional(v.string()),
     plan: v.optional(v.any()),
     error: v.optional(v.string()),
@@ -121,9 +127,11 @@ export default defineSchema({
     customDomainStatus: v.optional(domainStatus),
     customDomainError: v.optional(v.string()),
     customDomainUpdatedAt: v.optional(v.number()),
+    formPublicKey: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
-    .index("by_cf_subdomain", ["cfSubdomain"]),
+    .index("by_cf_subdomain", ["cfSubdomain"])
+    .index("by_form_public_key", ["formPublicKey"]),
 
   messages: defineTable({
     projectId: v.id("projects"),
@@ -135,4 +143,16 @@ export default defineSchema({
     thoughtDurationMs: v.optional(v.number()),
     status: messageStatus,
   }).index("by_project", ["projectId"]),
+
+  formSubmissions: defineTable({
+    projectId: v.id("projects"),
+    userId: v.id("users"),
+    createdAt: v.number(),
+    fields: v.record(v.string(), v.string()),
+    pagePath: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    status: formSubmissionStatus,
+  })
+    .index("by_project_created", ["projectId", "createdAt"])
+    .index("by_user_created", ["userId", "createdAt"]),
 });

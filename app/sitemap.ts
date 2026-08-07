@@ -1,27 +1,27 @@
 import type { MetadataRoute } from "next";
-import { getSiteUrl } from "@/lib/seo";
+import { routing } from "@/i18n/routing";
+import {
+  getAllSeoPaths,
+  absoluteUrl,
+  languageAlternates,
+} from "@/lib/pseo/seo-paths";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = getSiteUrl();
+  const now = new Date();
+  const entries: MetadataRoute.Sitemap = [];
 
-  return [
-    {
-      url: base,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${base}/login`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.4,
-    },
-    {
-      url: `${base}/sign-up`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-  ];
+  for (const path of getAllSeoPaths()) {
+    const languages = languageAlternates(path.pathByLocale);
+    for (const locale of routing.locales) {
+      entries.push({
+        url: absoluteUrl(path.pathByLocale[locale]),
+        lastModified: now,
+        changeFrequency: path.changeFrequency,
+        priority: path.priority,
+        alternates: { languages },
+      });
+    }
+  }
+
+  return entries;
 }

@@ -333,10 +333,7 @@ export const MessageResponse = memo(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className
       )}
-      components={{
-        br: () => " ",
-        ...components,
-      }}
+      components={components}
       {...props}
       plugins={{ code, mermaid, math, cjk }}
     />

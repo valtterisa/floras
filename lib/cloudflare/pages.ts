@@ -212,12 +212,22 @@ export async function addDomain(
     });
     return toDomainInfo(domain, info.subdomain);
   } catch (error) {
-    if (error instanceof APIError && error.status === 409) {
+    if (error instanceof APIError && isAlreadyAddedDomainError(error)) {
       const existing = await getDomain(projectName, hostname);
       if (existing) return existing;
     }
     throw mapCloudflareError(error, "Could not add custom domain.");
   }
+}
+
+function isAlreadyAddedDomainError(error: APIError): boolean {
+  if (error.status === 409) return true;
+  const message = error.message.toLowerCase();
+  return (
+    error.status === 400 &&
+    (message.includes("already added this custom domain") ||
+      message.includes("8000018"))
+  );
 }
 
 export async function getDomain(

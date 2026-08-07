@@ -24,6 +24,7 @@ export const sectionSchema = z.object({
     "gallery",
     "content",
     "blogList",
+    "contact",
   ]),
   heading: z.string().optional(),
   subheading: z.string().optional(),
@@ -33,6 +34,13 @@ export const sectionSchema = z.object({
   secondaryCta: z.object({ label: z.string(), href: z.string() }).optional(),
   items: z.array(featureItemSchema).optional(),
   imagePrompt: z.string().optional(),
+  submitLabel: z.string().optional(),
+  fields: z
+    .array(z.enum(["name", "email", "phone", "message"]))
+    .optional()
+    .describe(
+      "Contact form fields. Default name, email, message. Add phone when useful."
+    ),
 });
 
 export const pageSchema = z.object({

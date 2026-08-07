@@ -73,7 +73,7 @@ const RULES: Array<{ code: AppErrorCode; test: (text: string) => boolean }> = [
   {
     code: "preview",
     test: (t) =>
-      /\b(preview url|host output|astro dev|on\.ascii\.dev|box_direct_failed|response returned an error code)\b/.test(
+      /\b(preview url|astro dev|preview\.bl\.run|blaxel|response returned an error code)\b/.test(
         t
       ),
   },
@@ -94,7 +94,7 @@ const RULES: Array<{ code: AppErrorCode; test: (text: string) => boolean }> = [
   {
     code: "config",
     test: (t) =>
-      /\b(api.?key|box_api_key|cloudflare_api_token|cloudflare_account_id|cloudflare_zone_id|\.env|not configured|environment secrets|missing secret)\b/.test(
+      /\b(api.?key|bl_api_key|bl_sandbox_image|cloudflare_api_token|cloudflare_account_id|cloudflare_zone_id|\.env|not configured|environment secrets|missing secret)\b/.test(
         t
       ),
   },
@@ -262,6 +262,7 @@ export function statusForAppError(error: AppError): number {
   if (error.code === "not_found") return 404;
   if (error.code === "config") return 503;
   if (error.code === "domain") return 400;
+  if (error.code === "rate_limit") return 429;
   if (error.code === "no_plan" || error.code === "no_credits") return 402;
   return 500;
 }

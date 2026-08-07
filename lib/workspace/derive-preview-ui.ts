@@ -1,19 +1,16 @@
-const LIVE_BOX_STATES = new Set(["ready", "idle", "running"]);
-const STARTING_BOX_STATES = new Set([
-  "init",
-  "provisioning",
-  "provisioned",
-  "cloning",
-]);
+const LIVE_SANDBOX_STATES = new Set(["ready"]);
+const STARTING_SANDBOX_STATES = new Set(["starting"]);
 
 export type PreviewUi = {
   screen: {
-    title: string;
-    body: string;
+    titleKey: string;
+    bodyKey?: string;
+    bodyOverride?: string;
     spinning: boolean;
     showRestart: boolean;
   };
   badge: string;
+  badgeOverride?: string;
 };
 
 export function derivePreviewUi(input: {
@@ -26,26 +23,30 @@ export function derivePreviewUi(input: {
 }): PreviewUi {
   const { state, waking, restarting, previewOk, previewError, projectLabel } =
     input;
-  const boxLive = typeof state === "string" && LIVE_BOX_STATES.has(state);
+  const sandboxLive = typeof state === "string" && LIVE_SANDBOX_STATES.has(state);
 
-  let badge = "Offline";
-  if (previewError && !waking) badge = "Error";
-  else if (state === "archiving") badge = "Stopping";
-  else if (state === "archived") badge = waking ? "Starting" : "Stopped";
-  else if (state === "loading") badge = "Checking";
-  else if (state === "error") badge = "Error";
-  else if (typeof state === "string" && STARTING_BOX_STATES.has(state))
-    badge = "Starting";
-  else if (boxLive && previewOk && !waking) badge = projectLabel ?? "Live";
-  else if (waking || (boxLive && !previewOk))
-    badge = restarting ? "Restarting" : "Starting";
+  let badge = "offline";
+  let badgeOverride: string | undefined;
+  if (previewError && !waking) badge = "error";
+  else if (state === "stopping") badge = "stopping";
+  else if (state === "stopped") badge = waking ? "starting" : "stopped";
+  else if (state === "loading") badge = "checking";
+  else if (state === "error") badge = "error";
+  else if (typeof state === "string" && STARTING_SANDBOX_STATES.has(state))
+    badge = "starting";
+  else if (sandboxLive && previewOk && !waking) {
+    badge = "live";
+    if (projectLabel) badgeOverride = projectLabel;
+  } else if (waking || (sandboxLive && !previewOk))
+    badge = restarting ? "restarting" : "starting";
 
   if (previewError && !waking) {
     return {
       badge,
+      badgeOverride,
       screen: {
-        title: "Preview failed",
-        body: previewError,
+        titleKey: "screen.previewFailed",
+        bodyOverride: previewError,
         spinning: false,
         showRestart: true,
       },
@@ -53,23 +54,25 @@ export function derivePreviewUi(input: {
   }
 
   if (waking) {
-    if (state === "archiving") {
+    if (state === "stopping") {
       return {
         badge,
+        badgeOverride,
         screen: {
-          title: "Stopping sandbox",
-          body: "Waiting for the previous stop to finish.",
+          titleKey: "screen.stoppingTitle",
+          bodyKey: "screen.stoppingBody",
           spinning: true,
           showRestart: false,
         },
       };
     }
-    if (boxLive) {
+    if (sandboxLive) {
       return {
         badge,
+        badgeOverride,
         screen: {
-          title: "Starting preview",
-          body: "Waiting until the public preview URL responds.",
+          titleKey: "screen.startingPreviewTitle",
+          bodyKey: "screen.startingPreviewBody",
           spinning: true,
           showRestart: false,
         },
@@ -77,21 +80,23 @@ export function derivePreviewUi(input: {
     }
     return {
       badge,
+      badgeOverride,
       screen: {
-        title: "Starting sandbox",
-        body: "This can take a minute. Hang tight.",
+        titleKey: "screen.startingSandboxTitle",
+        bodyKey: "screen.startingSandboxBody",
         spinning: true,
         showRestart: false,
       },
     };
   }
 
-  if (boxLive && !previewOk) {
+  if (sandboxLive && !previewOk) {
     return {
       badge,
+      badgeOverride,
       screen: {
-        title: "Preview offline",
-        body: "Sandbox is up, but the site preview is not responding.",
+        titleKey: "screen.previewOfflineTitle",
+        bodyKey: "screen.previewOfflineBody",
         spinning: false,
         showRestart: true,
       },
@@ -100,40 +105,41 @@ export function derivePreviewUi(input: {
 
   const screens: Record<string, PreviewUi["screen"]> = {
     loading: {
-      title: "Checking sandbox",
-      body: "Reading machine status.",
+      titleKey: "screen.checkingTitle",
+      bodyKey: "screen.checkingBody",
       spinning: true,
       showRestart: false,
     },
-    archived: {
-      title: "Sandbox stopped",
-      body: "Preview is offline. Restart the preview to wake it up.",
+    stopped: {
+      titleKey: "screen.stoppedTitle",
+      bodyKey: "screen.stoppedBody",
       spinning: false,
       showRestart: true,
     },
-    archiving: {
-      title: "Stopping sandbox",
-      body: "The machine is snapshotting and going offline.",
+    stopping: {
+      titleKey: "screen.stoppingDevTitle",
+      bodyKey: "screen.stoppingDevBody",
       spinning: true,
       showRestart: false,
     },
     error: {
-      title: "Sandbox error",
-      body: "Something went wrong with the machine. Try restarting the preview.",
+      titleKey: "screen.errorTitle",
+      bodyKey: "screen.errorBody",
       spinning: false,
       showRestart: true,
     },
   };
 
   if (state && screens[state]) {
-    return { badge, screen: screens[state]! };
+    return { badge, badgeOverride, screen: screens[state]! };
   }
-  if (typeof state === "string" && STARTING_BOX_STATES.has(state)) {
+  if (typeof state === "string" && STARTING_SANDBOX_STATES.has(state)) {
     return {
       badge,
+      badgeOverride,
       screen: {
-        title: "Starting sandbox",
-        body: "The machine is still coming online.",
+        titleKey: "screen.startingOnlineTitle",
+        bodyKey: "screen.startingOnlineBody",
         spinning: true,
         showRestart: false,
       },
@@ -142,9 +148,10 @@ export function derivePreviewUi(input: {
   if (state === null) {
     return {
       badge,
+      badgeOverride,
       screen: {
-        title: "No sandbox",
-        body: "Generate a site to provision a preview machine.",
+        titleKey: "screen.noSandboxTitle",
+        bodyKey: "screen.noSandboxBody",
         spinning: false,
         showRestart: false,
       },
@@ -152,13 +159,14 @@ export function derivePreviewUi(input: {
   }
   return {
     badge,
+    badgeOverride,
     screen: {
-      title: "Sandbox unavailable",
-      body: "Preview is not ready yet. Try restarting the preview.",
+      titleKey: "screen.unavailableTitle",
+      bodyKey: "screen.unavailableBody",
       spinning: false,
       showRestart: true,
     },
   };
 }
 
-export { LIVE_BOX_STATES, STARTING_BOX_STATES };
+export { LIVE_SANDBOX_STATES, STARTING_SANDBOX_STATES };

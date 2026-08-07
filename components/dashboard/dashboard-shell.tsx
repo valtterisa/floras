@@ -13,7 +13,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
@@ -36,6 +37,7 @@ export function useDashboardChrome(): DashboardChromeValue {
 }
 
 export function DashboardShell({ children }: { children: ReactNode }) {
+  const t = useTranslations("nav");
   const projects = useQuery(api.projects.list, {}) as
     | DashboardProject[]
     | undefined;
@@ -98,7 +100,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               type="button"
               onClick={() => setMobileOpen(true)}
               className="inline-flex size-9 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Open menu"
+              aria-label={t("openMenu")}
             >
               <HugeiconsIcon icon={Menu01Icon} className="size-5" />
             </button>

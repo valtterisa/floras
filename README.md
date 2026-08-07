@@ -6,12 +6,12 @@
 
 **Floras** turns a plain-English prompt into a production-ready [Astro](https://astro.build/) site with a live preview.
 
-It is a Next.js 16 (App Router) frontend backed by [Convex](https://www.convex.dev/), generating sites inside [box.ascii.dev](https://box.ascii.dev) sandboxes via an [AI SDK](https://ai-sdk.dev/) agent, with [Autumn](https://useautumn.com/) billing.
+It is a Next.js 16 (App Router) frontend backed by [Convex](https://www.convex.dev/), generating sites inside [Blaxel](https://blaxel.ai) sandboxes via an [AI SDK](https://ai-sdk.dev/) agent, with [Autumn](https://useautumn.com/) billing.
 
 ## Features
 
 - **Prompt → Astro site** — Describe the site; an agent plans and scaffolds a full Astro project
-- **Live sandbox preview** — Each project runs `astro dev` in a Box VM on a public URL
+- **Live sandbox preview** — Each project runs `astro dev` in a Blaxel sandbox on a public preview URL
 - **Structured output** — Zod `SitePlan` drives a deterministic scaffolder (no brittle parsing of model text)
 - **Reactive chat UI** — Tool activity and summaries stream into Convex; the UI updates live
 - **Auth + billing** — Convex Auth (password) and Autumn usage gating
@@ -38,27 +38,27 @@ It is a Next.js 16 (App Router) frontend backed by [Convex](https://www.convex.d
 | Backend / DB | Convex + Convex Auth (password) |
 | Agent | AI SDK 7 `ToolLoopAgent` in a Convex Node action |
 | Output | Zod `SitePlan` → deterministic Astro scaffold |
-| Preview | box.ascii.dev VMs running `astro dev` |
+| Preview | Blaxel sandboxes running `astro`/`bun`/`pnpm` dev |
 | Billing | Autumn (`@useautumn/convex` + `autumn-js`) |
 
 ## Architecture
 
 ```text
-Prompt → Convex generate action → AI agent (plan + tools)
+Prompt → Next.js generate API → AI agent (plan + tools)
                 ↓                        ↓
-         SitePlan (zod)          Box sandbox (astro dev)
+         SitePlan (zod)          Blaxel sandbox (astro/bun/pnpm dev)
                 ↓                        ↓
-      scaffold Astro project      public preview URL
+      edit /app in place         public preview URL
                 ↓                        ↓
          Convex tables  ←── reactive UI (chat + iframe)
 ```
 
 - **Frontend:** Chat UI via `components/ai-elements/*`. Pages compose `MarketingLayout` / `DashboardShell` with feature modules in `landing/`, `dashboard/`, `workspace/`, and shared shells in `site/`.
 - **Backend:** Convex (`convex/`). Reactive queries drive chat + preview.
-- **Agent:** `lib/ai/agent.ts` runs inside `convex/generate.ts`. Tool activity and summaries stream into Convex tables.
-- **Output schema:** `lib/schema/site.ts` → `lib/astro/scaffold.ts` emits a full Astro project.
-- **Sandbox:** `lib/box/client.ts` wraps `@asciidev/box-sdk`. Preview URLs use `*.on.ascii.dev`.
-- **Billing:** `@useautumn/convex` in `convex/autumn.ts` (fail-open) + plans in `autumn.config.ts`. Frontend via `autumn-js/react` and `app/api/autumn/[...all]/route.ts`.
+- **Agent:** `lib/ai/agent.ts` runs from Next.js (`lib/generate/run-generation.ts`). Tool activity and summaries stream into Convex tables.
+- **Output schema:** `lib/schema/site.ts` — agent edits the Astro site in the sandbox.
+- **Sandbox:** `lib/sandbox/client.ts` wraps `@blaxel/core`. Preview URLs use `*.preview.bl.run`.
+- **Billing:** Autumn via Next.js (`app/api/autumn/[...all]`) + plans in `autumn.config.ts`. Frontend via `autumn-js/react`.
 
 Agent-oriented notes for Cursor / coding agents live in [`AGENTS.md`](AGENTS.md).
 
@@ -67,7 +67,7 @@ Agent-oriented notes for Cursor / coding agents live in [`AGENTS.md`](AGENTS.md)
 - Node.js 20+
 - [pnpm](https://pnpm.io/) 10+
 - A [Convex](https://www.convex.dev/) account (cloud deployment recommended for generation)
-- API keys for Anthropic, Box, and Autumn (see [`.env.example`](.env.example))
+- API keys for Anthropic, Blaxel, and Autumn (see [`.env.example`](.env.example))
 
 ## Quickstart
 
@@ -91,20 +91,23 @@ Start Convex (writes `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` into `.env
 pnpm dev:convex
 ```
 
-In another terminal, set Convex secrets:
-
-```bash
-npx convex env set ANTHROPIC_API_KEY <key>
-npx convex env set BOX_API_KEY <key>
-npx convex env set AUTUMN_SECRET_KEY <key>
-```
-
-Also put `AUTUMN_SECRET_KEY` in `.env.local` for the Next.js Autumn API route.
-
-Provision Convex Auth once:
+In another terminal, set Convex Auth secrets (AI/Blaxel/Autumn stay in Next.js `.env.local`):
 
 ```bash
 npx @convex-dev/auth
+```
+
+Also put Blaxel + Autumn keys in `.env.local`:
+
+```bash
+# .env.local
+BL_API_KEY=...
+BL_WORKSPACE=...
+BL_TEMPLATE_REPO=https://github.com/org/floras-template.git
+# BL_TEMPLATE_REF=main
+# BL_SANDBOX_IMAGE=blaxel/node:latest
+AUTUMN_SECRET_KEY=...
+ANTHROPIC_API_KEY=...
 ```
 
 Push Autumn plans (optional for local billing UI):
@@ -136,7 +139,12 @@ Full reference: [`.env.example`](.env.example).
 | `NEXT_PUBLIC_CONVEX_URL` | Convex client URL (from `convex dev`) |
 | `CONVEX_DEPLOYMENT` | Deployment name (from `convex dev`) |
 | `AUTUMN_SECRET_KEY` | Autumn handler on the Next.js side |
-| `BOX_API_KEY` | Box sandboxes (generate + publish) |
+| `ANTHROPIC_API_KEY` | Platform Anthropic key (Pro generation) |
+| `BL_API_KEY` | Blaxel API key |
+| `BL_WORKSPACE` | Blaxel workspace |
+| `BL_TEMPLATE_REPO` | Astro template Git URL cloned into new sandboxes |
+| `BL_TEMPLATE_REF` | Optional branch/tag (default `main`) |
+| `BL_SANDBOX_IMAGE` | Optional base image (default `blaxel/node:latest`) |
 | `CLOUDFLARE_API_TOKEN` | Pages Edit + Zone DNS Edit (floras.app) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account for Pages projects |
 | `CLOUDFLARE_ZONE_ID` | floras.app zone ID (per-subdomain CNAMEs) |
@@ -146,19 +154,14 @@ Full reference: [`.env.example`](.env.example).
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | yes | Anthropic API |
-| `BOX_API_KEY` | yes | box.ascii.dev sandboxes |
-| `AUTUMN_SECRET_KEY` | yes | Billing / usage gating |
-| `AGENT_MODEL` | no | Defaults to `claude-sonnet-4-5` |
-| `BOX_BASE_URL` | no | Defaults to `https://ascii.dev/api/box/v1` |
 | `JWT_PRIVATE_KEY` / `JWKS` / `SITE_URL` | yes | Via `npx @convex-dev/auth` |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | no | Google OAuth |
 
 ## Development notes
 
-- **`convex/_generated`** is committed as an untyped `AnyApi` fallback so the repo builds without a deployment. Running `convex dev` against a real deployment regenerates fully typed APIs.
-- **Heavy Node action:** `convex/generate.ts` bundles the AI SDK + Box SDK. The anonymous local backend (`CONVEX_AGENT_MODE=anonymous`) can hit the 64MB module-load limit. Prefer a real Convex cloud deployment for end-to-end generation.
-- **Preview hosts:** Sandbox Astro servers load over `*.on.ascii.dev`; the scaffolder sets Vite `server.allowedHosts: true`.
-- **Typecheck:** `next build` ignores type errors (`next.config.mjs`). Use `pnpm typecheck` for real checking. Auth gating is in `proxy.ts`.
+- **Heavy SDKs:** AI SDK + Blaxel + Autumn run in Next.js API routes — keep them out of Convex.
+- **Preview hosts:** Sandbox Astro servers load over Blaxel `*.preview.bl.run`; the cloned template must allow those hosts and bind `0.0.0.0`.
+- **Typecheck:** Use `pnpm typecheck` for real checking. Auth gating is in `proxy.ts`.
 
 ## Project structure
 
@@ -175,7 +178,7 @@ Full reference: [`.env.example`](.env.example).
 | `lib/ai/` | Agent + design guidelines |
 | `lib/schema/` | Zod `SitePlan` |
 | `lib/astro/` | Deterministic Astro scaffolder |
-| `lib/box/` | box.ascii.dev client |
+| `lib/sandbox/` | Blaxel sandbox client (`@blaxel/core`) |
 | `autumn.config.ts` | Autumn plans |
 
 ## Scripts

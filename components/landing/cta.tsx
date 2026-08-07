@@ -1,7 +1,12 @@
-import Link from "next/link";
+"use client";
+
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Reveal } from "@/components/site/reveal";
 
 export function CallToAction() {
+  const t = useTranslations("cta");
+
   return (
     <section className="relative overflow-hidden border-b border-border bg-brand text-brand-foreground">
       <div
@@ -24,7 +29,7 @@ export function CallToAction() {
         <div className="border-b border-brand-foreground/20 px-4 py-12 md:border-b-0 md:border-r md:px-8 md:py-16">
           <Reveal>
             <h2 className="max-w-[16ch] text-3xl font-semibold tracking-tight md:text-4xl">
-              Your next website is one sentence away.
+              {t("title")}
             </h2>
           </Reveal>
         </div>
@@ -34,7 +39,7 @@ export function CallToAction() {
               href="/sign-up"
               className="inline-flex h-11 items-center justify-center border border-brand-foreground/30 bg-paper px-7 text-sm font-medium text-ink shadow-[0_0_0_1px_color-mix(in_srgb,var(--brand)_12%,transparent)] transition-[filter] hover:brightness-95 active:scale-[0.98]"
             >
-              Create your site
+              {t("button")}
             </Link>
           </Reveal>
         </div>

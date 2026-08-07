@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { TopUpModal } from "@/components/billing/top-up-modal";
 import { UpgradeProModal } from "@/components/billing/upgrade-pro-modal";
 import { useGenerationAccess } from "@/lib/hooks/use-generation-access";
@@ -19,7 +19,10 @@ export function useBillingGates() {
       return false;
     }
     if (reason === "no_api_key") {
-      router.push("/dashboard/account#api-key");
+      router.push("/dashboard/account");
+      queueMicrotask(() => {
+        window.location.hash = "api-key";
+      });
       return false;
     }
     if (reason === "no_credits") {
@@ -36,7 +39,10 @@ export function useBillingGates() {
         return true;
       }
       if (code === "NO_API_KEY") {
-        router.push("/dashboard/account#api-key");
+        router.push("/dashboard/account");
+        queueMicrotask(() => {
+          window.location.hash = "api-key";
+        });
         return true;
       }
       if (code === "NO_CREDITS") {

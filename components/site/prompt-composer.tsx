@@ -8,6 +8,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ModelSelector } from "@/components/site/model-selector";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
@@ -36,6 +37,7 @@ export interface PromptComposerProps {
   autoFocus?: boolean;
   className?: string;
   defaultModelId?: AgentModelId;
+  defaultValue?: string;
   mode?: ComposerMode;
   defaultMode?: ComposerMode;
   onModeChange?: (mode: ComposerMode) => void;
@@ -52,6 +54,7 @@ export function PromptComposer({
   autoFocus = false,
   className,
   defaultModelId = DEFAULT_AGENT_MODEL_ID,
+  defaultValue = "",
   mode: controlledMode,
   defaultMode = "build",
   onModeChange,
@@ -59,7 +62,8 @@ export function PromptComposer({
   pendingLabel,
   showModeToggle = true,
 }: PromptComposerProps) {
-  const [text, setText] = useState("");
+  const t = useTranslations("composer");
+  const [text, setText] = useState(defaultValue);
   const [modelId, setModelId] = useState<AgentModelId>(defaultModelId);
   const [uncontrolledMode, setUncontrolledMode] =
     useState<ComposerMode>(defaultMode);
@@ -80,13 +84,11 @@ export function PromptComposer({
 
   const resolvedPlaceholder =
     placeholder ??
-    (mode === "ask"
-      ? "Ask about structure, tone, pages…"
-      : "Ask for changes: copy, sections, colors, a blog…");
+    (mode === "ask" ? t("placeholderAsk") : t("placeholderBuild"));
   const resolvedSubmitLabel =
-    submitLabel ?? (mode === "ask" ? "Ask" : "Build");
+    submitLabel ?? (mode === "ask" ? t("submitAsk") : t("submitBuild"));
   const resolvedPendingLabel =
-    pendingLabel ?? (mode === "ask" ? "Asking…" : "Building…");
+    pendingLabel ?? (mode === "ask" ? t("pendingAsk") : t("pendingBuild"));
 
   const submit = async (value: string) => {
     const trimmed = value.trim();
@@ -110,7 +112,7 @@ export function PromptComposer({
         className="border border-border bg-card"
       >
         <label htmlFor="prompt-composer" className="sr-only">
-          {mode === "ask" ? "Ask Floras" : "Describe the site to build"}
+          {mode === "ask" ? t("srAsk") : t("srBuild")}
         </label>
         <textarea
           id="prompt-composer"
@@ -148,8 +150,8 @@ export function PromptComposer({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   disabled={pending}
-                  aria-label="Composer mode (Shift+Tab to toggle)"
-                  title="Shift+Tab to toggle Ask / Build"
+                  aria-label={t("modeAria")}
+                  title={t("modeTitle")}
                   className={cn(
                     "inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 border border-border bg-background px-2.5 text-left text-muted-foreground transition-colors",
                     "hover:bg-card hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
@@ -157,7 +159,7 @@ export function PromptComposer({
                   )}
                 >
                   <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-foreground">
-                    {mode === "ask" ? "Ask" : "Build"}
+                    {mode === "ask" ? t("modeAsk") : t("modeBuild")}
                   </span>
                   <KbdGroup className="inline-flex gap-0.5">
                     <Kbd className="h-5 min-w-5 border-border bg-muted/80 px-1 text-[10px] text-muted-foreground normal-case">
@@ -184,10 +186,10 @@ export function PromptComposer({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-foreground">
-                        Build
+                        {t("modeBuild")}
                       </span>
                       <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                        Generate or edit the site
+                        {t("modeBuildHint")}
                       </span>
                     </span>
                     {mode === "build" ? (
@@ -206,10 +208,10 @@ export function PromptComposer({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-foreground">
-                        Ask
+                        {t("modeAsk")}
                       </span>
                       <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                        Plan without building
+                        {t("modeAskHint")}
                       </span>
                     </span>
                     {mode === "ask" ? (
@@ -220,7 +222,7 @@ export function PromptComposer({
                   </DropdownMenuItem>
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
                     <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Toggle mode
+                      {t("toggleMode")}
                     </span>
                     <KbdGroup className="inline-flex gap-0.5">
                       <Kbd className="h-5 px-1 text-[10px] normal-case">⇧</Kbd>

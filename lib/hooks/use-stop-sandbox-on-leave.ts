@@ -22,14 +22,9 @@ function stopSandboxRequest(projectId: string, reason: string) {
   });
 }
 
-/**
- * Stop the Box when leaving the editor (client nav) or closing the tab.
- * Defers unmount stops so React Strict Mode remounts do not archive the box.
- * Skips while the project is busy so generation is not interrupted.
- */
 export function useStopSandboxOnLeave(
   projectId: string,
-  boxId: string | undefined,
+  sandboxName: string | undefined,
   opts: { enabled?: boolean } = {}
 ) {
   const enabled = opts.enabled ?? true;
@@ -39,11 +34,11 @@ export function useStopSandboxOnLeave(
   useEffect(() => {
     stoppedRef.current = false;
 
-    if (!boxId || !enabled) {
+    if (!sandboxName || !enabled) {
       return;
     }
 
-    const key = `${projectId}:${boxId}`;
+    const key = `${projectId}:${sandboxName}`;
     activeKeyRef.current = key;
 
     const stopOnce = (reason: string) => {
@@ -70,5 +65,5 @@ export function useStopSandboxOnLeave(
         stopOnce("workspace-unmount");
       }, 500);
     };
-  }, [projectId, boxId, enabled]);
+  }, [projectId, sandboxName, enabled]);
 }

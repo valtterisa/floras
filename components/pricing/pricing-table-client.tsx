@@ -13,11 +13,8 @@ import {
   PRO_YEARLY_PLAN_ID,
   isSubscribedPlanId,
 } from "@/lib/billing/constants";
-import {
-  BYOK_FEATURES,
-  PRO_FEATURES_EXTENDED,
-} from "@/lib/billing/plan-copy";
 import { checkoutSuccessUrl, redirectToCheckout } from "@/lib/billing/checkout";
+import { useTranslations } from "next-intl";
 
 type BillingInterval = "month" | "year";
 
@@ -32,72 +29,73 @@ type PlanCard = {
   cta: string;
 };
 
-const ENTERPRISE_FEATURES = [
-  "Self-hosted Floras on your infra",
-  "White-label branding end to end",
-  "Custom models, limits, and SSO",
-  "Dedicated support & onboarding",
-  "Team seats and admin controls",
-] as const;
+function usePlanCards(interval: BillingInterval): PlanCard[] {
+  const t = useTranslations("plans");
+  const byok = t.raw("byok") as string[];
+  const pro = t.raw("proExtended") as string[];
+  const enterprise = t.raw("enterprise") as string[];
 
-const PLANS: Record<BillingInterval, PlanCard[]> = {
-  month: [
+  if (interval === "month") {
+    return [
+      {
+        id: BYOK_PLAN_ID,
+        name: "BYOK",
+        price: "$5",
+        cadence: "/mo",
+        features: byok,
+        cta: t("getByok"),
+      },
+      {
+        id: PRO_MONTHLY_PLAN_ID,
+        name: "Pro",
+        price: "$20",
+        cadence: "/mo",
+        highlight: true,
+        features: pro,
+        cta: t("getPro"),
+      },
+      {
+        id: ENTERPRISE_PLAN_ID,
+        name: "Enterprise",
+        price: t("customPrice"),
+        features: enterprise,
+        cta: t("talkToFounder"),
+      },
+    ];
+  }
+
+  return [
     {
       id: BYOK_PLAN_ID,
       name: "BYOK",
       price: "$5",
       cadence: "/mo",
-      features: BYOK_FEATURES,
-      cta: "Get BYOK",
-    },
-    {
-      id: PRO_MONTHLY_PLAN_ID,
-      name: "Pro",
-      price: "$20",
-      cadence: "/mo",
-      highlight: true,
-      features: PRO_FEATURES_EXTENDED,
-      cta: "Get Pro",
-    },
-    {
-      id: ENTERPRISE_PLAN_ID,
-      name: "Enterprise",
-      price: "Custom",
-      features: ENTERPRISE_FEATURES,
-      cta: "Talk to founder",
-    },
-  ],
-  year: [
-    {
-      id: BYOK_PLAN_ID,
-      name: "BYOK",
-      price: "$5",
-      cadence: "/mo",
-      note: "Billed monthly",
-      features: BYOK_FEATURES,
-      cta: "Get BYOK",
+      note: t("billedMonthly"),
+      features: byok,
+      cta: t("getByok"),
     },
     {
       id: PRO_YEARLY_PLAN_ID,
       name: "Pro",
       price: "$192",
       cadence: "/yr",
-      note: "Save 20% vs monthly",
+      note: t("saveYearly"),
       highlight: true,
-      features: PRO_FEATURES_EXTENDED,
-      cta: "Get Pro yearly",
+      features: pro,
+      cta: t("getProYearly"),
     },
     {
       id: ENTERPRISE_PLAN_ID,
       name: "Enterprise",
-      price: "Custom",
-      features: ENTERPRISE_FEATURES,
-      cta: "Talk to founder",
+      price: t("customPrice"),
+      features: enterprise,
+      cta: t("talkToFounder"),
     },
-  ],
-};
+  ];
+}
 
 export function PricingTableClient() {
+  const t = useTranslations("plans");
   const { isAuthenticated } = useConvexAuth();
   const { attach, data, refetch } = useCustomer({
     errorOnNotFound: false,
@@ -105,13 +103,13 @@ export function PricingTableClient() {
   });
   const [interval, setInterval] = useState<BillingInterval>("month");
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  const plans = usePlanCards(interval);
 
   const activePaid = data?.subscriptions?.find(
     (s) =>
       s.status === "active" && isSubscribedPlanId(s.planId) && !s.autoEnable
   );
   const currentPlanId = activePaid?.planId ?? null;
-  const plans = PLANS[interval];
 
   const onSelect = async (planId: string) => {
     if (planId === ENTERPRISE_PLAN_ID) {
@@ -120,13 +118,13 @@ export function PricingTableClient() {
     }
 
     if (!isAuthenticated) {
-      toast.error("Sign in to upgrade your plan.");
+      toast.error(t("signInToUpgrade"));
       window.location.href = `/login?next=${encodeURIComponent("/#pricing")}`;
       return;
     }
 
     if (planId === currentPlanId) {
-      toast.message("You are already on this plan.");
+      toast.message(t("alreadyOnPlan"));
       return;
     }
 
@@ -145,10 +143,10 @@ export function PricingTableClient() {
       if (await redirectToCheckout(result)) return;
 
       await refetch();
-      toast.success("Plan updated.");
+      toast.success(t("planUpdated"));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Could not open checkout.";
+        error instanceof Error ? error.message : t("couldNotCheckout");
       toast.error(message);
     } finally {
       setPendingPlan(null);
@@ -159,11 +157,11 @@ export function PricingTableClient() {
     <div>
       <div className="flex flex-col items-center gap-3 border-b border-border px-6 py-5 md:px-8">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          Billing period
+          {t("billingPeriod")}
         </p>
         <div
           role="group"
-          aria-label="Billing period"
+          aria-label={t("billingPeriod")}
           className="inline-flex border border-border bg-background"
         >
           <button
@@ -177,7 +175,7 @@ export function PricingTableClient() {
                 : "text-muted-foreground hover:bg-card hover:text-foreground"
             )}
           >
-            Monthly
+            {t("monthly")}
           </button>
           <button
             type="button"
@@ -190,7 +188,7 @@ export function PricingTableClient() {
                 : "text-muted-foreground hover:bg-card hover:text-foreground"
             )}
           >
-            Yearly
+            {t("yearly")}
             <span
               className={cn(
                 "border px-1.5 py-0.5 text-[9px] tracking-[0.12em]",
@@ -199,7 +197,7 @@ export function PricingTableClient() {
                   : "border-brand/40 text-brand"
               )}
             >
-              −20%
+              {t("yearlyDiscount")}
             </span>
           </button>
         </div>
@@ -223,7 +221,7 @@ export function PricingTableClient() {
                 <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
                 {plan.highlight ? (
                   <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand">
-                    Popular
+                    {t("popular")}
                   </span>
                 ) : null}
               </div>
@@ -263,9 +261,9 @@ export function PricingTableClient() {
                 )}
               >
                 {pending
-                  ? "Opening checkout…"
+                  ? t("openingCheckout")
                   : isCurrent && !isEnterprise
-                    ? "Current plan"
+                    ? t("currentPlan")
                     : plan.cta}
               </button>
             </div>

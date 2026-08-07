@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useConvexAuth } from "convex/react";
 import { useCustomer } from "autumn-js/react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   AI_CREDITS_FEATURE,
@@ -17,6 +18,7 @@ import { TopUpModal } from "@/components/billing/top-up-modal";
 import { PricingTableClient } from "@/components/pricing/pricing-table-client";
 
 export function BillingSection() {
+  const t = useTranslations("account.billing");
   const { isAuthenticated } = useConvexAuth();
   const { data, check, openCustomerPortal, refetch } = useCustomer({
     errorOnNotFound: false,
@@ -24,7 +26,7 @@ export function BillingSection() {
   });
   const [topUpOpen, setTopUpOpen] = useState(false);
 
-  let planName = "No plan";
+  let planName = t("noPlan");
   let planId: string | null = null;
   let remaining: number | null = null;
   let granted: number | null = null;
@@ -41,11 +43,11 @@ export function BillingSection() {
       subscribed?.planId ??
       active?.plan?.name ??
       active?.planId ??
-      "No plan";
+      t("noPlan");
     planName =
       rawName.length > 0
         ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
-        : "No plan";
+        : t("noPlan");
 
     try {
       const result = check({
@@ -70,31 +72,27 @@ export function BillingSection() {
         returnUrl: `${window.location.origin}/dashboard/account`,
       });
     } catch {
-      toast.error("Could not open billing portal.");
+      toast.error(t("portalFailed"));
     }
   };
 
   return (
     <AccountSection
       id="billing"
-      title="Billing"
-      description="Plan, usage, and payment settings for creating sites."
+      title={t("title")}
+      description={t("description")}
     >
       {!isAuthenticated ? (
-        <p className="text-sm text-muted-foreground">
-          Sign in to view billing.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("signIn")}</p>
       ) : !data ? (
-        <p className="text-sm text-muted-foreground">
-          Loading billing… If this stays empty, Autumn may not be configured.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
       ) : (
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Current plan
+                  {t("currentPlan")}
                 </p>
                 <p className="mt-1 text-xl font-semibold tracking-tight">
                   {planName}
@@ -102,11 +100,11 @@ export function BillingSection() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Credits left
+                  {t("creditsLeft")}
                 </p>
                 <p className="mt-1 text-xl font-semibold tracking-tight">
                   {isByok
-                    ? "Your key"
+                    ? t("yourKey")
                     : !isPro
                       ? "$0"
                       : remaining === null
@@ -115,11 +113,11 @@ export function BillingSection() {
                 </p>
                 {isPro && granted != null ? (
                   <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    of {formatCredits(granted)} included
+                    {t("ofIncluded", { amount: formatCredits(granted) })}
                   </p>
                 ) : isByok ? (
                   <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    Billed by Anthropic
+                    {t("billedByAnthropic")}
                   </p>
                 ) : null}
               </div>
@@ -131,7 +129,7 @@ export function BillingSection() {
                   className="rounded-none"
                   onClick={() => setTopUpOpen(true)}
                 >
-                  Top up credits
+                  {t("topUpCredits")}
                 </Button>
               ) : null}
               <Button
@@ -139,7 +137,7 @@ export function BillingSection() {
                 className="rounded-none"
                 onClick={() => void onManage()}
               >
-                Manage billing
+                {t("manageBilling")}
               </Button>
             </div>
           </div>

@@ -20,7 +20,8 @@ export type AccessResult = {
 
 function billingFailOpen(): boolean {
   if (process.env.BILLING_FAIL_OPEN === "1") return true;
-  return process.env.NODE_ENV !== "production";
+  if (process.env.VERCEL_ENV === "production") return false;
+  return process.env.NODE_ENV === "development";
 }
 
 function denyAll(): AccessResult {

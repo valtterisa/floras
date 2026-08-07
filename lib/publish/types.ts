@@ -110,7 +110,7 @@ export function parseHostname(input: string): string {
 
   if (
     raw.endsWith(".pages.dev") ||
-    raw.endsWith(".on.ascii.dev") ||
+    raw.endsWith(".preview.bl.run") ||
     raw === FLORAS_SITES_DOMAIN ||
     raw.endsWith(`.${FLORAS_SITES_DOMAIN}`) ||
     raw.includes("localhost")

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   PromptComposer,
@@ -16,25 +17,8 @@ import { triggerAsk, triggerGeneration } from "@/lib/generate/trigger-api";
 import type { AgentModelId } from "@/lib/ai/models";
 import { errorCode, userFacingError } from "@/lib/errors";
 
-const SUGGESTIONS = [
-  "Website for a solar-panel installer",
-  "Simple portfolio for a photographer",
-  "Launch site with a blog for a coffee roaster",
-  "Booking page for a yoga studio",
-  "Boutique hotel site with rooms and rates",
-  "Homepage for a local bakery",
-];
-
-const ASK_SUGGESTIONS = [
-  "What should a bakery homepage include?",
-  "Help me pick a tone for a yoga studio",
-  "How many pages does a hotel site need?",
-  "Draft a one-sentence brief for a photographer",
-  "Which sections belong on a coffee roaster site?",
-  "What CTA works for a solar installer?",
-];
-
 export function DashboardPrompt({ resetKey = 0 }: { resetKey?: number }) {
+  const t = useTranslations("composer");
   const router = useRouter();
   const searchParams = useSearchParams();
   const createSite = useCreateSite();
@@ -43,6 +27,11 @@ export function DashboardPrompt({ resetKey = 0 }: { resetKey?: number }) {
   const [pending, setPending] = useState(false);
   const [mode, setMode] = useState<ComposerMode>("build");
   const [composerKey, setComposerKey] = useState(0);
+
+  const suggestions = [0, 1, 2, 3, 4, 5].map((i) => t(`suggestions.${i}`));
+  const askSuggestions = [0, 1, 2, 3, 4, 5].map((i) =>
+    t(`askSuggestions.${i}`)
+  );
 
   useEffect(() => {
     setMode("build");
@@ -85,7 +74,7 @@ export function DashboardPrompt({ resetKey = 0 }: { resetKey?: number }) {
       return true;
     } catch (e) {
       if (gates.handleDenyCode(errorCode(e))) return false;
-      toast.error(userFacingError(e, "Could not create site"));
+      toast.error(userFacingError(e, t("couldNotCreate")));
       return false;
     } finally {
       setPending(false);
@@ -101,11 +90,11 @@ export function DashboardPrompt({ resetKey = 0 }: { resetKey?: number }) {
         mode={mode}
         onModeChange={setMode}
         autoFocus
-        suggestions={mode === "ask" ? ASK_SUGGESTIONS : SUGGESTIONS}
+        suggestions={mode === "ask" ? askSuggestions : suggestions}
         placeholder={
           mode === "ask"
-            ? "Ask about structure, tone, pages…"
-            : "Describe the site you want to build…"
+            ? t("placeholderAsk")
+            : t("placeholderDashboardBuild")
         }
       />
       <BillingGateModals
