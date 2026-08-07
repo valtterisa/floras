@@ -1,5 +1,6 @@
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
+import { getAccess } from "@/lib/billing/get-access";
 import { asProjectId } from "@/lib/convex/ids";
 import {
   addDomain,
@@ -54,10 +55,29 @@ function requireCloudflare() {
   }
 }
 
+async function requireCanPublish(customerId: string): Promise<void> {
+  const access = await getAccess(customerId);
+  if (!access.canPublish) {
+    throw new AppError("no_plan", "Pro plan required for custom domains.");
+  }
+}
+
+async function resolveCustomerId(
+  token: string,
+  customerId?: string
+): Promise<string> {
+  if (customerId?.trim()) return customerId.trim();
+  const me = await fetchQuery(api.users.me, {}, { token });
+  if (!me?.id) throw new AppError("auth");
+  return me.id;
+}
+
 export async function getCustomDomain(
   projectId: string,
-  token: string
+  token: string,
+  customerId?: string
 ): Promise<DomainsResponse> {
+  await requireCanPublish(await resolveCustomerId(token, customerId));
   const project = await loadProject(projectId, token);
 
   if (
@@ -105,8 +125,10 @@ export async function getCustomDomain(
 export async function connectCustomDomain(
   projectId: string,
   domainInput: string,
-  token: string
+  token: string,
+  customerId?: string
 ): Promise<DomainsResponse> {
+  await requireCanPublish(await resolveCustomerId(token, customerId));
   const project = await loadProject(projectId, token);
 
   if (project.publishStatus !== "published" || !project.cfProjectName) {
@@ -185,8 +207,10 @@ export async function connectCustomDomain(
 
 export async function disconnectCustomDomain(
   projectId: string,
-  token: string
+  token: string,
+  customerId?: string
 ): Promise<DomainsResponse> {
+  await requireCanPublish(await resolveCustomerId(token, customerId));
   const project = await loadProject(projectId, token);
 
   if (!project.cfProjectName || !project.customDomain) {

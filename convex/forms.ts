@@ -4,6 +4,7 @@ import { mutation, query } from "./_generated/server";
 import { formSubmissionStatus } from "./schema";
 import { requireOwnedProject } from "./lib/auth";
 import { authedMutation } from "./lib/customFunctions";
+import { rateLimiter } from "./rateLimits";
 
 const MAX_FIELD_KEYS = 20;
 const MAX_FIELD_VALUE_LEN = 2000;
@@ -54,6 +55,7 @@ export const submit = mutation({
     fields: v.record(v.string(), v.string()),
     pagePath: v.optional(v.string()),
     userAgent: v.optional(v.string()),
+    clientKey: v.optional(v.string()),
   },
   returns: v.object({
     submissionId: v.id("formSubmissions"),
@@ -75,6 +77,15 @@ export const submit = mutation({
       throw new Error("Unknown form key");
     }
 
+    const now = Date.now();
+    const clientKey = (args.clientKey ?? "anon").trim().slice(0, 128) || "anon";
+    const limited = await rateLimiter.limit(ctx, "formSubmit", {
+      key: `${key}:${clientKey}`,
+    });
+    if (!limited.ok) {
+      throw new Error("Too many requests");
+    }
+
     const fields = sanitizeFields(args.fields);
     const hasEmail = Boolean(fields.email);
     const hasName = Boolean(fields.name);
@@ -89,7 +100,7 @@ export const submit = mutation({
     const submissionId = await ctx.db.insert("formSubmissions", {
       projectId: project._id,
       userId: project.userId,
-      createdAt: Date.now(),
+      createdAt: now,
       fields,
       pagePath: pagePath || undefined,
       userAgent: userAgent || undefined,
@@ -206,7 +217,9 @@ export const setStatus = authedMutation({
 });
 
 export const getCorsHints = query({
-  args: { key: v.string() },
+  args: {
+    key: v.string(),
+  },
   returns: v.union(
     v.object({
       cfSubdomain: v.union(v.string(), v.null()),

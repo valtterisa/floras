@@ -262,6 +262,7 @@ export function statusForAppError(error: AppError): number {
   if (error.code === "not_found") return 404;
   if (error.code === "config") return 503;
   if (error.code === "domain") return 400;
+  if (error.code === "rate_limit") return 429;
   if (error.code === "no_plan" || error.code === "no_credits") return 402;
   return 500;
 }

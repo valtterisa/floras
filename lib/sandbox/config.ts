@@ -83,10 +83,30 @@ export function sandboxIdleTtl(): string | undefined {
   return raw || "60d";
 }
 
+export function assertSafeSiteRelativePath(path: string): string {
+  const cleaned = path.replace(/^\/+/, "").trim();
+  if (!cleaned || cleaned.includes("\0") || cleaned.includes("\\")) {
+    throw new Error("Invalid file path");
+  }
+  const segments = cleaned.split("/");
+  for (const segment of segments) {
+    if (!segment || segment === "." || segment === "..") {
+      throw new Error("Path must stay inside site/");
+    }
+  }
+  return segments.join("/");
+}
+
 export function absoluteSitePath(relative: string): string {
-  const cleaned = relative.replace(/^\/+/, "").trim();
-  if (!cleaned) return SITE_ROOT;
-  return `${SITE_ROOT.replace(/\/$/, "")}/${cleaned}`;
+  const root = SITE_ROOT.replace(/\/$/, "") || "/";
+  if (!relative.replace(/^\/+/, "").trim()) return root === "" ? "/" : root;
+  const safe = assertSafeSiteRelativePath(relative);
+  const absolute = `${root}/${safe}`;
+  const normalizedRoot = root.endsWith("/") ? root.slice(0, -1) : root;
+  if (absolute !== normalizedRoot && !absolute.startsWith(`${normalizedRoot}/`)) {
+    throw new Error("Path must stay inside site/");
+  }
+  return absolute;
 }
 
 export function sandboxLog(
@@ -108,7 +128,6 @@ export const PREVIEW_RESPONSE_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization, X-Requested-With, X-Blaxel-Workspace, X-Blaxel-Preview-Token, X-Blaxel-Authorization",
-  "Access-Control-Allow-Credentials": "true",
   "Access-Control-Expose-Headers": "Content-Length, X-Request-Id",
   "Access-Control-Max-Age": "86400",
   Vary: "Origin",

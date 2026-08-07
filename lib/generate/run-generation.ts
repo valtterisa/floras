@@ -113,6 +113,7 @@ export async function runGeneration(projectId: string, token: string) {
       sandbox: session,
       projectId,
       token,
+      customerId: me.id,
       model,
       hasPreview: Boolean(previewUrl),
       previewUrl,

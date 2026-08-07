@@ -2,6 +2,7 @@ import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { fetchQuery } from "convex/nextjs";
 import { z } from "zod";
 import { api } from "@/convex/_generated/api";
+import { assertRateLimit } from "@/lib/api/rate-limit";
 import { asProjectId } from "@/lib/convex/ids";
 import { sandboxConfigured } from "@/lib/sandbox/client";
 import { isCanonicalSandboxName } from "@/lib/sandbox/config";
@@ -16,6 +17,7 @@ export type PreviewProject = {
   sandboxName: string;
   previewUrl?: string;
   token: string;
+  userId: string;
 };
 
 export async function withPreviewProject(
@@ -43,6 +45,23 @@ export async function withPreviewProject(
 
   if (!sandboxConfigured()) {
     return appErrorResponse(new AppError("config"), 503);
+  }
+
+  const me = await fetchQuery(api.users.me, {}, { token });
+  if (!me?.id) {
+    return appErrorResponse(new AppError("auth"), 401);
+  }
+
+  try {
+    await assertRateLimit({
+      name: "preview",
+      key: me.id,
+    });
+  } catch (error) {
+    if (error instanceof AppError && error.code === "rate_limit") {
+      return appErrorResponse(error, 429);
+    }
+    throw error;
   }
 
   const project = await fetchQuery(
@@ -75,5 +94,6 @@ export async function withPreviewProject(
     previewUrl:
       typeof project.previewUrl === "string" ? project.previewUrl : undefined,
     token,
+    userId: me.id,
   };
 }

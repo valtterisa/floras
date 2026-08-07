@@ -2,6 +2,7 @@ import { ToolLoopAgent, isStepCount, tool, type LanguageModel } from "ai";
 import { z } from "zod";
 import { sitePlanSchema, type SitePlan } from "@/lib/schema/site";
 import * as sandboxClient from "@/lib/sandbox/client";
+import { assertSafeSiteRelativePath } from "@/lib/sandbox/config";
 import type { SandboxSession } from "@/lib/sandbox/session";
 import { DESIGN_SKILL } from "@/lib/ai/design-skill";
 import { anthropicThinkingOptions } from "@/lib/ai/anthropic-options";
@@ -33,6 +34,7 @@ export interface BuildAgentOptions {
   sandbox: SandboxSession;
   projectId: string;
   token: string;
+  customerId: string;
   onStep: (step: AgentStep) => Promise<void> | void;
   onPlan: (plan: SitePlan) => Promise<void> | void;
   hasPreview: boolean;
@@ -68,18 +70,11 @@ function detectGeneratedSite(files: string[]): boolean {
 }
 
 function assertSafeSitePath(path: string): string {
-  const cleaned = path.replace(/^\/+/, "").trim();
-  if (!cleaned || cleaned.includes("\0")) {
-    throw new AppError("unknown", "Invalid file path.");
-  }
-  if (
-    cleaned.startsWith("..") ||
-    cleaned.includes("/../") ||
-    cleaned.includes("\\")
-  ) {
+  try {
+    return assertSafeSiteRelativePath(path);
+  } catch {
     throw new AppError("unknown", "Path must stay inside site/.");
   }
-  return cleaned;
 }
 
 function assertAllowedCommand(command: string): string {
@@ -179,7 +174,7 @@ Use these when implementing contact forms. Do not invent other endpoints.`
 }
 
 export function buildSiteAgent(opts: BuildAgentOptions) {
-  const { sandbox, projectId, token, onStep, onPlan } = opts;
+  const { sandbox, projectId, token, customerId, onStep, onPlan } = opts;
   const knownExisting = siteAlreadyKnown(opts);
 
   const requireSandbox = async (): Promise<string> => {
@@ -362,7 +357,12 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
           .describe("Hostname to connect, e.g. www.example.com"),
       }),
       execute: async ({ domain }) => {
-        const result = await connectCustomDomain(projectId, domain, token);
+        const result = await connectCustomDomain(
+          projectId,
+          domain,
+          token,
+          customerId
+        );
         await onStep({
           kind: "domain",
           label: `Connected ${result.domain?.name ?? domain}`,
@@ -380,7 +380,7 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         "Refresh custom domain status and DNS records for this published site.",
       inputSchema: z.object({}),
       execute: async () => {
-        const result = await getCustomDomain(projectId, token);
+        const result = await getCustomDomain(projectId, token, customerId);
         await onStep({
           kind: "domain",
           label: result.domain
@@ -399,7 +399,11 @@ export function buildSiteAgent(opts: BuildAgentOptions) {
         "Disconnect the custom domain from this site (does not change the user's DNS records).",
       inputSchema: z.object({}),
       execute: async () => {
-        const result = await disconnectCustomDomain(projectId, token);
+        const result = await disconnectCustomDomain(
+          projectId,
+          token,
+          customerId
+        );
         await onStep({ kind: "domain", label: "Removed custom domain" });
         return {
           ok: true,

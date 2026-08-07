@@ -6,6 +6,7 @@ import { SITE_ROOT, sandboxLog } from "@/lib/sandbox/config";
 
 const SNAPSHOT_TAR = "/tmp/.floras-site-snapshot.tar.gz";
 const UPLOAD_ATTEMPTS = 3;
+const MAX_SITE_SNAPSHOT_BYTES = 200 * 1024 * 1024;
 
 export type SnapshotResult = "saved" | "skipped";
 
@@ -115,6 +116,11 @@ export async function snapshotSiteToR2(
     ).fs.readBinary(SNAPSHOT_TAR);
     const bytes = new Uint8Array(await blob.arrayBuffer());
     assertGzip(bytes, "packed snapshot");
+    if (bytes.byteLength > MAX_SITE_SNAPSHOT_BYTES) {
+      throw new Error(
+        `Snapshot exceeds size limit (${bytes.byteLength} > ${MAX_SITE_SNAPSHOT_BYTES})`
+      );
+    }
 
     let lastUploadError = "R2 upload failed";
     for (let attempt = 1; attempt <= UPLOAD_ATTEMPTS; attempt++) {
@@ -130,7 +136,11 @@ export async function snapshotSiteToR2(
       if (upload.ok) {
         await fetchMutation(
           api.siteSnapshots.finalizeSiteSnapshot,
-          { projectId: asProjectId(projectId), key },
+          {
+            projectId: asProjectId(projectId),
+            key,
+            contentLength: bytes.byteLength,
+          },
           { token }
         );
         sandboxLog(sandboxName, "r2", "snapshot uploaded", {

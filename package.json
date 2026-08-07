@@ -25,6 +25,7 @@
     "@blaxel/core": "^0.3.10",
     "@convex-dev/auth": "^0.0.94",
     "@convex-dev/r2": "0.10.2",
+    "@convex-dev/rate-limiter": "0.3.2",
     "@hookform/resolvers": "^5.4.0",
     "@hugeicons/core-free-icons": "^3.3.0",
     "@hugeicons/react": "^1.1.9",

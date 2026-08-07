@@ -15,6 +15,7 @@ import {
   sandboxRegion,
   sandboxLog,
   absoluteSitePath,
+  assertSafeSiteRelativePath,
   sandboxNameForProject,
   sandboxIdleTtl,
 } from "@/lib/sandbox/config";
@@ -358,7 +359,7 @@ export async function writeFiles(
   }
   await sandbox.fs.writeTree(
     files.map((f) => ({
-      path: f.path.replace(/^\/+/, ""),
+      path: assertSafeSiteRelativePath(f.path),
       content: f.content,
     })),
     SITE_ROOT

@@ -195,7 +195,10 @@ export const resetBusy = authedMutation({
 });
 
 export const setStatus = authedMutation({
-  args: { projectId: v.id("projects"), status: projectStatus },
+  args: {
+    projectId: v.id("projects"),
+    status: projectStatus,
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
@@ -231,7 +234,10 @@ export const setSandbox = authedMutation({
 });
 
 export const setPreview = authedMutation({
-  args: { projectId: v.id("projects"), previewUrl: v.string() },
+  args: {
+    projectId: v.id("projects"),
+    previewUrl: v.string(),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
@@ -241,7 +247,10 @@ export const setPreview = authedMutation({
 });
 
 export const setPlan = authedMutation({
-  args: { projectId: v.id("projects"), plan: sitePlanValidator },
+  args: {
+    projectId: v.id("projects"),
+    plan: sitePlanValidator,
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
@@ -251,7 +260,10 @@ export const setPlan = authedMutation({
 });
 
 export const setError = authedMutation({
-  args: { projectId: v.id("projects"), error: v.string() },
+  args: {
+    projectId: v.id("projects"),
+    error: v.string(),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
