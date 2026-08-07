@@ -114,6 +114,14 @@
       "cafes": "Cafés & studios"
     }
   },
+  "examplePreview": {
+    "title": "This is the kind of site Floras builds.",
+    "description": "A local plumbing business with services, recent jobs, reviews, and a quote form, from a plain-language brief.",
+    "open": "View live site",
+    "siteLabel": "Kauppisen Peten Paja",
+    "imageAlt": "Screenshot of a Floras-built plumbing business website"
+  },
+
   "pricing": {
     "title": "Simple pricing.",
     "description": "Tokens, hosting, and SEO-ready Astro — top up when you want to go further."

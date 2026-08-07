@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { MarketingLayout } from "@/components/site/marketing-layout";
 import { Hero } from "@/components/landing/hero";
 import { LogoWall } from "@/components/landing/logo-wall";
+import { HeroProductPreview } from "@/components/landing/hero-product-preview";
 import { Features } from "@/components/landing/features";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Pricing } from "@/components/landing/pricing";
@@ -74,6 +75,8 @@ export default async function LandingPage({ params }: Props) {
       <Hero />
       <LogoWall />
       <Features />
+      <HeroProductPreview />
+
       <SectionGutter />
       <HowItWorks />
       <SectionGutter />

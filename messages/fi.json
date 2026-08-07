@@ -114,6 +114,14 @@
       "cafes": "Kahviloille"
     }
   },
+  "examplePreview": {
+    "title": "Tällaisia sivustoja Floras tekee.",
+    "description": "Paikallinen putkiliike: palvelut, viimeisimmät työt, arvostelut ja tarjouslomake yhdestä selkokielisestä kuvauksesta.",
+    "open": "Katso live-sivusto",
+    "siteLabel": "Kauppisen Peten Paja",
+    "imageAlt": "Kuvakaappaus Floraksella tehdystä putkiliikkeen sivustosta"
+  },
+
   "pricing": {
     "title": "Yksinkertainen hinnoittelu.",
     "description": "Kreditit, hosting ja SEO-valmis Astro — lataa lisää kun haluat jatkaa."
