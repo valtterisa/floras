@@ -24,7 +24,7 @@ export function getSiteUrl(): string {
   const vercelUrl = process.env.VERCEL_URL?.replace(/\/$/, "");
   if (vercelUrl) return `https://${vercelUrl}`;
 
-  return "https://floras.ai";
+  return "https://floras.app";
 }
 
 export const noIndexRobots = {

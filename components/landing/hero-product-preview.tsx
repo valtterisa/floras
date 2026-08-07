@@ -9,7 +9,7 @@ export function HeroProductPreview() {
           <span className="size-2.5 rounded-full bg-foreground/15" />
           <span className="size-2.5 rounded-full bg-foreground/15" />
           <div className="ml-3 flex-1 truncate rounded-md bg-muted/50 px-3 py-1 font-mono text-[11px] text-muted-foreground">
-            floras.ai/build/coastal-studio
+            floras.app/build/coastal-studio
           </div>
         </div>
 
