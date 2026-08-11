@@ -5,6 +5,7 @@ import {
   getUseCaseSeoPaths,
   absoluteUrl,
 } from "@/lib/pseo/seo-paths";
+import { localizedPath, withLocalePrefix } from "@/i18n/routing";
 
 export const dynamic = "force-static";
 
@@ -44,11 +45,11 @@ export function GET() {
     "## Optional",
     "",
     `- [XML sitemap](${base}/sitemap.xml): machine-readable list of all public pages`,
-    `- [HTML sitemap](${base}/en/sitemap): browsable index of all public pages`,
-    `- [Finnish home](${base}/fi): same product in Finnish`,
-    `- [Finnish sitemap](${base}/fi/sivukartta): Finnish HTML sitemap`,
-    `- [Privacy](${base}/en/privacy): privacy policy`,
-    `- [Terms](${base}/en/terms): terms of service`,
+    `- [HTML sitemap](${base}${localizedPath("en", "sitemap")}): browsable index of all public pages`,
+    `- [Finnish home](${base}${withLocalePrefix("fi")}): same product in Finnish`,
+    `- [Finnish sitemap](${base}${localizedPath("fi", "sitemap")}): Finnish HTML sitemap`,
+    `- [Privacy](${base}${localizedPath("en", "privacy")}): privacy policy`,
+    `- [Terms](${base}${localizedPath("en", "terms")}): terms of service`,
     "",
   ].join("\n");
 

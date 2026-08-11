@@ -11,6 +11,7 @@ import {
   USE_CASES,
 } from "@/lib/pseo/use-cases";
 import { localizedPath, routing, type Locale } from "@/i18n/routing";
+import { languageAlternates } from "@/lib/pseo/seo-paths";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -30,12 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const useCase = getUseCaseBySlug(locale, slug);
   if (!useCase) return {};
 
-  const siteUrl = getSiteUrl();
   const path = localizedPath(locale, "for", slug);
-  const languages: Record<string, string> = {};
-  for (const l of routing.locales) {
-    languages[l] = `${siteUrl}${localizedPath(l, "for", useCase.slugs[l])}`;
-  }
+  const pathByLocale = {
+    en: localizedPath("en", "for", useCase.slugs.en),
+    fi: localizedPath("fi", "for", useCase.slugs.fi),
+  };
 
   return {
     title: useCase.title[locale],
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     keywords: useCase.keywords[locale],
     alternates: {
       canonical: path,
-      languages,
+      languages: languageAlternates(pathByLocale),
     },
     openGraph: {
       title: useCase.title[locale],

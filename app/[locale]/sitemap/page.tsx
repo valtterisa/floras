@@ -11,11 +11,11 @@ import {
   getComparisonSeoPaths,
   getUseCaseSeoPaths,
   absoluteUrl,
+  languageAlternates,
 } from "@/lib/pseo/seo-paths";
 import { USE_CASES } from "@/lib/pseo/use-cases";
 import { COMPARISONS } from "@/lib/pseo/comparisons";
 import { localizedPath, routing, type Locale } from "@/i18n/routing";
-import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -26,17 +26,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!hasLocale(routing.locales, loc)) return {};
   const locale = loc as Locale;
   const t = await getTranslations({ locale, namespace: "htmlSitemap" });
-  const siteUrl = getSiteUrl();
   const path = localizedPath(locale, "sitemap");
-  const languages: Record<string, string> = {};
-  for (const l of routing.locales) {
-    languages[l] = `${siteUrl}${localizedPath(l, "sitemap")}`;
-  }
+  const pathByLocale = {
+    en: localizedPath("en", "sitemap"),
+    fi: localizedPath("fi", "sitemap"),
+  };
 
   return {
     title: t("title"),
     description: t("description"),
-    alternates: { canonical: path, languages },
+    alternates: {
+      canonical: path,
+      languages: languageAlternates(pathByLocale),
+    },
     openGraph: {
       title: t("title"),
       description: t("description"),

@@ -11,6 +11,7 @@ import {
   getComparisonSlugs,
 } from "@/lib/pseo/comparisons";
 import { localizedPath, routing, type Locale } from "@/i18n/routing";
+import { languageAlternates } from "@/lib/pseo/seo-paths";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -30,12 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const comparison = getComparisonBySlug(locale, slug);
   if (!comparison) return {};
 
-  const siteUrl = getSiteUrl();
   const path = localizedPath(locale, "vs", slug);
-  const languages: Record<string, string> = {};
-  for (const l of routing.locales) {
-    languages[l] = `${siteUrl}${localizedPath(l, "vs", comparison.slugs[l])}`;
-  }
+  const pathByLocale = {
+    en: localizedPath("en", "vs", comparison.slugs.en),
+    fi: localizedPath("fi", "vs", comparison.slugs.fi),
+  };
 
   return {
     title: comparison.title[locale],
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     keywords: comparison.keywords[locale],
     alternates: {
       canonical: path,
-      languages,
+      languages: languageAlternates(pathByLocale),
     },
     openGraph: {
       title: comparison.title[locale],

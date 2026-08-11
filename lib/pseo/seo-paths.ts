@@ -1,4 +1,9 @@
-import { routing, type Locale, localizedPath } from "@/i18n/routing";
+import {
+  routing,
+  type Locale,
+  localizedPath,
+  withLocalePrefix,
+} from "@/i18n/routing";
 import { USE_CASES } from "@/lib/pseo/use-cases";
 import { COMPARISONS } from "@/lib/pseo/comparisons";
 import { getSiteUrl } from "@/lib/seo";
@@ -15,7 +20,10 @@ export type SeoPath = {
 export const STATIC_SEO_PATHS: SeoPath[] = [
   {
     id: "home",
-    pathByLocale: { en: "/en", fi: "/fi" },
+    pathByLocale: {
+      en: withLocalePrefix("en"),
+      fi: withLocalePrefix("fi"),
+    },
     title: { en: "Floras — AI website builder", fi: "Floras — AI-sivustonrakentaja" },
     description: {
       en: "Describe your business. Get a live website you can refine in chat and publish.",

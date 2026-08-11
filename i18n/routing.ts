@@ -56,7 +56,7 @@ export const pathnames = {
 export const routing = defineRouting({
   locales,
   defaultLocale: "en",
-  localePrefix: "always",
+  localePrefix: "as-needed",
   pathnames,
 });
 
@@ -73,11 +73,19 @@ export const localizedPrefixes = {
   "sign-up": { en: "sign-up", fi: "liity" },
 } as const;
 
+export function withLocalePrefix(locale: Locale, path = "/"): string {
+  const normalized =
+    path === "/" ? "/" : path.startsWith("/") ? path : `/${path}`;
+  if (locale === routing.defaultLocale) return normalized;
+  return normalized === "/" ? `/${locale}` : `/${locale}${normalized}`;
+}
+
 export function localizedPath(
   locale: Locale,
   key: keyof typeof localizedPrefixes,
   slug?: string
 ): string {
   const prefix = localizedPrefixes[key][locale];
-  return slug ? `/${locale}/${prefix}/${slug}` : `/${locale}/${prefix}`;
+  const path = slug ? `/${prefix}/${slug}` : `/${prefix}`;
+  return withLocalePrefix(locale, path);
 }

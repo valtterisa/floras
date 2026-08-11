@@ -7,6 +7,7 @@ import { MarketingLayout } from "@/components/site/marketing-layout";
 import { Reveal } from "@/components/site/reveal";
 import { COMPARISONS } from "@/lib/pseo/comparisons";
 import { localizedPath, routing, type Locale } from "@/i18n/routing";
+import { languageAlternates } from "@/lib/pseo/seo-paths";
 import { getSiteUrl } from "@/lib/seo";
 
 type Props = {
@@ -18,17 +19,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!hasLocale(routing.locales, loc)) return {};
   const locale = loc as Locale;
   const t = await getTranslations({ locale, namespace: "comparisonIndex" });
-  const siteUrl = getSiteUrl();
   const path = localizedPath(locale, "vs");
-  const languages: Record<string, string> = {};
-  for (const l of routing.locales) {
-    languages[l] = `${siteUrl}${localizedPath(l, "vs")}`;
-  }
+  const pathByLocale = {
+    en: localizedPath("en", "vs"),
+    fi: localizedPath("fi", "vs"),
+  };
 
   return {
     title: t("title"),
     description: t("description"),
-    alternates: { canonical: path, languages },
+    alternates: {
+      canonical: path,
+      languages: languageAlternates(pathByLocale),
+    },
     openGraph: {
       title: t("title"),
       description: t("description"),

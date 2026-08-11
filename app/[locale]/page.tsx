@@ -12,7 +12,8 @@ import { Pricing } from "@/components/landing/pricing";
 import { CallToAction } from "@/components/landing/cta";
 import { SectionGutter } from "@/components/landing/section-gutter";
 import { getSiteUrl, siteConfig } from "@/lib/seo";
-import { routing, type Locale } from "@/i18n/routing";
+import { routing, type Locale, withLocalePrefix } from "@/i18n/routing";
+import { languageAlternates } from "@/lib/pseo/seo-paths";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -21,7 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!hasLocale(routing.locales, loc)) return {};
   const locale = loc as Locale;
   const t = await getTranslations({ locale, namespace: "meta" });
-  const siteUrl = getSiteUrl();
+  const path = withLocalePrefix(locale);
+  const pathByLocale = {
+    en: withLocalePrefix("en"),
+    fi: withLocalePrefix("fi"),
+  };
 
   return {
     title: {
@@ -29,17 +34,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     description: t("description"),
     alternates: {
-      canonical: `/${locale}`,
-      languages: {
-        en: `${siteUrl}/en`,
-        fi: `${siteUrl}/fi`,
-      },
+      canonical: path,
+      languages: languageAlternates(pathByLocale),
     },
     openGraph: {
       locale: locale === "fi" ? "fi_FI" : "en_US",
       title: `${siteConfig.name} — ${t("tagline")}`,
       description: t("description"),
-      url: `/${locale}`,
+      url: path,
     },
   };
 }
