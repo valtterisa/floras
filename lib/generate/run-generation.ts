@@ -19,13 +19,6 @@ export async function runGeneration(projectId: string, token: string) {
   );
   if (!project) return;
 
-  const claimed = await fetchMutation(
-    api.projects.claimGeneration,
-    { projectId: pid },
-    { token }
-  );
-  if (!claimed) return;
-
   const history = await fetchQuery(
     api.messages.list,
     { projectId: pid },
@@ -35,13 +28,9 @@ export async function runGeneration(projectId: string, token: string) {
   const existingId = resolveStreamingAssistantId(
     history as Array<{ _id: string; role: string; status: string }>
   );
-  const assistantId =
-    existingId ??
-    (await fetchMutation(
-      api.messages.createAssistant,
-      { projectId: pid },
-      { token }
-    ));
+  if (!existingId) return;
+
+  const assistantId = existingId;
 
   try {
     if (!sandbox.sandboxConfigured()) {

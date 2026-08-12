@@ -53,7 +53,6 @@ export const projectDocValidator = v.object({
   initialPrompt: v.string(),
   modelId: v.optional(v.string()),
   status: projectStatus,
-  busyAt: v.optional(v.number()),
   sandboxName: v.optional(v.string()),
   snapshotKey: v.optional(v.string()),
   previewUrl: v.optional(v.string()),

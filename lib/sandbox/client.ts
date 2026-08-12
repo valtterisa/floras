@@ -663,8 +663,9 @@ export async function exportSiteZip(
 }
 
 export async function exportDistArchive(
-  sandboxName: string
-): Promise<Uint8Array> {
+  sandboxName: string,
+  destPath: string
+): Promise<void> {
   await runCommand(sandboxName, `rm -f ${shellQuote(DIST_TAR_PATH)}`, {
     cwd: "/",
     timeoutSeconds: 30,
@@ -681,14 +682,14 @@ export async function exportDistArchive(
         detail: pack.stderr || pack.stdout || `exit ${pack.exitCode}`,
       });
     }
-    const blob = await (await loadSandbox(sandboxName)).fs.readBinary(
-      DIST_TAR_PATH
+    const { streamSandboxFileToPath } = await import(
+      "@/lib/sandbox/stream-file"
     );
-    const buf = new Uint8Array(await blob.arrayBuffer());
-    if (buf.byteLength === 0) {
-      throw new AppError("publish", "Build output package is empty.");
-    }
-    return buf;
+    await streamSandboxFileToPath(
+      await loadSandbox(sandboxName),
+      DIST_TAR_PATH,
+      destPath
+    );
   } finally {
     await runCommand(sandboxName, `rm -f ${shellQuote(DIST_TAR_PATH)}`, {
       cwd: "/",

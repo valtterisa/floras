@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { asProjectId } from "@/lib/convex/ids";
@@ -91,12 +94,18 @@ export async function runPublish(projectId: string, token: string) {
   let florasHostIsNew = false;
   let committed = false;
 
-  const claimed = await fetchMutation(
-    api.projects.claimPublish,
-    { projectId: asProjectId(projectId) },
-    { token }
-  );
-  if (!claimed) return;
+  try {
+    await fetchMutation(
+      api.projects.setPublishStatus,
+      { projectId: asProjectId(projectId), status: "publishing" },
+      { token }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("busy")) {
+      return;
+    }
+    throw error;
+  }
 
   try {
     await withRetry(
@@ -126,24 +135,30 @@ export async function runPublish(projectId: string, token: string) {
     await sandbox.buildSite(sandboxName);
     await sandbox.assertDistPresent(sandboxName);
 
-    const distArchive = await withRetry(
-      () => sandbox.exportDistArchive(sandboxName),
-      {
-        attempts: 2,
-        initialDelayMs: 800,
-        maxDelayMs: 4000,
-        label: "exportDistArchive",
-        retryable: isRetryableSandboxError,
-      }
-    );
+    const publishWorkDir = await mkdtemp(join(tmpdir(), "floras-publish-"));
+    const distTarPath = join(publishWorkDir, "dist.tar");
+    try {
+      await withRetry(
+        () => sandbox.exportDistArchive(sandboxName, distTarPath),
+        {
+          attempts: 2,
+          initialDelayMs: 800,
+          maxDelayMs: 4000,
+          label: "exportDistArchive",
+          retryable: isRetryableSandboxError,
+        }
+      );
 
-    await withRetry(() => deployDistArchive(distArchive, name), {
-      attempts: 3,
-      initialDelayMs: 1500,
-      maxDelayMs: 10000,
-      label: "deployDistArchive",
-      retryable: isRetryableCloudflareError,
-    });
+      await withRetry(() => deployDistArchive(distTarPath, name), {
+        attempts: 3,
+        initialDelayMs: 1500,
+        maxDelayMs: 10000,
+        label: "deployDistArchive",
+        retryable: isRetryableCloudflareError,
+      });
+    } finally {
+      await rm(publishWorkDir, { recursive: true, force: true }).catch(() => {});
+    }
 
     const existingSubdomain =
       typeof project.cfSubdomain === "string" ? project.cfSubdomain : "";

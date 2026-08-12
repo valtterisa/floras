@@ -94,6 +94,4 @@ sites inside Blaxel sandboxes via an AI SDK agent, with Autumn billing.
   later).
 - **Typecheck:** `pnpm typecheck` / `next build` both enforce TypeScript. Auth gating
   lives in `proxy.ts` (Next.js 16 network proxy).
-- **Busy jobs:** generate/publish use atomic `claimGeneration` / `claimPublish`. Stuck
-  busy states auto-reclaim after 15 minutes via `busyAt`, or the owner can call
-  `projects.resetBusy`.
+- **Stuck jobs:** if generation or publish hangs, the owner can call `projects.resetBusy`.

@@ -67,13 +67,9 @@ export async function runAsk(projectId: string, token: string) {
   const existingId = resolveStreamingAssistantId(
     history as Array<{ _id: string; role: string; status: string }>
   );
-  const assistantId =
-    existingId ??
-    (await fetchMutation(
-      api.messages.createAssistant,
-      { projectId: pid },
-      { token }
-    ));
+  if (!existingId) return;
+
+  const assistantId = existingId;
 
   try {
     const { model } = await resolveGenerationModel({

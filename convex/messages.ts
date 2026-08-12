@@ -8,6 +8,7 @@ import {
   requireOwnedProject,
 } from "./lib/auth";
 import { authedMutation } from "./lib/customFunctions";
+import { isProjectBusy } from "./lib/projectBusy";
 
 export const list = query({
   args: { projectId: v.id("projects") },
@@ -35,11 +36,7 @@ export const send = authedMutation({
   handler: async (ctx, args) => {
     const { userId, project } = await requireOwnedProject(ctx, args.projectId);
 
-    if (
-      project.status === "provisioning" ||
-      project.status === "generating" ||
-      project.publishStatus === "publishing"
-    ) {
+    if (isProjectBusy(project)) {
       throw new Error("Project is busy");
     }
 
@@ -88,32 +85,6 @@ export const abandonStreamingTurn = authedMutation({
       status: "error",
     });
     return null;
-  },
-});
-
-export const createAssistant = authedMutation({
-  args: { projectId: v.id("projects") },
-  returns: v.id("messages"),
-  handler: async (ctx, args) => {
-    const { userId } = await requireOwnedProject(ctx, args.projectId);
-
-    const recent = await ctx.db
-      .query("messages")
-      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
-      .order("desc")
-      .take(8);
-    if (recent.some((m) => m.status === "streaming")) {
-      throw new Error("A turn is already in progress");
-    }
-
-    return await ctx.db.insert("messages", {
-      projectId: args.projectId,
-      userId,
-      role: "assistant",
-      content: "",
-      steps: [],
-      status: "streaming",
-    });
   },
 });
 

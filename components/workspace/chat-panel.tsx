@@ -114,7 +114,6 @@ export function ChatPanel({
   project?: {
     modelId?: string;
     previewUrl?: string;
-    busyAt?: number;
   } | null;
   busy: boolean;
   defaultMode?: ComposerMode;
@@ -133,13 +132,30 @@ export function ChatPanel({
   const [mode, setMode] = useState<ComposerMode>(defaultMode);
   const [submitting, setSubmitting] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const busySinceRef = useRef<number | null>(null);
 
   const defaultModelId = resolveAgentModelId(project?.modelId ?? null);
   const streaming = (messages ?? []).some((m) => m.status === "streaming");
   const pending = busy || streaming || submitting;
-  const stuckMs =
-    typeof project?.busyAt === "number" ? Date.now() - project.busyAt : 0;
-  const showReset = busy && stuckMs > 2 * 60 * 1000;
+
+  useEffect(() => {
+    if (!busy) {
+      busySinceRef.current = null;
+      setShowReset(false);
+      return;
+    }
+    if (busySinceRef.current === null) {
+      busySinceRef.current = Date.now();
+    }
+    const id = window.setInterval(() => {
+      const since = busySinceRef.current;
+      if (since && Date.now() - since > 2 * 60 * 1000) {
+        setShowReset(true);
+      }
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [busy]);
 
   useEffect(() => {
     if (streaming) setSubmitting(false);

@@ -10,7 +10,6 @@ export type WorkspaceProject = {
   _id: string;
   name: string;
   status: string;
-  busyAt?: number;
   previewUrl?: string;
   sandboxName?: string;
   snapshotKey?: string;

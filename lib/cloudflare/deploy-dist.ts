@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
@@ -18,17 +18,14 @@ function wranglerEntry(): string {
 }
 
 export async function deployDistArchive(
-  tarBytes: Uint8Array,
+  tarPath: string,
   projectName: string
 ): Promise<void> {
   const { apiToken, accountId } = getCloudflareConfig();
   const root = await mkdtemp(join(tmpdir(), "floras-pages-"));
-  const tarPath = join(root, "dist.tar");
 
   try {
-    await writeFile(tarPath, Buffer.from(tarBytes));
     await execFileAsync("tar", ["-xf", tarPath, "-C", root]);
-    await rm(tarPath, { force: true });
 
     await execFileAsync(
       process.execPath,
