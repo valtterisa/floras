@@ -113,7 +113,7 @@ Right now I rely on manual smoke tests: generate a site, preview it, submit a fo
 
 What I’d add next, in order:
 
-1. **Unit tests** for pure logic — `parseHostname`, `sanitizeFields`, claim-job stale logic, billing access helpers
+1. **Unit tests** for pure logic — `parseHostname`, `sanitizeFields`, `isProjectBusy`, billing access helpers
 2. **API route tests** (Vitest + mocked Convex/Blaxel) for `/api/forms/submit`, publish, domains
 3. **Convex function tests** via `convex-test` for auth, forms, turn/send concurrency
 4. **One e2e path** (Playwright): sign up → create project → send prompt → see preview iframe load
@@ -182,29 +182,65 @@ Try Floras. Follow the build.
 
 ---
 
-## Architecture (reference)
+## Architecture illustrations
+
+Full diagram set (10 figures: overview, stack, generation, publish, R2 vs Pages, trust boundary, forms, billing, ASCII fallback):
+
+**[`floras-architecture-diagrams.md`](./floras-architecture-diagrams.md)**
+
+Quick picks for a short post:
+
+### System overview
 
 ```mermaid
-flowchart TD
-  Prompt[Prompt] --> API[Generate API]
-  API --> Agent[AI agent<br/>SitePlan + tools]
-  API --> Convex[Convex<br/>chat / state]
-  Agent --> Sandbox[Blaxel sandbox<br/>Astro on :4321]
-  Convex --> UI[Reactive UI]
-  Sandbox --> Preview[Preview URL<br/>*.preview.bl.run]
+flowchart TB
+  subgraph App["Floras app (Vercel + Convex)"]
+    UI[Next.js UI]
+    API[API routes]
+    DB[(Convex)]
+    UI <--> DB
+    UI --> API
+  end
+
+  subgraph Sandbox["Blaxel microVM"]
+    Astro[Astro project]
+    Preview[*.preview.bl.run]
+    Astro --> Preview
+  end
+
+  subgraph CF["Cloudflare"]
+    R2[(R2 snapshots)]
+    Pages[Pages id.floras.app]
+  end
+
+  User((User)) --> UI
+  API --> Astro
+  Astro --> R2
+  R2 --> Astro
   Preview --> UI
-  Sandbox --> R2[R2 snapshot<br/>workspace.tar.gz]
-  Sandbox --> Build[astro build]
-  Build --> Pages[Cloudflare Pages<br/>id.floras.app]
-  UI --> Pages
+  API --> Pages
+```
+
+### Publish path (why secrets never enter the sandbox)
+
+```mermaid
+sequenceDiagram
+  participant API as Next.js
+  participant VM as Blaxel sandbox
+  participant CF as Cloudflare Pages
+
+  API->>VM: astro build
+  VM->>API: stream dist.tar
+  Note over API: CLOUDFLARE_* env<br/>only here
+  API->>CF: wrangler pages deploy
 ```
 
 ```text
-Prompt → Next.js generate API → AI agent (SitePlan + tools)
-                ↓                        ↓
-         Convex (chat/state)      Blaxel sandbox (astro dev :4321)
-                ↓                        ↓
-         Reactive UI  ←── preview URL (*.preview.bl.run)
-                ↓
-    R2 snapshot (source)     Publish: sandbox build → dist → Wrangler → Pages
+Prompt → messages.send → /api/generate → agent + SitePlan
+                ↓                              ↓
+           Convex (reactive UI)         Blaxel (astro dev)
+                ↓                              ↓
+           preview iframe          R2 snapshot (source only)
+                                           ↓
+                              publish: dist → Next.js → Pages
 ```
