@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { mkdtemp, rm } from "node:fs/promises";
+import { access, readFile, writeFile, mkdtemp, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { execFile } from "node:child_process";
@@ -10,11 +10,63 @@ import { getCloudflareConfig } from "@/lib/cloudflare/pages";
 const execFileAsync = promisify(execFile);
 const requireFromApp = createRequire(join(process.cwd(), "package.json"));
 
+const ASTRO_ASSET_RE = /(?:href|src)="(\/_astro\/[^"]+)"/g;
+
+const PAGES_NOT_FOUND_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Page not found</title>
+</head>
+<body>
+  <h1>Page not found</h1>
+</body>
+</html>
+`;
+
 function wranglerEntry(): string {
   return join(
     dirname(requireFromApp.resolve("wrangler/package.json")),
     "bin/wrangler.js"
   );
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function prepareDistForPages(root: string): Promise<void> {
+  const indexPath = join(root, "index.html");
+  if (!(await pathExists(indexPath))) {
+    throw new AppError("publish", "Build output is missing index.html.");
+  }
+
+  const astroDir = join(root, "_astro");
+  if (!(await pathExists(astroDir))) {
+    throw new AppError("publish", "Build output is missing the _astro assets folder.");
+  }
+
+  const html = await readFile(indexPath, "utf8");
+  const assetRefs = [...html.matchAll(ASTRO_ASSET_RE)].map((match) => match[1]);
+  for (const ref of assetRefs) {
+    const assetPath = join(root, ref.slice(1));
+    if (!(await pathExists(assetPath))) {
+      throw new AppError("publish", "Build output is missing a referenced asset.", {
+        detail: ref,
+      });
+    }
+  }
+
+  const notFoundPath = join(root, "404.html");
+  if (!(await pathExists(notFoundPath))) {
+    await writeFile(notFoundPath, PAGES_NOT_FOUND_HTML, "utf8");
+  }
 }
 
 export async function deployDistArchive(
@@ -26,6 +78,7 @@ export async function deployDistArchive(
 
   try {
     await execFileAsync("tar", ["-xf", tarPath, "-C", root]);
+    await prepareDistForPages(root);
 
     await execFileAsync(
       process.execPath,

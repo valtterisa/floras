@@ -13,6 +13,7 @@ import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_customFunctions from "../lib/customFunctions.js";
+import type * as lib_projectBusy from "../lib/projectBusy.js";
 import type * as lib_sandboxName from "../lib/sandboxName.js";
 import type * as messages from "../messages.js";
 import type * as projects from "../projects.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/customFunctions": typeof lib_customFunctions;
+  "lib/projectBusy": typeof lib_projectBusy;
   "lib/sandboxName": typeof lib_sandboxName;
   messages: typeof messages;
   projects: typeof projects;
