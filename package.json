@@ -2,16 +2,16 @@
   "name": "floras",
   "version": "0.1.0",
   "private": true,
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "description": "Floras — turn one sentence into a real website, no coding required",
   "repository": {
     "type": "git",
-    "url": "https://github.com/valtterisa/builddrr-app.git"
+    "url": "https://github.com/valtterisa/floras.git"
   },
   "bugs": {
-    "url": "https://github.com/valtterisa/builddrr-app/issues"
+    "url": "https://github.com/valtterisa/floras/issues"
   },
-  "homepage": "https://github.com/valtterisa/builddrr-app#readme",
+  "homepage": "https://github.com/valtterisa/floras#readme",
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:convex": "convex dev",
