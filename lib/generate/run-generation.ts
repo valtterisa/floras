@@ -1,14 +1,29 @@
 import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { asMessageId, asProjectId } from "@/lib/convex/ids";
-import { buildSiteAgent } from "@/lib/ai/agent";
+import { buildOrganizerAgent } from "@/lib/ai/agent";
 import { resolveGenerationModel } from "@/lib/billing/resolve-generation-model";
 import * as sandbox from "@/lib/sandbox/client";
 import { createSandboxSession } from "@/lib/sandbox/session";
 import { resolveStreamingAssistantId } from "@/lib/generate/resolve-assistant";
 import { AppError } from "@/lib/errors";
-import type { SitePlan } from "@/lib/schema/site";
 import { getSiteUrl } from "@/lib/seo";
+import {
+  redesignAnswersSchema,
+  type RedesignAnswers,
+} from "@/lib/schema/redesign";
+
+function stringField(
+  value: unknown
+): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function parseRedesignAnswers(value: unknown): RedesignAnswers | null {
+  const parsed = redesignAnswersSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
 
 export async function runGeneration(projectId: string, token: string) {
   const pid = asProjectId(projectId);
@@ -37,10 +52,7 @@ export async function runGeneration(projectId: string, token: string) {
       throw new AppError("config");
     }
 
-    const initialSandboxName =
-      typeof project.sandboxName === "string" ? project.sandboxName : undefined;
-    const previewUrl =
-      typeof project.previewUrl === "string" ? project.previewUrl : null;
+    const previewUrl = stringField(project.previewUrl) ?? null;
 
     await fetchMutation(
       api.projects.setStatus,
@@ -50,9 +62,9 @@ export async function runGeneration(projectId: string, token: string) {
 
     const session = createSandboxSession({
       projectId,
-      projectName: typeof project.name === "string" ? project.name : "site",
+      projectName: stringField(project.name) || "site",
       token,
-      initialSandboxName,
+      initialSandboxName: stringField(project.sandboxName),
       initialPreviewUrl: previewUrl,
       onSandbox: async ({ sandboxName }) => {
         await fetchMutation(
@@ -84,12 +96,8 @@ export async function runGeneration(projectId: string, token: string) {
     const { model } = await resolveGenerationModel({
       customerId: me.id,
       token,
-      modelId: typeof project.modelId === "string" ? project.modelId : null,
+      modelId: stringField(project.modelId) ?? null,
     });
-    const sitePlan =
-      project.plan && typeof project.plan === "object"
-        ? (project.plan as SitePlan)
-        : null;
 
     const formPublicKey = await fetchMutation(
       api.forms.ensureFormPublicKey,
@@ -98,7 +106,19 @@ export async function runGeneration(projectId: string, token: string) {
     );
     const formsSubmitUrl = `${getSiteUrl()}/api/forms/submit`;
 
-    const agent = buildSiteAgent({
+    let projectSnap: Doc<"projects"> | null = project;
+    const loadProject = async (fresh = false) => {
+      if (fresh || !projectSnap) {
+        projectSnap = await fetchQuery(
+          api.projects.get,
+          { projectId: pid },
+          { token }
+        );
+      }
+      return projectSnap;
+    };
+
+    const agent = buildOrganizerAgent({
       sandbox: session,
       projectId,
       token,
@@ -106,12 +126,8 @@ export async function runGeneration(projectId: string, token: string) {
       model,
       hasPreview: Boolean(previewUrl),
       previewUrl,
-      sitePlan,
-      projectName: typeof project.name === "string" ? project.name : undefined,
-      customInstructions:
-        typeof me.customInstructions === "string"
-          ? me.customInstructions
-          : undefined,
+      projectName: stringField(project.name),
+      customInstructions: stringField(me.customInstructions),
       formPublicKey,
       formsSubmitUrl,
       onStep: async (step) => {
@@ -121,12 +137,27 @@ export async function runGeneration(projectId: string, token: string) {
           { token }
         );
       },
-      onPlan: async (plan) => {
+      loadPlanMarkdown: async () =>
+        stringField((await loadProject())?.planMarkdown) ?? null,
+      loadDesignBrief: async () =>
+        stringField((await loadProject())?.designBrief) ?? null,
+      loadRedesignAnswers: async () =>
+        parseRedesignAnswers((await loadProject())?.redesignAnswers),
+      persistPlan: async (planMarkdown, designBrief) => {
         await fetchMutation(
-          api.projects.setPlan,
-          { projectId: pid, plan },
+          api.projects.setPlanMarkdown,
+          { projectId: pid, planMarkdown, designBrief },
           { token }
         );
+        await loadProject(true);
+      },
+      requestRedesignIntake: async () => {
+        await fetchMutation(
+          api.projects.requestRedesignIntake,
+          { projectId: pid },
+          { token }
+        );
+        await loadProject(true);
       },
     });
 

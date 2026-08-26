@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { ChatPanel } from "@/components/workspace/chat-panel";
 import { PreviewPane } from "@/components/workspace/preview-pane";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
+import { RedesignQuestionsDialog } from "@/components/workspace/redesign-questions-dialog";
 import type { ComposerMode } from "@/components/site/prompt-composer";
 import { useStopSandboxOnLeave } from "@/lib/hooks/use-stop-sandbox-on-leave";
 import type { WorkspaceProject } from "@/lib/types/user";
@@ -90,6 +91,10 @@ export function Workspace({
           />
         </section>
       </div>
+      <RedesignQuestionsDialog
+        projectId={projectId}
+        open={project?.pendingRedesign?.status === "awaiting_answers"}
+      />
     </div>
   );
 }

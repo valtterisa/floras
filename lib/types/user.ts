@@ -1,3 +1,5 @@
+import type { RedesignAnswers } from "@/lib/schema/redesign";
+
 export type UserMe = {
   id: string;
   name: string;
@@ -21,4 +23,8 @@ export type WorkspaceProject = {
   cfSubdomain?: string;
   customDomain?: string;
   customDomainStatus?: string;
+  planMarkdown?: string;
+  designBrief?: string;
+  pendingRedesign?: { status: "awaiting_answers" };
+  redesignAnswers?: RedesignAnswers;
 };

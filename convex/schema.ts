@@ -60,31 +60,29 @@ export const formSubmissionStatus = v.union(
   v.literal("archived")
 );
 
-export const sitePlanValidator = v.object({
-  siteName: v.string(),
-  tagline: v.string(),
-  description: v.string(),
-  accentColor: v.string(),
-  theme: v.union(v.literal("light"), v.literal("dark")),
-  fontFamily: v.string(),
-  nav: v.array(
-    v.object({
-      label: v.string(),
-      href: v.string(),
-    })
+export const redesignAnswersValidator = v.object({
+  direction: v.union(
+    v.literal("minimal"),
+    v.literal("bold"),
+    v.literal("premium"),
+    v.literal("playful")
   ),
-  pages: v.array(
-    v.object({
-      path: v.string(),
-      title: v.string(),
-      description: v.optional(v.string()),
-      sections: v.array(v.any()),
-    })
+  directionNote: v.optional(v.string()),
+  theme: v.union(
+    v.literal("light"),
+    v.literal("dark"),
+    v.literal("either")
   ),
-  blog: v.object({
-    enabled: v.boolean(),
-    posts: v.array(v.any()),
-  }),
+  keep: v.optional(v.string()),
+  scope: v.union(
+    v.literal("visuals"),
+    v.literal("restructure"),
+    v.literal("fresh")
+  ),
+});
+
+export const pendingRedesignValidator = v.object({
+  status: v.literal("awaiting_answers"),
 });
 
 export default defineSchema({
@@ -115,6 +113,10 @@ export default defineSchema({
     snapshotKey: v.optional(v.string()),
     previewUrl: v.optional(v.string()),
     plan: v.optional(v.any()),
+    planMarkdown: v.optional(v.string()),
+    designBrief: v.optional(v.string()),
+    pendingRedesign: v.optional(pendingRedesignValidator),
+    redesignAnswers: v.optional(redesignAnswersValidator),
     error: v.optional(v.string()),
     publishStatus: v.optional(publishStatus),
     cfProjectName: v.optional(v.string()),
