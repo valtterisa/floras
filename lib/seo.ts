@@ -11,7 +11,6 @@ export const siteConfig = {
     "small business website",
     "Floras",
   ],
-  ogImage: "/og-image.png",
 } as const;
 
 export function getSiteUrl(): string {
