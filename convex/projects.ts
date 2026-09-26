@@ -5,7 +5,7 @@ import {
   projectStatus,
   publishStatus,
   domainStatus,
-  sitePlanValidator,
+  redesignAnswersValidator,
 } from "./schema";
 import {
   projectDocValidator,
@@ -192,16 +192,92 @@ export const setPreview = authedMutation({
   },
 });
 
-export const setPlan = authedMutation({
+export const setPlanMarkdown = authedMutation({
   args: {
     projectId: v.id("projects"),
-    plan: sitePlanValidator,
+    planMarkdown: v.string(),
+    designBrief: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireOwnedProject(ctx, args.projectId);
-    await ctx.db.patch(args.projectId, { plan: args.plan });
+    await ctx.db.patch(args.projectId, {
+      planMarkdown: args.planMarkdown,
+      designBrief: args.designBrief,
+      redesignAnswers: undefined,
+    });
     return null;
+  },
+});
+
+export const requestRedesignIntake = authedMutation({
+  args: { projectId: v.id("projects") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, {
+      pendingRedesign: { status: "awaiting_answers" },
+    });
+    return null;
+  },
+});
+
+export const cancelPendingRedesign = authedMutation({
+  args: { projectId: v.id("projects") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOwnedProject(ctx, args.projectId);
+    await ctx.db.patch(args.projectId, {
+      pendingRedesign: undefined,
+    });
+    return null;
+  },
+});
+
+export const submitRedesignAnswers = authedMutation({
+  args: {
+    projectId: v.id("projects"),
+    answers: redesignAnswersValidator,
+  },
+  returns: v.object({ assistantId: v.id("messages") }),
+  handler: async (ctx, args) => {
+    const { userId, project } = await requireOwnedProject(ctx, args.projectId);
+    if (isProjectBusy(project)) {
+      throw new Error("Project is busy");
+    }
+    const recent = await ctx.db
+      .query("messages")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .order("desc")
+      .take(8);
+    if (recent.some((m) => m.status === "streaming")) {
+      throw new Error("A turn is already in progress");
+    }
+
+    await ctx.db.patch(args.projectId, {
+      redesignAnswers: args.answers,
+      pendingRedesign: undefined,
+    });
+
+    await ctx.db.insert("messages", {
+      projectId: args.projectId,
+      userId,
+      role: "user",
+      content:
+        "Continue the site-wide redesign using my redesign answers.",
+      status: "complete",
+    });
+
+    const assistantId = await ctx.db.insert("messages", {
+      projectId: args.projectId,
+      userId,
+      role: "assistant",
+      content: "",
+      steps: [],
+      status: "streaming",
+    });
+
+    return { assistantId };
   },
 });
 

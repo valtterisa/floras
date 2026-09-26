@@ -7,8 +7,10 @@ import {
   domainStatus,
   messageRole,
   messageStatus,
+  pendingRedesignValidator,
   projectStatus,
   publishStatus,
+  redesignAnswersValidator,
 } from "../schema";
 
 export type AuthedCtx = (QueryCtx | MutationCtx) & { userId: Id<"users"> };
@@ -57,6 +59,10 @@ export const projectDocValidator = v.object({
   snapshotKey: v.optional(v.string()),
   previewUrl: v.optional(v.string()),
   plan: v.optional(v.any()),
+  planMarkdown: v.optional(v.string()),
+  designBrief: v.optional(v.string()),
+  pendingRedesign: v.optional(pendingRedesignValidator),
+  redesignAnswers: v.optional(redesignAnswersValidator),
   error: v.optional(v.string()),
   publishStatus: v.optional(publishStatus),
   cfProjectName: v.optional(v.string()),
